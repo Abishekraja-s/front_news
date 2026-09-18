@@ -36,6 +36,7 @@ import { AdminThemeProvider } from './context/AdminThemeContext';
 import Dashboard from './admin/Dashboard';
 import Articles from './admin/Articles';
 import ArticleForm from './admin/ArticleForm';
+import ArticlePreview from './admin/ArticlePreview';
 import Categories from './admin/Categories';
 import Authors from './admin/Authors';
 import Media from './admin/Media';
@@ -153,6 +154,7 @@ function App() {
         <Route path="articles" element={<Articles />} />
         <Route path="articles/create" element={<ArticleForm />} />
         <Route path="articles/edit/:id" element={<ArticleForm />} />
+        <Route path="articles/preview/:id" element={<ArticlePreview />} />
         <Route path="categories" element={<Categories />} />
         <Route path="authors" element={<Authors />} />
         <Route path="media" element={<Media />} />
