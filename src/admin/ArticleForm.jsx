@@ -263,9 +263,10 @@ const ArticleForm = () => {
     e.preventDefault();
     setLoading(true);
 
+    const nextStatus = overrideStatus || form.status;
     const payload = {
       ...form,
-      status: overrideStatus || form.status,
+      status: nextStatus,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
       secondaryKeywords: (form.secondaryKeywords || '').split(',').map((t) => t.trim()).filter(Boolean),
       entities: (form.entities || '').split(',').map((t) => t.trim()).filter(Boolean),
@@ -276,13 +277,19 @@ const ArticleForm = () => {
       author: form.author || undefined,
     };
 
+    // Empty date strings clear publishedAt in Mongo and hide the article on the site
+    if (!payload.publishedAt) delete payload.publishedAt;
+    if (nextStatus === 'PUBLISHED' && !payload.publishedAt) {
+      payload.publishedAt = new Date().toISOString();
+    }
+
     try {
       if (isEdit) {
         await articleService.update(id, payload);
-        toast.success('Article updated');
+        toast.success(nextStatus === 'PUBLISHED' ? 'Published — visible on website' : 'Article updated');
       } else {
         await articleService.create(payload);
-        toast.success('Article created');
+        toast.success(nextStatus === 'PUBLISHED' ? 'Published — visible on website' : 'Article created');
       }
       navigate('/admin/articles');
     } catch (err) {

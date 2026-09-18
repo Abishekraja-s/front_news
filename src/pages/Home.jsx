@@ -44,15 +44,19 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [featuredRes, latestRes, popularRes] = await Promise.all([
+        const [featuredRes, latestRes, popularRes] = await Promise.allSettled([
           articleService.getFeatured(),
           articleService.getLatest(8),
           articleService.getPopular(5),
         ]);
 
-        setFeatured(featuredRes.data.data || []);
-        setLatest(latestRes.data.data || []);
-        setPopular(popularRes.data.data || []);
+        setFeatured(
+          featuredRes.status === 'fulfilled' ? featuredRes.value.data.data || [] : []
+        );
+        setLatest(latestRes.status === 'fulfilled' ? latestRes.value.data.data || [] : []);
+        setPopular(
+          popularRes.status === 'fulfilled' ? popularRes.value.data.data || [] : []
+        );
 
         const catResults = {};
         await Promise.all(

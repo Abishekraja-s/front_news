@@ -115,6 +115,21 @@ const Articles = () => {
         header: 'Actions',
         render: (row) => (
           <div className="data-table-actions">
+            {row.slug && (
+              <a
+                href={`/news/${row.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="data-table-action data-table-action-secondary"
+                title={
+                  row.status === 'PUBLISHED'
+                    ? 'View on website'
+                    : 'View on website (visible only if published)'
+                }
+              >
+                View
+              </a>
+            )}
             <Link
               to={`/admin/articles/edit/${row._id}`}
               className="data-table-action data-table-action-edit"
