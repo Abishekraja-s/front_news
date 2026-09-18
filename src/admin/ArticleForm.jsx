@@ -10,6 +10,7 @@ import {
   mediaService,
 } from '../services/articleService';
 import { getMediaUrl } from '../utils/images';
+import { getYoutubeEmbedUrl } from '../utils/youtube';
 import ImageUploadField from '../components/ImageUploadField';
 import GeminiGeneratePanel from './GeminiGeneratePanel';
 
@@ -416,6 +417,9 @@ const ArticleForm = () => {
 
             <div className="admin-card space-y-3">
               <h3 className="font-semibold text-slate-900">Audio Reader</h3>
+              <p className="text-xs text-slate-500">
+                Upload an MP3/audio file, or leave empty — readers can still use Listen (browser voice) on the article page.
+              </p>
               <input
                 name="audioReader"
                 value={form.audioReader}
@@ -460,7 +464,21 @@ const ArticleForm = () => {
                 className="admin-input"
                 placeholder="https://www.youtube.com/watch?v=..."
               />
-              <p className="text-xs text-slate-500">Paste a YouTube watch, embed, or youtu.be link.</p>
+              <p className="text-xs text-slate-500">Paste a YouTube watch, Shorts, live, embed, or youtu.be link.</p>
+              {getYoutubeEmbedUrl(form.youtubeVideoLink) && (
+                <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                  <iframe
+                    title="YouTube preview"
+                    src={getYoutubeEmbedUrl(form.youtubeVideoLink)}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+              {form.youtubeVideoLink.trim() && !getYoutubeEmbedUrl(form.youtubeVideoLink) && (
+                <p className="text-xs text-rose-600">Invalid YouTube URL — video will not show on the article.</p>
+              )}
             </div>
 
             <div className="admin-card space-y-3">

@@ -58,14 +58,8 @@ export const adService = {
 
 export const mediaService = {
   getAll: (params = {}) => api.get('/media', { params }),
-  upload: (formData) =>
-    api.post('/media/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-  uploadAudio: (formData) =>
-    api.post('/media/upload-audio', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+  upload: (formData) => api.post('/media/upload', formData),
+  uploadAudio: (formData) => api.post('/media/upload-audio', formData),
   update: (id, data) => api.put(`/media/${id}`, data),
   delete: (id) => api.delete(`/media/${id}`),
 };
@@ -78,9 +72,7 @@ export const settingService = {
     const formData = new FormData();
     formData.append('type', type);
     formData.append('file', file);
-    return api.post(`/settings/upload-brand?type=${encodeURIComponent(type)}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    return api.post(`/settings/upload-brand?type=${encodeURIComponent(type)}`, formData);
   },
 };
 
@@ -189,6 +181,20 @@ export const googleNewsService = {
   deleteItem: (id) => api.delete(`/google-news/items/${id}`),
 };
 
+export const rssIngestService = {
+  getSources: () => api.get('/rss-ingest/sources'),
+  createSource: (data) => api.post('/rss-ingest/sources', data),
+  updateSource: (id, data) => api.put(`/rss-ingest/sources/${id}`, data),
+  deleteSource: (id) => api.delete(`/rss-ingest/sources/${id}`),
+  fetchNow: (data = {}) => api.post('/rss-ingest/fetch', data),
+  getArticles: (params = {}) => api.get('/rss-ingest/articles', { params }),
+  publishArticle: (id) => api.post(`/rss-ingest/articles/${id}/publish`),
+  bulkPublish: (ids) => api.post('/rss-ingest/articles/bulk-publish', { ids }),
+  bulkDelete: (ids) => api.post('/rss-ingest/articles/bulk-delete', { ids }),
+  deleteByDate: (data) => api.post('/rss-ingest/articles/delete-by-date', data),
+  deleteArticle: (id) => api.delete(`/rss-ingest/articles/${id}`),
+};
+
 export const adSenseService = {
   getPublic: (params = {}) => api.get('/adsense/public', { params }),
   getMeta: () => api.get('/adsense/meta'),
@@ -266,27 +272,15 @@ export const matrimonyService = {
   deleteProfile: (id) => api.delete(`/matrimony/admin/profiles/${id}`),
   reviewProfile: (id, data) => api.put(`/matrimony/admin/profiles/${id}/review`, data),
   toggleFlags: (id, data) => api.put(`/matrimony/admin/profiles/${id}/flags`, data),
-  uploadPhoto: (formData) =>
-    api.post('/matrimony/admin/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-  uploadDocument: (formData) =>
-    api.post('/matrimony/admin/upload-document', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+  uploadPhoto: (formData) => api.post('/matrimony/admin/upload', formData),
+  uploadDocument: (formData) => api.post('/matrimony/admin/upload-document', formData),
   registerMember: (data) => api.post('/matrimony/member/register', data),
   getMemberProfile: () => api.get('/matrimony/member/profile'),
   createMemberProfile: (data) => api.post('/matrimony/member/profile', data),
   updateMemberProfile: (data) => api.put('/matrimony/member/profile', data),
   deleteMemberProfile: () => api.delete('/matrimony/member/profile'),
-  uploadMemberPhoto: (formData) =>
-    api.post('/matrimony/member/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-  uploadMemberDocument: (formData) =>
-    api.post('/matrimony/member/upload-document', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+  uploadMemberPhoto: (formData) => api.post('/matrimony/member/upload', formData),
+  uploadMemberDocument: (formData) => api.post('/matrimony/member/upload-document', formData),
   sendEnquiry: (profileId, data) => api.post(`/matrimony/public/${profileId}/enquiries`, data),
   getMyEnquiries: () => api.get('/matrimony/member/enquiries'),
   getReceivedEnquiries: () => api.get('/matrimony/member/enquiries/received'),

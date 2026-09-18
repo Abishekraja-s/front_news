@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import Header from '../components/Header';
 import BreakingNews from '../components/BreakingNews';
 import Footer from '../components/Footer';
+import MobileBottomNav from '../components/MobileBottomNav';
 import WhatsAppChannelSection from '../components/WhatsAppChannelSection';
 import Advertisement from '../components/Advertisement';
 import AdSenseSlot from '../components/AdSenseSlot';
@@ -94,7 +95,7 @@ const PublicLayout = () => {
   }, [headerLogoUrl, headerPosterUrl, faviconUrl, settings?.headerLogo, tracking.measurementId, tracking.gtmId]);
 
   return (
-    <div className="min-h-screen flex flex-col pb-16 lg:pb-0">
+    <div className="min-h-screen flex flex-col pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
       <Helmet>
         {preloadLinks}
         {faviconUrl ? (
@@ -127,10 +128,11 @@ const PublicLayout = () => {
       </div>
       <WhatsAppChannelSection settings={settings} />
       <Footer settings={settings} />
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-stone-200 p-2 shadow-md mobile-sticky-ad">
+      <div className="lg:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] inset-x-0 z-30 bg-white border-t border-stone-200 p-2 shadow-md mobile-sticky-ad">
         <Advertisement position="mobile_sticky" label={false} />
         <AdSenseSlot location="mobile_sticky" page="all" />
       </div>
+      <MobileBottomNav />
     </div>
   );
 };

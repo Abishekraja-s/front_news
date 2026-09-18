@@ -44,9 +44,22 @@ export const truncate = (text, length = 100) => {
   return text.length > length ? text.slice(0, length) + '...' : text;
 };
 
+/** Fixed bottom bar on mobile */
+export const MOBILE_BOTTOM_NAV_ITEMS = [
+  { label: 'முகப்பு', path: '/' },
+  { label: 'இன்று', path: '/explore' },
+  { label: 'மார்க்கெட்பிளேஸ்', path: '/marketplace' },
+  { label: 'திருமண சேவை', path: '/matrimony' },
+];
+
+export const isMobileBottomNavActive = (path, pathname = '') => {
+  if (path === '/') return pathname === '/';
+  return pathname === path || pathname.startsWith(`${path}/`);
+};
+
 export const NAV_ITEMS = [
   { label: 'முகப்பு', path: '/' },
-  { label: 'அனைத்தும்', path: '/explore' },
+  { label: 'இன்று', path: '/explore' },
   { label: 'தமிழ்நாடு', path: '/tamil-nadu' },
   { label: 'சென்னை', path: '/chennai' },
   { label: 'இந்தியா', path: '/india' },

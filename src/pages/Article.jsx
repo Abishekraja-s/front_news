@@ -5,7 +5,7 @@ import { articleService, googleNewsService } from '../services/articleService';
 import { sanitizeHtml, generateArticleJsonLd } from '../utils/sanitize';
 import GoogleNewsArticleView from '../components/GoogleNewsArticleView';
 import { formatDateTime } from '../utils/helpers';
-import { getImageUrl, getMediaUrl } from '../utils/images';
+import { getImageUrl } from '../utils/images';
 import { getYoutubeEmbedUrl } from '../utils/youtube';
 import NewsImage from '../components/NewsImage';
 import ShareButtons from '../components/ShareButtons';
@@ -13,6 +13,7 @@ import RelatedNews from '../components/RelatedNews';
 import Advertisement from '../components/Advertisement';
 import AdSenseSlot from '../components/AdSenseSlot';
 import Loading from '../components/Loading';
+import ArticleAudioReader from '../components/ArticleAudioReader';
 
 const Article = () => {
   const { slug } = useParams();
@@ -65,7 +66,6 @@ const Article = () => {
 
   const jsonLd = generateArticleJsonLd(article);
   const youtubeEmbed = getYoutubeEmbedUrl(article.youtubeVideoLink);
-  const audioUrl = getMediaUrl(article.audioReader);
 
   return (
     <>
@@ -175,14 +175,12 @@ const Article = () => {
             )}
         </figure>
 
-        {audioUrl && (
-          <div className="mb-6 rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <p className="text-sm font-semibold text-slate-800 mb-2">Audio Reader</p>
-            <audio controls preload="metadata" className="w-full" src={audioUrl}>
-              Your browser does not support audio playback.
-            </audio>
-          </div>
-        )}
+        <ArticleAudioReader
+          audioReader={article.audioReader}
+          title={article.title}
+          excerpt={article.excerpt}
+          content={article.content}
+        />
 
         {youtubeEmbed && (
           <div className="mb-6">

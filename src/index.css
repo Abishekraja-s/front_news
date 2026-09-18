@@ -725,6 +725,10 @@ body.mobile-menu-open .mobile-sticky-ad {
   display: none;
 }
 
+body.mobile-menu-open .mobile-bottom-nav {
+  display: none;
+}
+
 .ticker-wrap {
   overflow: hidden;
   white-space: nowrap;

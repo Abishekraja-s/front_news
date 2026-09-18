@@ -51,6 +51,7 @@ import AeoGeo from './admin/AeoGeo';
 import YoutubeSliderAdmin from './admin/YoutubeSliderAdmin';
 import InstagramPostsAdmin from './admin/InstagramPostsAdmin';
 import GoogleNewsAdmin from './admin/GoogleNewsAdmin';
+import RssFeedAdmin from './admin/RssFeedAdmin';
 import TravelNotificationsAdmin from './admin/TravelNotificationsAdmin';
 import SportsLiveAdmin from './admin/SportsLiveAdmin';
 import GovernmentNotificationsAdmin from './admin/GovernmentNotificationsAdmin';
@@ -178,6 +179,7 @@ function App() {
         <Route path="youtube-slider" element={<YoutubeSliderAdmin />} />
         <Route path="instagram-posts" element={<InstagramPostsAdmin />} />
         <Route path="google-news" element={<GoogleNewsAdmin />} />
+        <Route path="rss-feed" element={<RssFeedAdmin />} />
         <Route path="travel-notifications" element={<TravelNotificationsAdmin />} />
         <Route path="sports-live" element={<SportsLiveAdmin />} />
         <Route path="government-notifications" element={<GovernmentNotificationsAdmin />} />
