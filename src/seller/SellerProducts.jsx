@@ -30,16 +30,6 @@ const SellerProducts = () => {
     load();
   }, []);
 
-  const mark = async (id, status) => {
-    try {
-      await marketplaceService.updateProduct(id, { status });
-      toast.success(`Marked ${status.toLowerCase()}`);
-      load();
-    } catch {
-      toast.error('Update failed');
-    }
-  };
-
   const remove = async (id) => {
     if (!confirm('Delete this product?')) return;
     try {
@@ -107,16 +97,6 @@ const SellerProducts = () => {
         header: 'Actions',
         render: (row) => (
           <div className="data-table-actions">
-            {row.status === 'APPROVED' && (
-              <>
-                <button type="button" onClick={() => mark(row._id, 'SOLD')} className="data-table-action data-table-action-secondary">
-                  Sold
-                </button>
-                <button type="button" onClick={() => mark(row._id, 'INACTIVE')} className="data-table-action data-table-action-secondary">
-                  Hide
-                </button>
-              </>
-            )}
             <Link to={`/seller/products/${row._id}/edit`} className="data-table-action data-table-action-edit">
               Edit
             </Link>

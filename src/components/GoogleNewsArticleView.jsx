@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { formatDateTime } from '../utils/helpers';
-import { getImageUrl } from '../utils/images';
+import { buildGoogleNewsSocialMeta } from '../utils/seo';
 import { cleanGoogleNewsContent, toArticleParagraphs, truncateExcerpt } from '../utils/text';
 import NewsImage from './NewsImage';
 import GoogleNewsCard from './GoogleNewsCard';
@@ -15,16 +15,32 @@ const GoogleNewsArticleView = ({ item, related = [] }) => {
   const summary = truncateExcerpt(cleanedContent, 160);
   const imageSeed = item.guid || item.slug || item._id || title;
   const hasImage = Boolean(item.image?.trim()) && !item.image.includes('picsum.photos') && !item.image.includes('googleusercontent.com');
+  const social = buildGoogleNewsSocialMeta({
+    ...item,
+    excerpt: summary,
+    description: summary,
+  });
 
   return (
     <>
       <Helmet>
         <title>{title} - The Great India News</title>
-        <meta name="description" content={summary} />
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={summary} />
-        {hasImage && <meta property="og:image" content={getImageUrl(item.image, imageSeed)} />}
+        <meta name="description" content={social.description} />
+        <link rel="canonical" href={social.url} />
+        <meta property="og:title" content={social.title} />
+        <meta property="og:description" content={social.description} />
+        <meta property="og:image" content={social.image} />
+        <meta property="og:image:secure_url" content={social.image} />
+        <meta property="og:image:type" content={social.imageType || 'image/jpeg'} />
+        <meta property="og:image:width" content={social.imageWidth || '1200'} />
+        <meta property="og:image:height" content={social.imageHeight || '630'} />
+        <meta property="og:url" content={social.url} />
         <meta property="og:type" content="article" />
+        <meta property="og:site_name" content={social.siteName} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={social.twitterTitle} />
+        <meta name="twitter:description" content={social.twitterDescription} />
+        <meta name="twitter:image" content={social.twitterImage} />
       </Helmet>
 
       <article className="container-news py-6">
@@ -106,7 +122,13 @@ const GoogleNewsArticleView = ({ item, related = [] }) => {
           </p>
         )}
 
-        <ShareButtons title={title} />
+        <ShareButtons
+          title={social.title}
+          description={social.description}
+          image={hasImage ? item.image : undefined}
+          slug={item.slug}
+          url={social.url}
+        />
 
         {related.length > 0 && (
           <section className="mt-12 pt-8 border-t" aria-labelledby="related-google-news">

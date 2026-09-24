@@ -82,6 +82,59 @@ export const emptyMatrimonyForm = () => ({
   isVisible: true,
 });
 
+export const BIRTH_STAR_OPTIONS = [
+  'Ashwini',
+  'Bharani',
+  'Karthigai',
+  'Rohini',
+  'Mirugaseerisham',
+  'Thiruvathirai',
+  'Punarpoosam',
+  'Poosam',
+  'Ayilyam',
+  'Magam',
+  'Pooram',
+  'Uthiram',
+  'Hastham',
+  'Chithirai',
+  'Swathi',
+  'Visakam',
+  'Anusham',
+  'Kettai',
+  'Moolam',
+  'Pooradam',
+  'Uthiradam',
+  'Thiruvonam',
+  'Avittam',
+  'Sathayam',
+  'Poorattathi',
+  'Uthirattathi',
+  'Revathi',
+  'Other',
+];
+
+export const RASI_OPTIONS = [
+  'Mesham',
+  'Rishabam',
+  'Mithunam',
+  'Kadagam',
+  'Simmam',
+  'Kanni',
+  'Thulam',
+  'Viruchigam',
+  'Dhanusu',
+  'Magaram',
+  'Kumbam',
+  'Meenam',
+  'Other',
+];
+
+const withCurrentOption = (options, current) => {
+  const value = String(current || '').trim();
+  if (!value || options.includes(value)) return options;
+  return [...options, value];
+};
+
 /** @deprecated use emptyMatrimonyForm */
 export const emptyMemberForm = emptyMatrimonyForm;
 
@@ -106,12 +159,14 @@ export const buildProfilePayload = (form, { includeProfileId = false } = {}) => 
 
 const FIELD_LABELS = {
   fullName: 'Full Name',
+  gender: 'Gender',
   profilePhoto: 'Profile Photo',
   dateOfBirth: 'Date of Birth',
   birthTime: 'Birth Time',
   birthPlace: 'Birth Place',
   nativePlace: 'Native Place',
   currentLocation: 'Current Location',
+  maritalStatus: 'Marital Status',
   motherTongue: 'Mother Tongue',
   category: 'Category',
   categoryName: 'Category Name',
@@ -129,6 +184,7 @@ const FIELD_LABELS = {
   weight: 'Weight',
   bodyType: 'Body Type',
   complexion: 'Complexion',
+  physicalStatus: 'Physical Status',
   bloodGroup: 'Blood Group',
   education: 'Education',
   college: 'College',
@@ -156,6 +212,7 @@ const FIELD_LABELS = {
   mobile: 'Mobile Number',
   alternateMobile: 'Alternate Mobile',
   email: 'Email Address',
+  preferredContactMethod: 'Preferred Contact Method',
   prefAgeMin: 'Preferred Age Min',
   prefAgeMax: 'Preferred Age Max',
   prefHeightMin: 'Preferred Height Min',
@@ -171,6 +228,8 @@ const FIELD_LABELS = {
   hobbies: 'Hobbies',
   interests: 'Interests',
   foodHabits: 'Food Habits',
+  smoking: 'Smoking',
+  drinking: 'Drinking',
   languagesKnown: 'Languages Known',
 };
 
@@ -186,6 +245,17 @@ export const validateMatrimonyProfileForm = (form) => {
   }
   if (!Array.isArray(form.photos) || form.photos.filter(Boolean).length === 0) {
     return 'At least one additional photo is required';
+  }
+  const phone = String(form.mobile || '').replace(/\D/g, '');
+  if (!/^\d{10}$/.test(phone)) {
+    return 'Enter a valid 10-digit mobile number';
+  }
+  const altPhone = String(form.alternateMobile || '').replace(/\D/g, '');
+  if (!/^\d{10}$/.test(altPhone)) {
+    return 'Enter a valid 10-digit alternate mobile number';
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(form.email || '').trim())) {
+    return 'Enter a valid email address';
   }
   return null;
 };
@@ -236,7 +306,8 @@ export const MatrimonyProfileFields = ({
   requireAllFields = false,
 }) => {
   const age = calcAge(form.dateOfBirth);
-  const req = (also) => requireAllFields || also;
+  const req = (also = false) => requireAllFields || also;
+  const r = requireAllFields;
 
   return (
     <>
@@ -278,10 +349,11 @@ export const MatrimonyProfileFields = ({
             <option value="other">Other</option>
           </select>
         </Field>
-        <Field label="Date of Birth">
+        <Field label="Date of Birth" required={r}>
           <input
             type="date"
             className={inputCls}
+            required={r}
             value={form.dateOfBirth}
             onChange={(e) => set('dateOfBirth', e.target.value)}
           />
@@ -289,20 +361,20 @@ export const MatrimonyProfileFields = ({
         <Field label="Age (auto)">
           <input className={inputCls} value={age !== '' ? age : '—'} readOnly disabled />
         </Field>
-        <Field label="Birth Time">
-          <input className={inputCls} value={form.birthTime} onChange={(e) => set('birthTime', e.target.value)} placeholder="HH:MM" />
+        <Field label="Birth Time" required={r}>
+          <input className={inputCls} required={r} value={form.birthTime} onChange={(e) => set('birthTime', e.target.value)} placeholder="HH:MM" />
         </Field>
-        <Field label="Birth Place">
-          <input className={inputCls} value={form.birthPlace} onChange={(e) => set('birthPlace', e.target.value)} />
+        <Field label="Birth Place" required={r}>
+          <input className={inputCls} required={r} value={form.birthPlace} onChange={(e) => set('birthPlace', e.target.value)} />
         </Field>
-        <Field label="Native Place">
-          <input className={inputCls} value={form.nativePlace} onChange={(e) => set('nativePlace', e.target.value)} />
+        <Field label="Native Place" required={r}>
+          <input className={inputCls} required={r} value={form.nativePlace} onChange={(e) => set('nativePlace', e.target.value)} />
         </Field>
-        <Field label="Current Location">
-          <input className={inputCls} value={form.currentLocation} onChange={(e) => set('currentLocation', e.target.value)} />
+        <Field label="Current Location" required={r}>
+          <input className={inputCls} required={r} value={form.currentLocation} onChange={(e) => set('currentLocation', e.target.value)} />
         </Field>
-        <Field label="Marital Status">
-          <select className={inputCls} value={form.maritalStatus} onChange={(e) => set('maritalStatus', e.target.value)}>
+        <Field label="Marital Status" required={r}>
+          <select className={inputCls} required={r} value={form.maritalStatus} onChange={(e) => set('maritalStatus', e.target.value)}>
             <option value="never_married">Never Married</option>
             <option value="divorced">Divorced</option>
             <option value="widowed">Widowed</option>
@@ -310,27 +382,28 @@ export const MatrimonyProfileFields = ({
             <option value="awaiting_divorce">Awaiting Divorce</option>
           </select>
         </Field>
-        <Field label="Mother Tongue">
-          <input className={inputCls} value={form.motherTongue} onChange={(e) => set('motherTongue', e.target.value)} />
+        <Field label="Mother Tongue" required={r}>
+          <input className={inputCls} required={r} value={form.motherTongue} onChange={(e) => set('motherTongue', e.target.value)} />
         </Field>
-        <Field label="Category">
-          <select className={inputCls} value={form.category} onChange={(e) => set('category', e.target.value)}>
-            <option value="">— None —</option>
+        <Field label="Category" required={r}>
+          <select className={inputCls} required={r} value={form.category} onChange={(e) => set('category', e.target.value)}>
+            <option value="">{r ? 'Select category' : '— None —'}</option>
             {categories.map((c) => (
               <option key={c._id} value={c._id}>{c.name}</option>
             ))}
           </select>
         </Field>
-        <Field label="Category Name (optional label)">
+        <Field label="Category Name" required={r}>
           <input
             className={inputCls}
+            required={r}
             value={form.categoryName}
             onChange={(e) => set('categoryName', e.target.value)}
             placeholder="Custom category label if needed"
           />
         </Field>
         <div className="sm:col-span-2 lg:col-span-3">
-          <Field label="Profile Photo">
+          <Field label="Profile Photo" required={r}>
             <div className="flex flex-wrap items-center gap-4">
               {form.profilePhoto && (
                 <img
@@ -342,7 +415,8 @@ export const MatrimonyProfileFields = ({
               <input type="file" accept="image/*" onChange={onPhoto} disabled={uploading} className="text-sm" />
               <input
                 className={`${inputCls} max-w-md`}
-                value={form.profilePhoto}
+                required={r && !form.profilePhoto}
+                value={form.profilePhoto?.startsWith('blob:') ? '' : form.profilePhoto}
                 onChange={(e) => set('profilePhoto', e.target.value)}
                 placeholder="Or paste image URL"
               />
@@ -350,7 +424,7 @@ export const MatrimonyProfileFields = ({
           </Field>
         </div>
         <div className="sm:col-span-2 lg:col-span-3">
-          <Field label="Additional Photos">
+          <Field label="Additional Photos" required={r}>
             <div className="space-y-3">
               {Array.isArray(form.photos) && form.photos.length > 0 && (
                 <div className="flex flex-wrap gap-3">
@@ -374,7 +448,7 @@ export const MatrimonyProfileFields = ({
                 </div>
               )}
               <div className="flex flex-wrap items-center gap-3">
-                <input type="file" accept="image/*" onChange={onGalleryPhoto} disabled={uploading} className="text-sm" />
+                <input type="file" accept="image/*" onChange={onGalleryPhoto} disabled={uploading} className="text-sm" required={r && !(form.photos || []).length} />
                 {onAddGalleryPhotoUrl && (
                   <div className="flex flex-wrap gap-2 items-center">
                     <input
@@ -411,22 +485,59 @@ export const MatrimonyProfileFields = ({
       </Section>
 
       <Section title="Religion & Horoscope">
-        <Field label="Religion"><input className={inputCls} value={form.religion} onChange={(e) => set('religion', e.target.value)} /></Field>
-        <Field label="Caste"><input className={inputCls} value={form.caste} onChange={(e) => set('caste', e.target.value)} /></Field>
-        <Field label="Sub-Caste"><input className={inputCls} value={form.subCaste} onChange={(e) => set('subCaste', e.target.value)} /></Field>
-        <Field label="Rasi"><input className={inputCls} value={form.rasi} onChange={(e) => set('rasi', e.target.value)} /></Field>
-        <Field label="Nakshatra"><input className={inputCls} value={form.nakshatra} onChange={(e) => set('nakshatra', e.target.value)} /></Field>
-        <Field label="Lagnam"><input className={inputCls} value={form.lagnam} onChange={(e) => set('lagnam', e.target.value)} /></Field>
-        <Field label="Gothram"><input className={inputCls} value={form.gothram} onChange={(e) => set('gothram', e.target.value)} /></Field>
-        <Field label="Birth Star"><input className={inputCls} value={form.birthStar} onChange={(e) => set('birthStar', e.target.value)} /></Field>
-        <Field label="Dosham"><input className={inputCls} value={form.dosham} onChange={(e) => set('dosham', e.target.value)} /></Field>
+        <Field label="Religion" required={r}><input className={inputCls} required={r} value={form.religion} onChange={(e) => set('religion', e.target.value)} /></Field>
+        <Field label="Caste" required={r}><input className={inputCls} required={r} value={form.caste} onChange={(e) => set('caste', e.target.value)} /></Field>
+        <Field label="Sub-Caste" required={r}><input className={inputCls} required={r} value={form.subCaste} onChange={(e) => set('subCaste', e.target.value)} /></Field>
+        <Field label="Rasi" required={r}>
+          <select
+            className={inputCls}
+            required={r}
+            value={form.rasi}
+            onChange={(e) => set('rasi', e.target.value)}
+          >
+            <option value="">Select rasi</option>
+            {withCurrentOption(RASI_OPTIONS, form.rasi).map((rasi) => (
+              <option key={rasi} value={rasi}>{rasi}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Nakshatra" required={r}>
+          <select
+            className={inputCls}
+            required={r}
+            value={form.nakshatra}
+            onChange={(e) => set('nakshatra', e.target.value)}
+          >
+            <option value="">Select nakshatra</option>
+            {withCurrentOption(BIRTH_STAR_OPTIONS, form.nakshatra).map((star) => (
+              <option key={star} value={star}>{star}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Lagnam" required={r}><input className={inputCls} required={r} value={form.lagnam} onChange={(e) => set('lagnam', e.target.value)} /></Field>
+        <Field label="Gothram" required={r}><input className={inputCls} required={r} value={form.gothram} onChange={(e) => set('gothram', e.target.value)} /></Field>
+        <Field label="Birth Star" required={r}>
+          <select
+            className={inputCls}
+            required={r}
+            value={form.birthStar}
+            onChange={(e) => set('birthStar', e.target.value)}
+          >
+            <option value="">Select birth star</option>
+            {withCurrentOption(BIRTH_STAR_OPTIONS, form.birthStar).map((star) => (
+              <option key={star} value={star}>{star}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Dosham" required={r}><input className={inputCls} required={r} value={form.dosham} onChange={(e) => set('dosham', e.target.value)} /></Field>
         <div className="sm:col-span-2 lg:col-span-3">
-          <Field label="Horoscope / Jathagam Upload">
+          <Field label="Horoscope / Jathagam Upload" required={r}>
             <div className="flex flex-wrap items-center gap-3">
               <input type="file" accept="image/*,.pdf" onChange={onHoroscope} disabled={uploading} className="text-sm" />
               <input
                 className={`${inputCls} max-w-md`}
-                value={form.horoscopeUrl}
+                required={r && !form.horoscopeUrl}
+                value={form.horoscopeUrl?.startsWith('blob:') ? '' : form.horoscopeUrl}
                 onChange={(e) => set('horoscopeUrl', e.target.value)}
                 placeholder="Or paste document URL"
               />
@@ -441,51 +552,69 @@ export const MatrimonyProfileFields = ({
       </Section>
 
       <Section title="Physical Details">
-        <Field label="Height"><input className={inputCls} value={form.height} onChange={(e) => set('height', e.target.value)} placeholder="e.g. 5'6&quot;" /></Field>
-        <Field label="Weight"><input className={inputCls} value={form.weight} onChange={(e) => set('weight', e.target.value)} /></Field>
-        <Field label="Body Type"><input className={inputCls} value={form.bodyType} onChange={(e) => set('bodyType', e.target.value)} /></Field>
-        <Field label="Complexion"><input className={inputCls} value={form.complexion} onChange={(e) => set('complexion', e.target.value)} /></Field>
-        <Field label="Physical Status"><input className={inputCls} value={form.physicalStatus} onChange={(e) => set('physicalStatus', e.target.value)} /></Field>
-        <Field label="Blood Group"><input className={inputCls} value={form.bloodGroup} onChange={(e) => set('bloodGroup', e.target.value)} /></Field>
+        <Field label="Height" required={r}><input className={inputCls} required={r} value={form.height} onChange={(e) => set('height', e.target.value)} placeholder="e.g. 5'6&quot;" /></Field>
+        <Field label="Weight" required={r}><input className={inputCls} required={r} value={form.weight} onChange={(e) => set('weight', e.target.value)} /></Field>
+        <Field label="Body Type" required={r}><input className={inputCls} required={r} value={form.bodyType} onChange={(e) => set('bodyType', e.target.value)} /></Field>
+        <Field label="Complexion" required={r}><input className={inputCls} required={r} value={form.complexion} onChange={(e) => set('complexion', e.target.value)} /></Field>
+        <Field label="Physical Status" required={r}><input className={inputCls} required={r} value={form.physicalStatus} onChange={(e) => set('physicalStatus', e.target.value)} /></Field>
+        <Field label="Blood Group" required={r}><input className={inputCls} required={r} value={form.bloodGroup} onChange={(e) => set('bloodGroup', e.target.value)} /></Field>
       </Section>
 
       <Section title="Education & Career">
-        <Field label="Education / Qualification"><input className={inputCls} value={form.education} onChange={(e) => set('education', e.target.value)} /></Field>
-        <Field label="College / University"><input className={inputCls} value={form.college} onChange={(e) => set('college', e.target.value)} /></Field>
-        <Field label="Profession / Job"><input className={inputCls} value={form.profession} onChange={(e) => set('profession', e.target.value)} /></Field>
-        <Field label="Company / Organization"><input className={inputCls} value={form.company} onChange={(e) => set('company', e.target.value)} /></Field>
-        <Field label="Job Location"><input className={inputCls} value={form.jobLocation} onChange={(e) => set('jobLocation', e.target.value)} /></Field>
-        <Field label="Annual Salary / Income"><input className={inputCls} value={form.annualIncome} onChange={(e) => set('annualIncome', e.target.value)} /></Field>
-        <Field label="Work Experience"><input className={inputCls} value={form.workExperience} onChange={(e) => set('workExperience', e.target.value)} /></Field>
+        <Field label="Education / Qualification" required={r}><input className={inputCls} required={r} value={form.education} onChange={(e) => set('education', e.target.value)} /></Field>
+        <Field label="College / University" required={r}><input className={inputCls} required={r} value={form.college} onChange={(e) => set('college', e.target.value)} /></Field>
+        <Field label="Profession / Job" required={r}><input className={inputCls} required={r} value={form.profession} onChange={(e) => set('profession', e.target.value)} /></Field>
+        <Field label="Company / Organization" required={r}><input className={inputCls} required={r} value={form.company} onChange={(e) => set('company', e.target.value)} /></Field>
+        <Field label="Job Location" required={r}><input className={inputCls} required={r} value={form.jobLocation} onChange={(e) => set('jobLocation', e.target.value)} /></Field>
+        <Field label="Annual Salary / Income" required={r}><input className={inputCls} required={r} value={form.annualIncome} onChange={(e) => set('annualIncome', e.target.value)} /></Field>
+        <Field label="Work Experience" required={r}><input className={inputCls} required={r} value={form.workExperience} onChange={(e) => set('workExperience', e.target.value)} /></Field>
       </Section>
 
       <Section title="Family Details">
-        <Field label="Father's Name"><input className={inputCls} value={form.fatherName} onChange={(e) => set('fatherName', e.target.value)} /></Field>
-        <Field label="Father's Occupation"><input className={inputCls} value={form.fatherOccupation} onChange={(e) => set('fatherOccupation', e.target.value)} /></Field>
-        <Field label="Mother's Name"><input className={inputCls} value={form.motherName} onChange={(e) => set('motherName', e.target.value)} /></Field>
-        <Field label="Mother's Occupation"><input className={inputCls} value={form.motherOccupation} onChange={(e) => set('motherOccupation', e.target.value)} /></Field>
-        <Field label="Brother's Name"><input className={inputCls} value={form.brotherName} onChange={(e) => set('brotherName', e.target.value)} /></Field>
-        <Field label="Brother's Marital Status"><input className={inputCls} value={form.brotherMaritalStatus} onChange={(e) => set('brotherMaritalStatus', e.target.value)} /></Field>
-        <Field label="Sister's Name"><input className={inputCls} value={form.sisterName} onChange={(e) => set('sisterName', e.target.value)} /></Field>
-        <Field label="Sister's Marital Status"><input className={inputCls} value={form.sisterMaritalStatus} onChange={(e) => set('sisterMaritalStatus', e.target.value)} /></Field>
-        <Field label="Number of Brothers"><input type="number" min="0" className={inputCls} value={form.numberOfBrothers} onChange={(e) => set('numberOfBrothers', e.target.value)} /></Field>
-        <Field label="Number of Sisters"><input type="number" min="0" className={inputCls} value={form.numberOfSisters} onChange={(e) => set('numberOfSisters', e.target.value)} /></Field>
-        <Field label="Family Type"><input className={inputCls} value={form.familyType} onChange={(e) => set('familyType', e.target.value)} placeholder="Joint / Nuclear" /></Field>
-        <Field label="Family Status"><input className={inputCls} value={form.familyStatus} onChange={(e) => set('familyStatus', e.target.value)} /></Field>
-        <Field label="Family Location"><input className={inputCls} value={form.familyLocation} onChange={(e) => set('familyLocation', e.target.value)} /></Field>
+        <Field label="Father's Name" required={r}><input className={inputCls} required={r} value={form.fatherName} onChange={(e) => set('fatherName', e.target.value)} /></Field>
+        <Field label="Father's Occupation" required={r}><input className={inputCls} required={r} value={form.fatherOccupation} onChange={(e) => set('fatherOccupation', e.target.value)} /></Field>
+        <Field label="Mother's Name" required={r}><input className={inputCls} required={r} value={form.motherName} onChange={(e) => set('motherName', e.target.value)} /></Field>
+        <Field label="Mother's Occupation" required={r}><input className={inputCls} required={r} value={form.motherOccupation} onChange={(e) => set('motherOccupation', e.target.value)} /></Field>
+        <Field label="Brother's Name" required={r}><input className={inputCls} required={r} value={form.brotherName} onChange={(e) => set('brotherName', e.target.value)} /></Field>
+        <Field label="Brother's Marital Status" required={r}><input className={inputCls} required={r} value={form.brotherMaritalStatus} onChange={(e) => set('brotherMaritalStatus', e.target.value)} /></Field>
+        <Field label="Sister's Name" required={r}><input className={inputCls} required={r} value={form.sisterName} onChange={(e) => set('sisterName', e.target.value)} /></Field>
+        <Field label="Sister's Marital Status" required={r}><input className={inputCls} required={r} value={form.sisterMaritalStatus} onChange={(e) => set('sisterMaritalStatus', e.target.value)} /></Field>
+        <Field label="Number of Brothers" required={r}><input type="number" min="0" className={inputCls} required={r} value={form.numberOfBrothers} onChange={(e) => set('numberOfBrothers', e.target.value)} /></Field>
+        <Field label="Number of Sisters" required={r}><input type="number" min="0" className={inputCls} required={r} value={form.numberOfSisters} onChange={(e) => set('numberOfSisters', e.target.value)} /></Field>
+        <Field label="Family Type" required={r}><input className={inputCls} required={r} value={form.familyType} onChange={(e) => set('familyType', e.target.value)} placeholder="Joint / Nuclear" /></Field>
+        <Field label="Family Status" required={r}><input className={inputCls} required={r} value={form.familyStatus} onChange={(e) => set('familyStatus', e.target.value)} /></Field>
+        <Field label="Family Location" required={r}><input className={inputCls} required={r} value={form.familyLocation} onChange={(e) => set('familyLocation', e.target.value)} /></Field>
       </Section>
 
       <Section title="Contact Details (private by default)">
-        <Field label="Address"><input className={inputCls} value={form.address} onChange={(e) => set('address', e.target.value)} /></Field>
-        <Field label="City"><input className={inputCls} value={form.city} onChange={(e) => set('city', e.target.value)} /></Field>
-        <Field label="District"><input className={inputCls} value={form.district} onChange={(e) => set('district', e.target.value)} /></Field>
-        <Field label="State"><input className={inputCls} value={form.state} onChange={(e) => set('state', e.target.value)} /></Field>
-        <Field label="Country"><input className={inputCls} value={form.country} onChange={(e) => set('country', e.target.value)} /></Field>
-        <Field label="Mobile Number"><input className={inputCls} value={form.mobile} onChange={(e) => set('mobile', e.target.value)} /></Field>
-        <Field label="Alternate Mobile"><input className={inputCls} value={form.alternateMobile} onChange={(e) => set('alternateMobile', e.target.value)} /></Field>
-        <Field label="Email Address"><input type="email" className={inputCls} value={form.email} onChange={(e) => set('email', e.target.value)} /></Field>
-        <Field label="Preferred Contact Method">
-          <select className={inputCls} value={form.preferredContactMethod} onChange={(e) => set('preferredContactMethod', e.target.value)}>
+        <Field label="Address" required={r}><input className={inputCls} required={r} value={form.address} onChange={(e) => set('address', e.target.value)} /></Field>
+        <Field label="City" required={r}><input className={inputCls} required={r} value={form.city} onChange={(e) => set('city', e.target.value)} /></Field>
+        <Field label="District" required={r}><input className={inputCls} required={r} value={form.district} onChange={(e) => set('district', e.target.value)} /></Field>
+        <Field label="State" required={r}><input className={inputCls} required={r} value={form.state} onChange={(e) => set('state', e.target.value)} /></Field>
+        <Field label="Country" required={r}><input className={inputCls} required={r} value={form.country} onChange={(e) => set('country', e.target.value)} /></Field>
+        <Field label="Mobile Number" required={r}>
+          <input
+            className={inputCls}
+            required={r}
+            inputMode="numeric"
+            maxLength={10}
+            value={form.mobile}
+            onChange={(e) => set('mobile', e.target.value.replace(/\D/g, '').slice(0, 10))}
+          />
+        </Field>
+        <Field label="Alternate Mobile" required={r}>
+          <input
+            className={inputCls}
+            required={r}
+            inputMode="numeric"
+            maxLength={10}
+            value={form.alternateMobile}
+            onChange={(e) => set('alternateMobile', e.target.value.replace(/\D/g, '').slice(0, 10))}
+          />
+        </Field>
+        <Field label="Email Address" required={r}><input type="email" className={inputCls} required={r} value={form.email} onChange={(e) => set('email', e.target.value)} /></Field>
+        <Field label="Preferred Contact Method" required={r}>
+          <select className={inputCls} required={r} value={form.preferredContactMethod} onChange={(e) => set('preferredContactMethod', e.target.value)}>
             <option value="mobile">Mobile</option>
             <option value="email">Email</option>
             <option value="whatsapp">WhatsApp</option>
@@ -494,47 +623,47 @@ export const MatrimonyProfileFields = ({
       </Section>
 
       <Section title="Partner Preferences">
-        <Field label="Preferred Age Min"><input type="number" className={inputCls} value={form.prefAgeMin} onChange={(e) => set('prefAgeMin', e.target.value)} /></Field>
-        <Field label="Preferred Age Max"><input type="number" className={inputCls} value={form.prefAgeMax} onChange={(e) => set('prefAgeMax', e.target.value)} /></Field>
-        <Field label="Preferred Height Min"><input className={inputCls} value={form.prefHeightMin} onChange={(e) => set('prefHeightMin', e.target.value)} /></Field>
-        <Field label="Preferred Height Max"><input className={inputCls} value={form.prefHeightMax} onChange={(e) => set('prefHeightMax', e.target.value)} /></Field>
-        <Field label="Preferred Religion"><input className={inputCls} value={form.prefReligion} onChange={(e) => set('prefReligion', e.target.value)} /></Field>
-        <Field label="Preferred Caste"><input className={inputCls} value={form.prefCaste} onChange={(e) => set('prefCaste', e.target.value)} /></Field>
-        <Field label="Preferred Education"><input className={inputCls} value={form.prefEducation} onChange={(e) => set('prefEducation', e.target.value)} /></Field>
-        <Field label="Preferred Profession"><input className={inputCls} value={form.prefProfession} onChange={(e) => set('prefProfession', e.target.value)} /></Field>
-        <Field label="Preferred Location"><input className={inputCls} value={form.prefLocation} onChange={(e) => set('prefLocation', e.target.value)} /></Field>
-        <Field label="Preferred Marital Status"><input className={inputCls} value={form.prefMaritalStatus} onChange={(e) => set('prefMaritalStatus', e.target.value)} /></Field>
+        <Field label="Preferred Age Min" required={r}><input type="number" className={inputCls} required={r} value={form.prefAgeMin} onChange={(e) => set('prefAgeMin', e.target.value)} /></Field>
+        <Field label="Preferred Age Max" required={r}><input type="number" className={inputCls} required={r} value={form.prefAgeMax} onChange={(e) => set('prefAgeMax', e.target.value)} /></Field>
+        <Field label="Preferred Height Min" required={r}><input className={inputCls} required={r} value={form.prefHeightMin} onChange={(e) => set('prefHeightMin', e.target.value)} /></Field>
+        <Field label="Preferred Height Max" required={r}><input className={inputCls} required={r} value={form.prefHeightMax} onChange={(e) => set('prefHeightMax', e.target.value)} /></Field>
+        <Field label="Preferred Religion" required={r}><input className={inputCls} required={r} value={form.prefReligion} onChange={(e) => set('prefReligion', e.target.value)} /></Field>
+        <Field label="Preferred Caste" required={r}><input className={inputCls} required={r} value={form.prefCaste} onChange={(e) => set('prefCaste', e.target.value)} /></Field>
+        <Field label="Preferred Education" required={r}><input className={inputCls} required={r} value={form.prefEducation} onChange={(e) => set('prefEducation', e.target.value)} /></Field>
+        <Field label="Preferred Profession" required={r}><input className={inputCls} required={r} value={form.prefProfession} onChange={(e) => set('prefProfession', e.target.value)} /></Field>
+        <Field label="Preferred Location" required={r}><input className={inputCls} required={r} value={form.prefLocation} onChange={(e) => set('prefLocation', e.target.value)} /></Field>
+        <Field label="Preferred Marital Status" required={r}><input className={inputCls} required={r} value={form.prefMaritalStatus} onChange={(e) => set('prefMaritalStatus', e.target.value)} /></Field>
         <div className="sm:col-span-2 lg:col-span-3">
-          <Field label="Other Expectations">
-            <textarea className={inputCls} rows={3} value={form.otherExpectations} onChange={(e) => set('otherExpectations', e.target.value)} />
+          <Field label="Other Expectations" required={r}>
+            <textarea className={inputCls} required={r} rows={3} value={form.otherExpectations} onChange={(e) => set('otherExpectations', e.target.value)} />
           </Field>
         </div>
       </Section>
 
       <Section title="Additional Information">
         <div className="sm:col-span-2 lg:col-span-3">
-          <Field label="About Me">
-            <textarea className={inputCls} rows={3} value={form.aboutMe} onChange={(e) => set('aboutMe', e.target.value)} />
+          <Field label="About Me" required={r}>
+            <textarea className={inputCls} required={r} rows={3} value={form.aboutMe} onChange={(e) => set('aboutMe', e.target.value)} />
           </Field>
         </div>
-        <Field label="Hobbies"><input className={inputCls} value={form.hobbies} onChange={(e) => set('hobbies', e.target.value)} /></Field>
-        <Field label="Interests"><input className={inputCls} value={form.interests} onChange={(e) => set('interests', e.target.value)} /></Field>
-        <Field label="Food Habits"><input className={inputCls} value={form.foodHabits} onChange={(e) => set('foodHabits', e.target.value)} /></Field>
-        <Field label="Smoking">
-          <select className={inputCls} value={form.smoking} onChange={(e) => set('smoking', e.target.value)}>
+        <Field label="Hobbies" required={r}><input className={inputCls} required={r} value={form.hobbies} onChange={(e) => set('hobbies', e.target.value)} /></Field>
+        <Field label="Interests" required={r}><input className={inputCls} required={r} value={form.interests} onChange={(e) => set('interests', e.target.value)} /></Field>
+        <Field label="Food Habits" required={r}><input className={inputCls} required={r} value={form.foodHabits} onChange={(e) => set('foodHabits', e.target.value)} /></Field>
+        <Field label="Smoking" required={r}>
+          <select className={inputCls} required={r} value={form.smoking} onChange={(e) => set('smoking', e.target.value)}>
             <option value="no">No</option>
             <option value="yes">Yes</option>
             <option value="occasionally">Occasionally</option>
           </select>
         </Field>
-        <Field label="Drinking">
-          <select className={inputCls} value={form.drinking} onChange={(e) => set('drinking', e.target.value)}>
+        <Field label="Drinking" required={r}>
+          <select className={inputCls} required={r} value={form.drinking} onChange={(e) => set('drinking', e.target.value)}>
             <option value="no">No</option>
             <option value="yes">Yes</option>
             <option value="occasionally">Occasionally</option>
           </select>
         </Field>
-        <Field label="Languages Known"><input className={inputCls} value={form.languagesKnown} onChange={(e) => set('languagesKnown', e.target.value)} /></Field>
+        <Field label="Languages Known" required={r}><input className={inputCls} required={r} value={form.languagesKnown} onChange={(e) => set('languagesKnown', e.target.value)} /></Field>
         {showAdminFields && (
           <div className="sm:col-span-2 lg:col-span-3">
             <Field label="Admin Notes">

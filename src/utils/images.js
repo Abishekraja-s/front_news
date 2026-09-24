@@ -6,7 +6,10 @@ export const getImageUrl = (url, seed = 'news') => {
   if (!url || url.trim() === '') {
     return `https://picsum.photos/seed/${seed}/800/450`;
   }
-  if (url.startsWith('http://') || url.startsWith('https://')) {
+  if (url.startsWith('http://')) {
+    return url.replace(/^http:/i, 'https:');
+  }
+  if (url.startsWith('https://')) {
     return url;
   }
   if (url.startsWith('/')) {

@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import {
+  SellerAuthShell,
+  SellerAuthFooter,
+  SellerBackLink,
+  sellerInputCls,
+} from './SellerAuthShell';
 
 const SellerLogin = () => {
   const { user, login, logout } = useAuth();
@@ -9,6 +15,7 @@ const SellerLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   if (user) {
     return <Navigate to={user.role === 'SELLER' ? '/seller' : '/admin'} replace />;
@@ -35,29 +42,76 @@ const SellerLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-md border border-stone-200 p-6 sm:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 font-headline">Seller Login</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage your Marketplace listings and enquiries</p>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <label className="block text-sm">
-            <span className="text-slate-600">Email</span>
-            <input required type="email" className="mt-1 w-full border border-stone-200 rounded-xl px-3 py-2.5" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
-          <label className="block text-sm">
-            <span className="text-slate-600">Password</span>
-            <input required type="password" className="mt-1 w-full border border-stone-200 rounded-xl px-3 py-2.5" value={password} onChange={(e) => setPassword(e.target.value)} />
-          </label>
-          <button type="submit" disabled={loading} className="btn-primary w-full">{loading ? 'Signing in…' : 'Sign in'}</button>
-        </form>
-        <p className="text-sm text-slate-500 mt-4 text-center">
-          New seller? <Link to="/seller/register" className="text-teal-700 font-semibold">Register</Link>
-        </p>
-        <p className="text-xs text-center mt-3">
-          <Link to="/marketplace" className="text-slate-400 hover:text-slate-600">← Back to Marketplace</Link>
-        </p>
-      </div>
-    </div>
+    <SellerAuthShell
+      title="Seller Login"
+      subtitle="Manage your Marketplace listings and enquiries"
+      footer={
+        <SellerAuthFooter>
+          <p className="text-sm text-slate-500">
+            New seller?{' '}
+            <Link to="/seller/register" className="text-teal-700 font-semibold">
+              Register
+            </Link>
+          </p>
+          <SellerBackLink />
+        </SellerAuthFooter>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <label className="block text-sm">
+          <span className="text-slate-600 font-medium">Email</span>
+          <input
+            required
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            className={sellerInputCls}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
+        </label>
+
+        <label className="block text-sm">
+          <span className="text-slate-600 font-medium">Password</span>
+          <div className="relative mt-1.5">
+            <input
+              required
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              className={`${sellerInputCls} mt-0 pr-12`}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500 px-2 py-1.5 rounded-lg hover:bg-stone-100"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          </div>
+          <div className="mt-2 flex justify-end">
+            <Link
+              to="/seller/forgot-password"
+              className="text-sm font-semibold text-teal-700 hover:text-teal-800"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        </label>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary w-full py-3 text-base sm:text-sm disabled:opacity-50"
+        >
+          {loading ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+    </SellerAuthShell>
   );
 };
 

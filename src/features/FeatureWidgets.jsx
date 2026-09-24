@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FeatureIcon } from './FeatureIcons';
 import NewsImage from '../components/NewsImage';
 import { timeAgo } from '../utils/helpers';
 import { marketplaceService, matrimonyService, governmentNotificationService, featureService } from '../services/articleService';
+import { useAuth } from '../context/AuthContext';
+import { matrimonyLoginRedirect } from '../matrimony/matrimonyAuthRedirect';
+import RasiImage from '../components/RasiImage';
 
 const CardShell = ({ title, titleTamil, viewAllTo, children, className = '', headerRight }) => (
   <section className={`hub-card ${className}`}>
@@ -540,6 +543,8 @@ export const GovernmentNotificationsWidget = ({ feature }) => {
 };
 
 export const MatrimonyWidget = ({ feature }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -561,6 +566,15 @@ export const MatrimonyWidget = ({ feature }) => {
     };
   }, []);
 
+  const openProfile = (e, profilePath) => {
+    e.preventDefault();
+    if (!user) {
+      navigate(matrimonyLoginRedirect(profilePath));
+      return;
+    }
+    navigate(profilePath);
+  };
+
   return (
     <CardShell title={feature.name} titleTamil={feature.nameTamil} viewAllTo="/matrimony">
       {loading ? (
@@ -578,10 +592,13 @@ export const MatrimonyWidget = ({ feature }) => {
         </p>
       ) : (
         <ul className="space-y-3">
-          {items.map((item) => (
+          {items.map((item) => {
+            const profilePath = `/matrimony/${item.profileId || item._id}`;
+            return (
             <li key={item._id}>
-              <Link
-                to={`/matrimony/${item.profileId || item._id}`}
+              <a
+                href={profilePath}
+                onClick={(e) => openProfile(e, profilePath)}
                 className="flex gap-3 p-2.5 -mx-1 rounded-xl hover:bg-stone-100/80 transition-colors"
               >
                 <NewsImage
@@ -604,9 +621,10 @@ export const MatrimonyWidget = ({ feature }) => {
                   </p>
                   <p className="text-[10px] text-slate-400 mt-0.5">{item.profileId}</p>
                 </div>
-              </Link>
+              </a>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </CardShell>
@@ -666,24 +684,31 @@ export const MarketplaceWidget = ({ feature }) => {
 export const DailyDoseWidget = ({ feature }) => (
   <CardShell title={feature.name} titleTamil={feature.nameTamil} viewAllTo={`/explore/${feature.key}`}>
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3">
-      {(feature.items || []).map((item) => (
-        <Link
-          key={item._id}
-          to={item.link || `/explore/${feature.key}`}
-          className="flex flex-col items-center text-center gap-2 p-3 rounded-2xl bg-stone-100/70 ring-1 ring-stone-200 hover:ring-brand-300 hover:bg-brand-50/50 transition-all"
-        >
-          <span
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-soft"
-            style={{ backgroundColor: item.color || '#0d9488' }}
+      {(feature.items || []).map((item) => {
+        const isAstrology = item.link === '/astrology' || item.meta?.slug === 'astrology' || item.meta?.slug === 'horoscope';
+        return (
+          <Link
+            key={item._id}
+            to={item.link || `/explore/${feature.key}`}
+            className="flex flex-col items-center text-center gap-2 p-3 rounded-2xl bg-stone-100/70 ring-1 ring-stone-200 hover:ring-brand-300 hover:bg-brand-50/50 transition-all"
           >
-            <FeatureIcon name={item.icon || 'spark'} className="w-5 h-5" />
-          </span>
-          <span className="text-xs font-bold text-slate-900">{item.title}</span>
-          {item.titleTamil && (
-            <span className="text-[10px] text-slate-600 font-tamil leading-tight">{item.titleTamil}</span>
-          )}
-        </Link>
-      ))}
+            {isAstrology ? (
+              <RasiImage slug="mesham" size="sm" alt={item.titleTamil || item.title || 'Astrology'} />
+            ) : (
+              <span
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-soft"
+                style={{ backgroundColor: item.color || '#0d9488' }}
+              >
+                <FeatureIcon name={item.icon || 'spark'} className="w-5 h-5" />
+              </span>
+            )}
+            <span className="text-xs font-bold text-slate-900">{item.title}</span>
+            {item.titleTamil && (
+              <span className="text-[10px] text-slate-600 font-tamil leading-tight">{item.titleTamil}</span>
+            )}
+          </Link>
+        );
+      })}
     </div>
   </CardShell>
 );

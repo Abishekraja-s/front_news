@@ -57,10 +57,13 @@ const GovernmentNotificationsAdmin = () => {
   const [items, setItems] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [page, setPage] = useState(1);
-  const [filterStatus, setFilterStatus] = useState('pending');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [filterLevel, setFilterLevel] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchQ, setSearchQ] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [selected, setSelected] = useState([]);
   const [editItem, setEditItem] = useState(null);
   const [sources, setSources] = useState([]);
@@ -104,7 +107,7 @@ const GovernmentNotificationsAdmin = () => {
 
   const loadNotifications = useCallback(async () => {
     const { data } = await governmentNotificationService.getNotifications({
-      status: filterStatus,
+      status: filterStatus === 'all' ? undefined : filterStatus,
       level: filterLevel === 'all' ? undefined : filterLevel,
       category: filterCategory === 'all' ? undefined : filterCategory,
       q: searchQ || undefined,
@@ -145,7 +148,7 @@ const GovernmentNotificationsAdmin = () => {
       toast.success(data.message || 'Fetch complete');
       await loadConfig();
       setTab('notifications');
-      setFilterStatus('pending');
+      setFilterStatus('all');
       setPage(1);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Fetch failed — check official feed URLs');
@@ -262,6 +265,49 @@ const GovernmentNotificationsAdmin = () => {
       await loadNotifications();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Remove failed');
+    }
+  };
+
+  const handleDeleteByDate = async () => {
+    if (!dateFrom && !dateTo) {
+      return toast.error('Pick a from and/or to date');
+    }
+    try {
+      setBulkBusy(true);
+      const preview = await governmentNotificationService.deleteByDate({
+        from: dateFrom || undefined,
+        to: dateTo || undefined,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        dryRun: true,
+      });
+      const count = preview.data?.data?.count ?? 0;
+      if (!count) {
+        toast.error('No notifications match that date range');
+        return;
+      }
+      const rangeLabel = [dateFrom || '…', dateTo || '…'].join(' → ');
+      const statusLabel = filterStatus !== 'all' ? ` (${filterStatus})` : '';
+      if (
+        !window.confirm(
+          `Permanently delete ${count} notification(s) created ${rangeLabel}${statusLabel}? This cannot be undone.`
+        )
+      ) {
+        return;
+      }
+      const { data } = await governmentNotificationService.deleteByDate({
+        from: dateFrom || undefined,
+        to: dateTo || undefined,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        dryRun: false,
+      });
+      toast.success(data.message || 'Deleted');
+      setSelected([]);
+      await loadConfig();
+      await loadNotifications();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Delete by date failed');
+    } finally {
+      setBulkBusy(false);
     }
   };
 
@@ -393,9 +439,9 @@ const GovernmentNotificationsAdmin = () => {
 
       {tab === 'notifications' && (
         <div className="space-y-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3">
             <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-              {['pending', 'approved', 'published', 'rejected', 'disabled', 'all'].map((s) => (
+              {['all', 'pending', 'approved', 'published', 'rejected', 'disabled'].map((s) => (
                 <button
                   key={s}
                   type="button"
@@ -404,11 +450,37 @@ const GovernmentNotificationsAdmin = () => {
                     filterStatus === s ? 'admin-tab admin-tab-active' : 'admin-tab'
                   }`}
                 >
-                  {s}
+                  {s === 'all' ? 'All' : s}
                 </button>
               ))}
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 items-end">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">From date</label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="admin-input text-sm py-2 w-auto"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">To date</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="admin-input text-sm py-2 w-auto"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleDeleteByDate}
+                disabled={bulkBusy || (!dateFrom && !dateTo)}
+                className="text-sm font-semibold px-3 py-2 rounded-lg border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-50"
+              >
+                {bulkBusy ? 'Deleting…' : 'Delete'}
+              </button>
               <select
                 value={filterLevel}
                 onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}

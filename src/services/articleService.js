@@ -132,9 +132,17 @@ export const marketplaceService = {
   deleteProduct: (id) => api.delete(`/marketplace/seller/products/${id}`),
   getMyEnquiries: () => api.get('/marketplace/seller/enquiries'),
   updateEnquiry: (id, data) => api.put(`/marketplace/seller/enquiries/${id}`, data),
+  deleteEnquiry: (id) => api.delete(`/marketplace/seller/enquiries/${id}`),
   getAdminProducts: (params = {}) => api.get('/marketplace/admin/products', { params }),
   reviewProduct: (id, data) => api.put(`/marketplace/admin/products/${id}/review`, data),
+  deleteAdminProduct: (id) => api.delete(`/marketplace/admin/products/${id}`),
+  deleteAdminProductsByDate: (data) => api.post('/marketplace/admin/products/delete-by-date', data),
   getAdminEnquiries: () => api.get('/marketplace/admin/enquiries'),
+  getCategories: () => api.get('/marketplace/categories'),
+  getAdminCategories: () => api.get('/marketplace/admin/categories'),
+  createCategory: (data) => api.post('/marketplace/admin/categories', data),
+  updateCategory: (id, data) => api.put(`/marketplace/admin/categories/${id}`, data),
+  deleteCategory: (id) => api.delete(`/marketplace/admin/categories/${id}`),
 };
 
 export const youtubeService = {
@@ -179,6 +187,7 @@ export const googleNewsService = {
   updateItem: (id, data) => api.put(`/google-news/items/${id}`, data),
   bulkStatus: (ids, status) => api.put('/google-news/items/bulk-status', { ids, status }),
   deleteItem: (id) => api.delete(`/google-news/items/${id}`),
+  deleteByDate: (data) => api.post('/google-news/items/delete-by-date', data),
 };
 
 export const rssIngestService = {
@@ -249,6 +258,8 @@ export const governmentNotificationService = {
     api.put('/government-notifications/notifications/bulk-status', { ids, status }),
   bulkDelete: (ids) =>
     api.post('/government-notifications/notifications/bulk-delete', { ids }),
+  deleteByDate: (data) =>
+    api.post('/government-notifications/notifications/delete-by-date', data),
   publishAll: () => api.post('/government-notifications/notifications/publish-all'),
   deleteNotification: (id) => api.delete(`/government-notifications/notifications/${id}`),
 };
@@ -285,9 +296,27 @@ export const matrimonyService = {
   getMyEnquiries: () => api.get('/matrimony/member/enquiries'),
   getReceivedEnquiries: () => api.get('/matrimony/member/enquiries/received'),
   updateEnquiry: (id, data) => api.put(`/matrimony/member/enquiries/${id}`, data),
+  deleteEnquiry: (id) => api.delete(`/matrimony/member/enquiries/${id}`),
   getProfileEnquiries: (profileId) => api.get(`/matrimony/admin/profiles/${profileId}/enquiries`),
   updateProfileEnquiry: (profileId, enquiryId, data) =>
     api.put(`/matrimony/admin/profiles/${profileId}/enquiries/${enquiryId}`, data),
+};
+
+export const astrologyService = {
+  getPublicToday: (params = {}) => api.get('/astrology/public/today', { params }),
+  getPublicRasis: () => api.get('/astrology/public/rasis'),
+  getPublicRasi: (slug, params = {}) => api.get(`/astrology/public/rasi/${slug}`, { params }),
+  getDashboard: () => api.get('/astrology/admin/dashboard'),
+  getConfig: () => api.get('/astrology/admin/config'),
+  updateConfig: (data) => api.put('/astrology/admin/config', data),
+  testConnection: () => api.post('/astrology/admin/test-connection'),
+  syncNow: () => api.post('/astrology/admin/sync'),
+  getSyncLogs: (params = {}) => api.get('/astrology/admin/sync-logs', { params }),
+  getSyncLog: (id) => api.get(`/astrology/admin/sync-logs/${id}`),
+  getHoroscopes: (params = {}) => api.get('/astrology/admin/horoscopes', { params }),
+  getHoroscope: (id) => api.get(`/astrology/admin/horoscopes/${id}`),
+  updateHoroscope: (id, data) => api.put(`/astrology/admin/horoscopes/${id}`, data),
+  getPanchang: (params = {}) => api.get('/astrology/admin/panchang', { params }),
 };
 
 export const aeoService = {

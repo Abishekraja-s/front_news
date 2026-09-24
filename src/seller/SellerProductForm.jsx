@@ -10,7 +10,7 @@ const empty = {
   price: '',
   location: '',
   image: '',
-  category: 'General',
+  category: '',
   condition: 'used',
 };
 
@@ -19,7 +19,22 @@ const SellerProductForm = () => {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const [form, setForm] = useState(empty);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    marketplaceService
+      .getCategories()
+      .then(({ data }) => {
+        const list = data.data || [];
+        setCategories(list);
+        setForm((prev) => {
+          if (prev.category) return prev;
+          return { ...prev, category: list[0]?.name || '' };
+        });
+      })
+      .catch(() => toast.error('Failed to load categories'));
+  }, []);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -38,7 +53,7 @@ const SellerProductForm = () => {
           price: p.price ?? '',
           location: p.location || '',
           image: p.image || '',
-          category: p.category || 'General',
+          category: p.category || '',
           condition: p.condition || 'used',
         });
       })
@@ -47,15 +62,19 @@ const SellerProductForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.category) {
+      toast.error('Please select a category');
+      return;
+    }
     setLoading(true);
     try {
       const payload = { ...form, price: Number(form.price) };
       if (isEdit) {
         await marketplaceService.updateProduct(id, payload);
-        toast.success('Updated — resubmitted for review if content changed');
+        toast.success('Product updated');
       } else {
         await marketplaceService.createProduct(payload);
-        toast.success('Submitted for admin approval');
+        toast.success('Product listed on marketplace');
       }
       navigate('/seller/products');
     } catch (err) {
@@ -65,11 +84,19 @@ const SellerProductForm = () => {
     }
   };
 
+  const categoryOptions = (() => {
+    const names = categories.map((c) => c.name);
+    if (form.category && !names.includes(form.category)) {
+      return [...categories, { _id: 'legacy', name: form.category }];
+    }
+    return categories;
+  })();
+
   return (
     <div className="max-w-2xl">
       <Link to="/seller/products" className="text-sm text-teal-700 font-medium">← My Products</Link>
       <h1 className="text-2xl font-bold text-slate-900 mt-2">{isEdit ? 'Edit Product' : 'Add Product'}</h1>
-      <p className="text-sm text-slate-500 mb-6">Listings appear on the website only after admin approval.</p>
+      <p className="text-sm text-slate-500 mb-6">Your listing goes live on the marketplace as soon as you save.</p>
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-stone-200 p-5 sm:p-6 space-y-4">
         <label className="block text-sm">
           <span className="text-slate-600">Title</span>
@@ -90,7 +117,17 @@ const SellerProductForm = () => {
           </label>
           <label className="block text-sm">
             <span className="text-slate-600">Category</span>
-            <input className="mt-1 w-full border rounded-xl px-3 py-2.5" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+            <select
+              required
+              className="mt-1 w-full border rounded-xl px-3 py-2.5 bg-white"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+            >
+              <option value="">Select category</option>
+              {categoryOptions.map((c) => (
+                <option key={c._id || c.name} value={c.name}>{c.name}</option>
+              ))}
+            </select>
           </label>
           <label className="block text-sm">
             <span className="text-slate-600">Condition</span>

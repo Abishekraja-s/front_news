@@ -1,11 +1,26 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { matrimonyService } from '../services/articleService';
 import { useAuth } from '../context/AuthContext';
 import NewsImage from '../components/NewsImage';
+import { matrimonyLoginRedirect } from '../matrimony/matrimonyAuthRedirect';
 
-const ProfileCard = ({ p }) => (
+const ProfileCard = ({ p }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const profilePath = `/matrimony/${p.profileId || p._id}`;
+
+  const handleViewProfile = (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate(matrimonyLoginRedirect(profilePath));
+      return;
+    }
+    navigate(profilePath);
+  };
+
+  return (
   <article className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
     <div className="relative">
       <NewsImage
@@ -39,15 +54,17 @@ const ProfileCard = ({ p }) => (
           {[p.rasi, p.nakshatra].filter(Boolean).join(' / ')}
         </p>
       )}
-      <Link
-        to={`/matrimony/${p.profileId || p._id}`}
+      <a
+        href={profilePath}
+        onClick={handleViewProfile}
         className="mt-auto pt-4 text-sm font-semibold text-brand-700 hover:underline"
       >
         View Profile →
-      </Link>
+      </a>
     </div>
   </article>
-);
+  );
+};
 
 const Matrimony = () => {
   const { user } = useAuth();
@@ -239,8 +256,8 @@ const Matrimony = () => {
 
       <div className="container-news py-8">
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className="skeleton h-80 rounded-2xl" />
             ))}
           </div>
@@ -254,7 +271,7 @@ const Matrimony = () => {
         ) : (
           <>
             <p className="text-xs text-slate-400 mb-4">{pagination.total} profiles</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {items.map((p) => (
                 <ProfileCard key={p._id} p={p} />
               ))}

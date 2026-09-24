@@ -249,6 +249,98 @@ const Settings = () => {
         ))}
 
         <div className="admin-card">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-1 pb-2 border-b border-slate-100 dark:border-slate-700">
+            Email (SMTP)
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 mb-4">
+            Used for seller forgot-password emails and other system mail. Enable SMTP and save host credentials (Gmail app password, Zoho, SendGrid, etc.).
+          </p>
+          <div className="space-y-4">
+            <label className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={Boolean(settings.smtpEnabled)}
+                onChange={(e) => handleChange('smtpEnabled', e.target.checked)}
+                className="rounded border-slate-300"
+              />
+              Enable SMTP email sending
+            </label>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">SMTP Host</label>
+                <input
+                  value={settings.smtpHost || ''}
+                  onChange={(e) => handleChange('smtpHost', e.target.value)}
+                  className="admin-input"
+                  placeholder="smtp.gmail.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">SMTP Port</label>
+                <input
+                  type="number"
+                  value={settings.smtpPort ?? 587}
+                  onChange={(e) => handleChange('smtpPort', e.target.value)}
+                  className="admin-input"
+                  placeholder="587"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">SMTP Username</label>
+                <input
+                  value={settings.smtpUser || ''}
+                  onChange={(e) => handleChange('smtpUser', e.target.value)}
+                  className="admin-input"
+                  placeholder="your@email.com"
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  SMTP Password {settings.smtpPasswordSet ? '(saved — leave blank to keep)' : ''}
+                </label>
+                <input
+                  type="password"
+                  value={settings.smtpPassword || ''}
+                  onChange={(e) => handleChange('smtpPassword', e.target.value)}
+                  className="admin-input"
+                  placeholder={settings.smtpPasswordSet ? '••••••••' : 'App password / SMTP password'}
+                  autoComplete="new-password"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">From name</label>
+                <input
+                  value={settings.smtpFromName || ''}
+                  onChange={(e) => handleChange('smtpFromName', e.target.value)}
+                  className="admin-input"
+                  placeholder="The Great India News"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">From email</label>
+                <input
+                  type="email"
+                  value={settings.smtpFromEmail || ''}
+                  onChange={(e) => handleChange('smtpFromEmail', e.target.value)}
+                  className="admin-input"
+                  placeholder="noreply@yourdomain.com"
+                />
+              </div>
+            </div>
+            <label className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={Boolean(settings.smtpSecure)}
+                onChange={(e) => handleChange('smtpSecure', e.target.checked)}
+                className="rounded border-slate-300"
+              />
+              Use SSL/TLS (usually on for port 465)
+            </label>
+          </div>
+        </div>
+
+        <div className="admin-card">
           <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Google Analytics</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
             Measurement ID and Tag Manager are managed in a dedicated admin page.

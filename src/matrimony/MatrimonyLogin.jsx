@@ -1,16 +1,33 @@
-import { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { resolvePostLoginPath } from './matrimonyAuthRedirect';
 
 const MatrimonyLogin = () => {
   const { user, login, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const messageShown = useRef(false);
+
+  const from = location.state?.from;
+  const loginMessage = location.state?.message;
+  const postLoginPath = resolvePostLoginPath(from, '/matrimony/member');
+
+  useEffect(() => {
+    if (loginMessage && !messageShown.current) {
+      messageShown.current = true;
+      toast.error(loginMessage);
+    }
+  }, [loginMessage]);
 
   if (user) {
+    if (from) {
+      return <Navigate to={postLoginPath} replace />;
+    }
     return <Navigate to={user.role === 'MATRIMONY' ? '/matrimony/member' : '/admin'} replace />;
   }
 
@@ -25,7 +42,7 @@ const MatrimonyLogin = () => {
         return;
       }
       toast.success('Welcome back');
-      navigate('/matrimony/member');
+      navigate(postLoginPath, { replace: true });
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed';
       toast.error(msg === 'Invalid credentials' ? 'Invalid email or password. Register first if you have no account.' : msg);
@@ -38,7 +55,11 @@ const MatrimonyLogin = () => {
     <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md border border-stone-200 p-6 sm:p-8">
         <h1 className="text-2xl font-bold text-slate-900 font-headline">Matrimony Login</h1>
-        <p className="text-sm text-slate-500 mt-1">Sign in to manage your matrimony profile</p>
+        <p className="text-sm text-slate-500 mt-1">
+          {from
+            ? 'Sign in to view this matrimony profile'
+            : 'Sign in to manage your matrimony profile'}
+        </p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block text-sm">
             <span className="text-slate-600">Email</span>

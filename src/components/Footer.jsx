@@ -51,10 +51,13 @@ const Footer = ({ settings }) => {
           <h4 className="text-white font-semibold mb-4 text-sm tracking-wide uppercase">Quick Links</h4>
           <ul className="space-y-2.5 text-sm">
             <li><Link to="/explore" className="hover:text-brand-300 transition-colors">Explore All</Link></li>
+            <li><Link to="/astrology" className="hover:text-brand-300 transition-colors">Astrology</Link></li>
             <li><Link to="/about" className="hover:text-brand-300 transition-colors">About Us</Link></li>
             <li><Link to="/contact" className="hover:text-brand-300 transition-colors">Contact</Link></li>
             <li><Link to="/editorial-policy" className="hover:text-brand-300 transition-colors">Editorial Policy</Link></li>
             <li><Link to="/correction-policy" className="hover:text-brand-300 transition-colors">Correction Policy</Link></li>
+            <li><Link to="/disclaimer" className="hover:text-brand-300 transition-colors">Disclaimer</Link></li>
+            <li><Link to="/gdpr-privacy-policy" className="hover:text-brand-300 transition-colors">GDPR Privacy Policy</Link></li>
           </ul>
         </div>
 

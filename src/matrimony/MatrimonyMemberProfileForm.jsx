@@ -78,21 +78,10 @@ const MatrimonyMemberProfileForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!hasProfile) {
-      const err = validateMatrimonyProfileForm(form);
-      if (err) {
-        toast.error(err);
-        return;
-      }
-    } else {
-      if (!form.fullName.trim()) {
-        toast.error('Full name is required');
-        return;
-      }
-      if (!form.gender) {
-        toast.error('Gender is required');
-        return;
-      }
+    const err = validateMatrimonyProfileForm(form);
+    if (err) {
+      toast.error(err);
+      return;
     }
     setSaving(true);
     const payload = buildProfilePayload(form);
@@ -126,9 +115,7 @@ const MatrimonyMemberProfileForm = () => {
           {hasProfile ? 'Edit Profile' : 'Create Profile'}
         </h1>
         <p className="text-sm text-slate-500 mt-1">
-          {hasProfile
-            ? 'Update your matrimony profile details'
-            : 'All fields are required — complete every section before submitting'}
+          All fields are required — complete every section before saving
         </p>
       </div>
 
@@ -144,7 +131,7 @@ const MatrimonyMemberProfileForm = () => {
           onRemoveGalleryPhoto={handlers.handleRemoveGalleryPhoto}
           onAddGalleryPhotoUrl={handlers.handleAddGalleryPhotoUrl}
           readOnlyProfileId
-          requireAllFields={!hasProfile}
+          requireAllFields
         />
 
         <div className="sticky bottom-0 bg-stone-100/95 backdrop-blur border-t border-slate-200 py-3 flex flex-wrap gap-2 justify-end">

@@ -57,8 +57,11 @@ const GoogleNewsAdmin = () => {
   const [counts, setCounts] = useState({});
   const [items, setItems] = useState([]);
   const [meta, setMeta] = useState({ categories: [] });
-  const [filterStatus, setFilterStatus] = useState('pending');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [editId, setEditId] = useState(null);
   const [itemForm, setItemForm] = useState(EMPTY);
   const [cfg, setCfg] = useState({
@@ -173,7 +176,6 @@ const GoogleNewsAdmin = () => {
 
       if (switchToList) {
         setTab('list');
-        setFilterStatus('pending');
       }
 
       return { success: true, created };
@@ -369,6 +371,48 @@ const GoogleNewsAdmin = () => {
     } catch (err) { toast.error(err.response?.data?.message || 'Delete failed'); }
   };
 
+  const handleDeleteByDate = async () => {
+    if (!dateFrom && !dateTo) {
+      return toast.error('Pick a from and/or to date');
+    }
+    try {
+      setBulkBusy(true);
+      const preview = await googleNewsService.deleteByDate({
+        from: dateFrom || undefined,
+        to: dateTo || undefined,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        dryRun: true,
+      });
+      const count = preview.data?.data?.count ?? 0;
+      if (!count) {
+        toast.error('No items match that date range');
+        return;
+      }
+      const rangeLabel = [dateFrom || '…', dateTo || '…'].join(' → ');
+      const statusLabel = filterStatus !== 'all' ? ` (${filterStatus})` : '';
+      if (
+        !confirm(
+          `Permanently delete ${count} Google News item(s) created ${rangeLabel}${statusLabel}? This cannot be undone.`
+        )
+      ) {
+        return;
+      }
+      const { data } = await googleNewsService.deleteByDate({
+        from: dateFrom || undefined,
+        to: dateTo || undefined,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        dryRun: false,
+      });
+      toast.success(data.message || 'Deleted');
+      await loadConfig();
+      await loadItems();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Delete by date failed');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const columns = useMemo(() => [
     { key: 'image', header: '', render: (r) => (
       r.image && !r.image.includes('picsum.photos') ? (
@@ -523,22 +567,55 @@ const GoogleNewsAdmin = () => {
       </div>
 
       {tab === 'list' && (
-        <DataTable columns={columns} data={items} loading={loading} pageSize={15}
-          searchPlaceholder="Search titles, sources…" searchKeys={['title', 'sourceName', 'category', 'slug', 'description']}
-          emptyMessage="No items — configure sources and Sync Now."
-          toolbar={(
-            <>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="admin-input py-1.5 text-sm w-auto">
-                <option value="all">All statuses</option>
-                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="admin-input py-1.5 text-sm w-auto">
-                <option value="">All categories</option>
-                {(meta.categories || []).map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </>
-          )}
-        />
+        <>
+          <div className="admin-card mb-4 p-3 flex flex-wrap gap-2 items-end">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Created from</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="admin-input text-sm w-auto"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Created to</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="admin-input text-sm w-auto"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleDeleteByDate}
+              disabled={bulkBusy || (!dateFrom && !dateTo)}
+              className="text-sm font-semibold px-3 py-2 rounded-lg border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-50"
+            >
+              {bulkBusy ? 'Deleting…' : 'Delete by date'}
+            </button>
+            <p className="text-xs text-slate-500 w-full sm:w-auto sm:ml-2">
+              Deletes items created in this range. Uses the status filter below when not “All statuses”.
+            </p>
+          </div>
+          <DataTable columns={columns} data={items} loading={loading} pageSize={15}
+            searchPlaceholder="Search titles, sources…" searchKeys={['title', 'sourceName', 'category', 'slug', 'description']}
+            emptyMessage="No items — configure sources and Sync Now."
+            toolbar={(
+              <>
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="admin-input py-1.5 text-sm w-auto">
+                  <option value="all">All statuses</option>
+                  {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="admin-input py-1.5 text-sm w-auto">
+                  <option value="">All categories</option>
+                  {(meta.categories || []).map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </>
+            )}
+          />
+        </>
       )}
 
       {tab === 'form' && (

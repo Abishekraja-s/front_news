@@ -169,9 +169,180 @@ export const Copyright = () => (
     <p>© 2026 The Great India News. All content, including text, images, and videos, is protected by copyright law. Unauthorized reproduction is prohibited.</p>
   </StaticPage>
 );
-
 export const Grievance = () => (
   <StaticPage title="Grievance Redressal">
     <p>If you have any grievances regarding our content or services, please write to grievance@thegreatindianews.com. We will address your concerns within 15 working days.</p>
   </StaticPage>
 );
+
+export const Disclaimer = () => (
+  <StaticPage title="Disclaimer">
+    <p>
+      Welcome to &ldquo;THE GREAT INDIA NEWS,&rdquo; your trusted source for news and information in Tamil.
+      Before using our website and accessing our content, please read this disclaimer carefully.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Accuracy of Information</h2>
+    <p>
+      While we strive to provide accurate and up-to-date information, &ldquo;THE GREAT INDIA News&rdquo;
+      cannot guarantee the completeness, reliability, or accuracy of the content published on our website.
+      The views and opinions expressed in articles, opinion pieces, and other forms of content are those of
+      the authors and do not necessarily reflect the views of &ldquo;THE GREAT INDIA News&rdquo; or its
+      editorial team.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Editorial Integrity</h2>
+    <p>
+      Our editorial team adheres to strict journalistic standards and ethics in the creation and publication
+      of content. We maintain editorial independence and objectivity in reporting news and strive to present
+      balanced and unbiased perspectives on various topics. However, readers should exercise their own
+      judgment and discretion when interpreting and relying on the information provided.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Third-Party Content</h2>
+    <p>
+      &ldquo;THE GREAT INDIA NEWS&rdquo; may contain links to third-party websites, articles, or resources
+      for informational purposes. We do not endorse or guarantee the accuracy of the content provided on
+      these external sites and are not responsible for any loss or damage that may arise from their use.
+      Users should review the terms of use and privacy policies of these third-party sites before accessing
+      their content.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">No Legal or Professional Advice</h2>
+    <p>
+      The information provided on &ldquo;THE GREAT INDIA NEWS&rdquo; is for general informational purposes
+      only and should not be construed as legal, financial, medical, or professional advice. Readers should
+      seek appropriate professional advice or conduct their own research before making any decisions based
+      on the information provided on our website.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Changes to Content</h2>
+    <p>
+      &ldquo;THE GREAT INDIA NEWS&rdquo; reserves the right to modify, update, or remove content from our
+      website at any time without prior notice. We may also revise this disclaimer or other policies
+      governing the use of our website. By continuing to use our website, you agree to be bound by the most
+      current version of these terms and conditions.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Limitation of Liability</h2>
+    <p>
+      Under no circumstances shall &ldquo;THE GREAT INDIA NEWS&rdquo; or its affiliates be liable for any
+      direct, indirect, incidental, special, or consequential damages arising out of the use or inability to
+      use our website or the content provided therein. This includes but is not limited to damages for loss
+      of profits, data, or goodwill.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Contact Us</h2>
+    <p>
+      If you have any questions or concerns about this disclaimer or our website&rsquo;s content, please
+      contact us at{' '}
+      <a href="mailto:grievance@thegreatindianews.com" className="text-brand-600 hover:underline">
+        grievance@thegreatindianews.com
+      </a>
+      .
+    </p>
+  </StaticPage>
+);
+
+export const GdprPrivacyPolicy = () => (
+  <StaticPage title="GDPR Privacy Policy">
+    <p>
+      At &ldquo;THE GREAT INDIA NEWS&rdquo;, we are committed to protecting the privacy and personal data of
+      our users in compliance with the General Data Protection Regulation (GDPR). This policy outlines how
+      we collect, use, disclose, and protect personal data when you use our website and services.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Data Collection and Processing</h2>
+    <p className="mb-3">
+      We collect and process personal data for specified, explicit, and legitimate purposes. When you visit
+      our website or interact with our services, we may collect the following types of personal data:
+    </p>
+    <ul className="list-disc pl-6 space-y-2">
+      <li>
+        <strong>Contact Information:</strong> Such as your name, email address, postal address, and phone
+        number, which you provide when subscribing to our magazine or signing up for our newsletter.
+      </li>
+      <li>
+        <strong>Usage Information:</strong> Such as your IP address, browser type, device information, and
+        browsing behavior on our website, collected through cookies and similar technologies.
+      </li>
+      <li>
+        <strong>Payment Information:</strong> If you make purchases through our website, we may collect
+        payment details such as credit card numbers or other financial information. However, we do not store
+        this information on our servers and use third-party payment processors to handle transactions
+        securely.
+      </li>
+    </ul>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Lawful Basis for Processing</h2>
+    <p className="mb-3">We only process personal data when we have a lawful basis to do so, such as:</p>
+    <ul className="list-disc pl-6 space-y-2">
+      <li>
+        <strong>Consent:</strong> When you voluntarily provide us with your personal data for specific
+        purposes, such as subscribing to our magazine or newsletter, you consent to the processing of your
+        information for those purposes.
+      </li>
+      <li>
+        <strong>Contractual Necessity:</strong> When processing personal data is necessary for the
+        performance of a contract, such as fulfilling your subscription or delivering purchased products.
+      </li>
+      <li>
+        <strong>Legitimate Interests:</strong> When processing is necessary for our legitimate interests,
+        such as improving our services, preventing fraud, and ensuring the security of our website and
+        users.
+      </li>
+    </ul>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Data Security</h2>
+    <p>
+      We implement appropriate technical and organizational measures to ensure the security of personal data
+      and protect it from unauthorized access, disclosure, alteration, or destruction. These measures
+      include encryption, access controls, and regular security assessments.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Data Retention</h2>
+    <p>
+      We retain personal data only for as long as necessary to fulfill the purposes for which it was
+      collected, or as required by law. When personal data is no longer needed, we securely delete or
+      anonymize it to prevent identification.
+    </p>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Your Rights</h2>
+    <p className="mb-3">Under the GDPR, you have certain rights regarding your personal data, including:</p>
+    <ul className="list-disc pl-6 space-y-2">
+      <li>
+        <strong>Right to Access:</strong> You have the right to request access to the personal data we hold
+        about you and receive information about how it is processed.
+      </li>
+      <li>
+        <strong>Right to Rectification:</strong> You have the right to request the correction of inaccurate
+        or incomplete personal data.
+      </li>
+      <li>
+        <strong>Right to Erasure:</strong> You have the right to request the deletion of your personal data
+        under certain circumstances, such as when it is no longer necessary for the purposes for which it
+        was collected.
+      </li>
+      <li>
+        <strong>Right to Object:</strong> You have the right to object to the processing of your personal
+        data in certain situations, such as for direct marketing purposes.
+      </li>
+      <li>
+        <strong>Right to Data Portability:</strong> You have the right to receive a copy of your personal
+        data in a structured, commonly used, and machine-readable format, and to transmit it to another
+        controller.
+      </li>
+    </ul>
+
+    <h2 className="text-xl font-bold mt-8 mb-3">Contact Us</h2>
+    <p>
+      If you have any questions or concerns about our GDPR Policy or our practices regarding your personal
+      information, please contact us at{' '}
+      <a href="mailto:grievance@thegreatindianews.com" className="text-brand-600 hover:underline">
+        grievance@thegreatindianews.com
+      </a>
+      .
+    </p>
+  </StaticPage>
+);
+

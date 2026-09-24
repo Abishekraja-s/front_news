@@ -23,9 +23,32 @@ const MarketplaceDetail = () => {
 
   const handleEnquiry = async (e) => {
     e.preventDefault();
+    const name = form.buyerName.trim();
+    const email = form.buyerEmail.trim();
+    const phone = form.buyerPhone.replace(/\D/g, '');
+    const message = form.message.trim();
+
+    if (!name || !email || !phone || !message) {
+      toast.error('All fields are required');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Enter a valid email');
+      return;
+    }
+    if (!/^\d{10}$/.test(phone)) {
+      toast.error('Enter a valid 10-digit phone number');
+      return;
+    }
+
     setSending(true);
     try {
-      await marketplaceService.sendEnquiry(id, form);
+      await marketplaceService.sendEnquiry(id, {
+        buyerName: name,
+        buyerEmail: email,
+        buyerPhone: phone,
+        message,
+      });
       toast.success('Enquiry sent to the seller');
       setForm({ buyerName: '', buyerEmail: '', buyerPhone: '', message: '' });
     } catch (err) {
@@ -74,13 +97,45 @@ const MarketplaceDetail = () => {
             {product.seller?.city && <p className="text-slate-500 text-xs">{product.seller.city}</p>}
           </div>
 
-          <form onSubmit={handleEnquiry} className="mt-6 bg-white border border-stone-200 rounded-2xl p-5 space-y-3 shadow-sm">
+          <form onSubmit={handleEnquiry} className="mt-6 bg-white border border-stone-200 rounded-2xl p-5 space-y-3 shadow-sm" noValidate>
             <h2 className="font-bold text-slate-900">Send enquiry to seller</h2>
             <p className="text-xs text-slate-500">Your message goes directly to the seller’s dashboard.</p>
-            <input required placeholder="Your name" className="w-full border rounded-xl px-3 py-2.5 text-sm" value={form.buyerName} onChange={(e) => setForm({ ...form, buyerName: e.target.value })} />
-            <input required type="email" placeholder="Email" className="w-full border rounded-xl px-3 py-2.5 text-sm" value={form.buyerEmail} onChange={(e) => setForm({ ...form, buyerEmail: e.target.value })} />
-            <input placeholder="Phone (optional)" className="w-full border rounded-xl px-3 py-2.5 text-sm" value={form.buyerPhone} onChange={(e) => setForm({ ...form, buyerPhone: e.target.value })} />
-            <textarea required rows={4} placeholder="Message" className="w-full border rounded-xl px-3 py-2.5 text-sm" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
+            <input
+              required
+              placeholder="Your name *"
+              className="w-full border rounded-xl px-3 py-2.5 text-sm"
+              value={form.buyerName}
+              onChange={(e) => setForm({ ...form, buyerName: e.target.value })}
+            />
+            <input
+              required
+              type="email"
+              placeholder="Email *"
+              className="w-full border rounded-xl px-3 py-2.5 text-sm"
+              value={form.buyerEmail}
+              onChange={(e) => setForm({ ...form, buyerEmail: e.target.value })}
+            />
+            <input
+              required
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]{10}"
+              maxLength={10}
+              placeholder="Phone number *"
+              className="w-full border rounded-xl px-3 py-2.5 text-sm"
+              value={form.buyerPhone}
+              onChange={(e) =>
+                setForm({ ...form, buyerPhone: e.target.value.replace(/\D/g, '').slice(0, 10) })
+              }
+            />
+            <textarea
+              required
+              rows={4}
+              placeholder="Message *"
+              className="w-full border rounded-xl px-3 py-2.5 text-sm"
+              value={form.message}
+              onChange={(e) => setForm({ ...form, message: e.target.value })}
+            />
             <button type="submit" disabled={sending} className="btn-primary w-full">
               {sending ? 'Sending…' : 'Send enquiry'}
             </button>

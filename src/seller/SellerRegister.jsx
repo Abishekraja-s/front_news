@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import {
+  SellerAuthShell,
+  SellerAuthFooter,
+  SellerBackLink,
+  sellerInputCls,
+} from './SellerAuthShell';
 
 const empty = { name: '', email: '', password: '', phone: '', businessName: '', city: '' };
 
@@ -30,39 +36,57 @@ const SellerRegister = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-md border border-stone-200 p-6 sm:p-8">
-        <h1 className="text-2xl font-bold text-slate-900 font-headline">Seller Registration</h1>
-        <p className="text-sm text-slate-500 mt-1">Create an account to list products on The Great India News Marketplace</p>
-        <form onSubmit={handleSubmit} className="mt-6 grid sm:grid-cols-2 gap-4">
-          {[
-            ['name', 'Full name', 'text', true],
-            ['email', 'Email', 'email', true],
-            ['password', 'Password (min 6)', 'password', true],
-            ['phone', 'Phone', 'tel', false],
-            ['businessName', 'Business / shop name', 'text', false],
-            ['city', 'City', 'text', false],
-          ].map(([key, label, type, required]) => (
-            <label key={key} className={`block text-sm ${key === 'businessName' ? 'sm:col-span-2' : ''}`}>
-              <span className="text-slate-600">{label}</span>
-              <input
-                required={required}
-                type={type}
-                className="mt-1 w-full border border-stone-200 rounded-xl px-3 py-2.5"
-                value={form[key]}
-                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-              />
-            </label>
-          ))}
-          <button type="submit" disabled={loading} className="btn-primary sm:col-span-2">
-            {loading ? 'Creating…' : 'Create seller account'}
-          </button>
-        </form>
-        <p className="text-sm text-slate-500 mt-4 text-center">
-          Already registered? <Link to="/seller/login" className="text-teal-700 font-semibold">Sign in</Link>
-        </p>
-      </div>
-    </div>
+    <SellerAuthShell
+      title="Seller Registration"
+      subtitle="Create an account to list products on The Great India News Marketplace"
+      maxWidthClass="max-w-lg"
+      footer={
+        <SellerAuthFooter>
+          <p className="text-sm text-slate-500">
+            Already registered?{' '}
+            <Link to="/seller/login" className="text-teal-700 font-semibold">
+              Sign in
+            </Link>
+          </p>
+          <SellerBackLink />
+        </SellerAuthFooter>
+      }
+    >
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {[
+          ['name', 'Full name', 'text', true],
+          ['email', 'Email', 'email', true],
+          ['password', 'Password (min 6)', 'password', true],
+          ['phone', 'Phone', 'tel', false],
+          ['businessName', 'Business / shop name', 'text', false],
+          ['city', 'City', 'text', false],
+        ].map(([key, label, type, required]) => (
+          <label
+            key={key}
+            className={`block text-sm ${key === 'businessName' ? 'sm:col-span-2' : ''}`}
+          >
+            <span className="text-slate-600 font-medium">{label}</span>
+            <input
+              required={required}
+              type={type}
+              autoComplete={
+                key === 'email' ? 'email' : key === 'password' ? 'new-password' : key === 'name' ? 'name' : 'off'
+              }
+              className={sellerInputCls}
+              value={form[key]}
+              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+            />
+          </label>
+        ))}
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary sm:col-span-2 w-full py-3 text-base sm:text-sm disabled:opacity-50"
+        >
+          {loading ? 'Creating…' : 'Create seller account'}
+        </button>
+      </form>
+    </SellerAuthShell>
   );
 };
 

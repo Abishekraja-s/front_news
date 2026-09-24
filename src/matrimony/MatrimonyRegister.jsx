@@ -121,6 +121,10 @@ const MatrimonyRegister = () => {
       toast.error('Mobile number is required');
       return;
     }
+    if (!/^\d{10}$/.test(account.phone.replace(/\D/g, ''))) {
+      toast.error('Enter a valid 10-digit mobile number');
+      return;
+    }
     if (!account.city.trim()) {
       toast.error('City is required');
       return;
@@ -211,10 +215,13 @@ const MatrimonyRegister = () => {
               <input
                 required
                 className={inputCls}
+                inputMode="numeric"
+                maxLength={10}
                 value={account.phone}
                 onChange={(e) => {
-                  setAccount({ ...account, phone: e.target.value });
-                  if (!form.mobile) set('mobile', e.target.value);
+                  const phone = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  setAccount({ ...account, phone });
+                  if (!form.mobile) set('mobile', phone);
                 }}
               />
             </Field>

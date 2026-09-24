@@ -22,12 +22,14 @@ import LiveSports from './pages/LiveSports';
 import MatchDetails from './pages/MatchDetails';
 import PlayerDetails from './pages/PlayerDetails';
 import TravelUpdates from './pages/TravelUpdates';
+import Astrology from './pages/Astrology';
+import AstrologyRasiDetail from './pages/AstrologyRasiDetail';
 import Matrimony from './pages/Matrimony';
 import MatrimonyDetail from './pages/MatrimonyDetail';
 import About from './pages/About';
 import {
   Contact, PrivacyPolicy, Terms,
-  EditorialPolicy, CorrectionPolicy, Copyright, Grievance,
+  EditorialPolicy, CorrectionPolicy, Copyright, Grievance, Disclaimer, GdprPrivacyPolicy,
 } from './pages/StaticPages';
 
 import AdminLayout from './admin/AdminLayout';
@@ -65,12 +67,20 @@ import MatrimonyProfileView from './admin/matrimony/MatrimonyProfileView';
 import MatrimonyProfileEnquiries from './admin/matrimony/MatrimonyProfileEnquiries';
 import MatrimonyCategories from './admin/matrimony/MatrimonyCategories';
 import MatrimonySettings from './admin/matrimony/MatrimonySettings';
+import AstrologyDashboard from './admin/astrology/AstrologyDashboard';
+import AstrologySettings from './admin/astrology/AstrologySettings';
+import AstrologyDailyHoroscope from './admin/astrology/AstrologyDailyHoroscope';
+import AstrologyPanchangam from './admin/astrology/AstrologyPanchangam';
+import AstrologySyncNow from './admin/astrology/AstrologySyncNow';
+import AstrologySyncHistory from './admin/astrology/AstrologySyncHistory';
 import PageMenuLayout from './admin/PageMenuLayout';
 import AboutPageEditor from './admin/AboutPageEditor';
 
 import SellerLayout from './seller/SellerLayout';
 import SellerLogin from './seller/SellerLogin';
 import SellerRegister from './seller/SellerRegister';
+import SellerForgotPassword from './seller/SellerForgotPassword';
+import SellerResetPassword from './seller/SellerResetPassword';
 import SellerDashboard from './seller/SellerDashboard';
 import SellerProducts from './seller/SellerProducts';
 import SellerProductForm from './seller/SellerProductForm';
@@ -110,6 +120,8 @@ function App() {
         <Route path="live-sports/match/:id/player/:playerKey" element={<PlayerDetails />} />
         <Route path="live-sports/match/:id" element={<MatchDetails />} />
         <Route path="travel-updates" element={<TravelUpdates />} />
+        <Route path="astrology" element={<Astrology />} />
+        <Route path="astrology/rasi/:slug" element={<AstrologyRasiDetail />} />
         <Route path="matrimony" element={<Matrimony />} />
         <Route path="matrimony/:id" element={<MatrimonyDetail />} />
         {CATEGORY_ROUTES.map((slug) => (
@@ -128,10 +140,14 @@ function App() {
         <Route path="correction-policy" element={<CorrectionPolicy />} />
         <Route path="copyright" element={<Copyright />} />
         <Route path="grievance" element={<Grievance />} />
+        <Route path="disclaimer" element={<Disclaimer />} />
+        <Route path="gdpr-privacy-policy" element={<GdprPrivacyPolicy />} />
       </Route>
 
       <Route path="seller/login" element={<SellerLogin />} />
       <Route path="seller/register" element={<SellerRegister />} />
+      <Route path="seller/forgot-password" element={<SellerForgotPassword />} />
+      <Route path="seller/reset-password" element={<SellerResetPassword />} />
       <Route path="seller" element={<SellerLayout />}>
         <Route index element={<SellerDashboard />} />
         <Route path="products" element={<SellerProducts />} />
@@ -178,6 +194,12 @@ function App() {
         <Route path="matrimony/verified" element={<MatrimonyProfileList />} />
         <Route path="matrimony/categories" element={<MatrimonyCategories />} />
         <Route path="matrimony/settings" element={<MatrimonySettings />} />
+        <Route path="astrology" element={<AstrologyDashboard />} />
+        <Route path="astrology/settings" element={<AstrologySettings />} />
+        <Route path="astrology/horoscopes" element={<AstrologyDailyHoroscope />} />
+        <Route path="astrology/panchangam" element={<AstrologyPanchangam />} />
+        <Route path="astrology/sync" element={<AstrologySyncNow />} />
+        <Route path="astrology/sync-history" element={<AstrologySyncHistory />} />
         <Route path="youtube-slider" element={<YoutubeSliderAdmin />} />
         <Route path="instagram-posts" element={<InstagramPostsAdmin />} />
         <Route path="google-news" element={<GoogleNewsAdmin />} />

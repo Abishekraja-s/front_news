@@ -5,7 +5,7 @@ import { articleService, googleNewsService } from '../services/articleService';
 import { sanitizeHtml, generateArticleJsonLd } from '../utils/sanitize';
 import GoogleNewsArticleView from '../components/GoogleNewsArticleView';
 import { formatDateTime } from '../utils/helpers';
-import { getImageUrl } from '../utils/images';
+import { buildArticleSocialMeta } from '../utils/seo';
 import { getYoutubeEmbedUrl } from '../utils/youtube';
 import NewsImage from '../components/NewsImage';
 import ShareButtons from '../components/ShareButtons';
@@ -66,22 +66,31 @@ const Article = () => {
 
   const jsonLd = generateArticleJsonLd(article);
   const youtubeEmbed = getYoutubeEmbedUrl(article.youtubeVideoLink);
+  const social = buildArticleSocialMeta(article);
 
   return (
     <>
       <Helmet>
         <title>{article.seoTitle || article.title} - The Great India News</title>
-        <meta name="description" content={article.metaDescription || article.excerpt} />
-        {article.canonicalUrl && <link rel="canonical" href={article.canonicalUrl} />}
-        <meta property="og:title" content={article.ogTitle || article.title} />
-        <meta property="og:description" content={article.ogDescription || article.excerpt} />
-        <meta property="og:image" content={getImageUrl(article.ogImage || article.featuredImage)} />
-        <meta property="og:url" content={window.location.href} />
+        <meta name="description" content={social.description} />
+        <link rel="canonical" href={social.canonicalLink || social.url} />
+
+        <meta property="og:title" content={social.title} />
+        <meta property="og:description" content={social.description} />
+        <meta property="og:image" content={social.image} />
+        <meta property="og:image:secure_url" content={social.image} />
+        <meta property="og:image:type" content={social.imageType || 'image/jpeg'} />
+        <meta property="og:image:width" content={social.imageWidth || '1200'} />
+        <meta property="og:image:height" content={social.imageHeight || '630'} />
+        <meta property="og:url" content={social.url} />
         <meta property="og:type" content="article" />
+        <meta property="og:site_name" content={social.siteName} />
+
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={article.twitterTitle || article.title} />
-        <meta name="twitter:description" content={article.twitterDescription || article.excerpt} />
-        <meta name="twitter:image" content={getImageUrl(article.twitterImage || article.featuredImage)} />
+        <meta name="twitter:title" content={social.twitterTitle} />
+        <meta name="twitter:description" content={social.twitterDescription} />
+        <meta name="twitter:image" content={social.twitterImage} />
+
         {jsonLd && (
           <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         )}
@@ -227,13 +236,25 @@ const Article = () => {
             )}
 
             <div className="mt-6 pt-6 border-t">
-              <ShareButtons title={article.title} />
+              <ShareButtons
+                title={social.title}
+                description={social.description}
+                slug={article.slug}
+                image={article.ogImage || article.featuredImage}
+                url={social.url}
+              />
             </div>
           </div>
 
           <aside className="space-y-6">
             <div className="sticky top-24">
-              <ShareButtons title={article.title} />
+              <ShareButtons
+                title={social.title}
+                description={social.description}
+                slug={article.slug}
+                image={article.ogImage || article.featuredImage}
+                url={social.url}
+              />
               <Advertisement position="sidebar" className="mt-6" />
               <AdSenseSlot
                 location="sidebar"

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
 import { matrimonyService } from '../services/articleService';
 import { useAuth } from '../context/AuthContext';
 import NewsImage from '../components/NewsImage';
 import { getImageUrl } from '../utils/images';
+import { matrimonyLoginRedirect } from '../matrimony/matrimonyAuthRedirect';
 
 const LABEL = {
   male: 'Male',
@@ -48,7 +49,8 @@ const Section = ({ title, children }) => (
 
 const MatrimonyDetail = () => {
   const { id } = useParams();
-  const { user } = useAuth();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState(null);
   const [related, setRelated] = useState([]);
   const [contact, setContact] = useState({});
@@ -68,6 +70,7 @@ const MatrimonyDetail = () => {
   }, [user]);
 
   useEffect(() => {
+    if (authLoading || !user) return;
     setLoading(true);
     setError(false);
     matrimonyService
@@ -79,7 +82,7 @@ const MatrimonyDetail = () => {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, user, authLoading]);
 
   const handleEnquiry = async (e) => {
     e.preventDefault();
@@ -98,6 +101,19 @@ const MatrimonyDetail = () => {
       setSendingEnquiry(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="container-news py-10">
+        <div className="skeleton h-96 rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    const redirect = matrimonyLoginRedirect(location.pathname);
+    return <Navigate to={redirect.pathname} state={redirect.state} replace />;
+  }
 
   if (loading) {
     return (
