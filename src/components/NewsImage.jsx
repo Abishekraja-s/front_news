@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getImageUrl } from '../utils/images';
 
 /**
@@ -16,9 +16,16 @@ const NewsImage = ({
   ...props
 }) => {
   const hasSrc = Boolean(src?.trim());
-  const initial = hasSrc ? getImageUrl(src, seed) : '';
-  const [imgSrc, setImgSrc] = useState(initial);
+  const resolved = hasSrc ? getImageUrl(src, seed) : '';
+  const [imgSrc, setImgSrc] = useState(resolved);
   const [failed, setFailed] = useState(!hasSrc);
+
+  // Re-bind when image URL is updated after enrich / edit
+  useEffect(() => {
+    const next = src?.trim() ? getImageUrl(src, seed) : '';
+    setImgSrc(next);
+    setFailed(!next);
+  }, [src, seed]);
 
   const handleError = () => {
     if (!failed) {

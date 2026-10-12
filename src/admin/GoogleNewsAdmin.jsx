@@ -172,6 +172,15 @@ const GoogleNewsAdmin = () => {
         toast.success(data.message || 'Sync complete');
       }
 
+      // Backfill publisher images when sync left some rows without thumbnails
+      if (created > 0) {
+        try {
+          await googleNewsService.enrichExisting(Math.min(created + 20, 80));
+        } catch {
+          /* enrich is best-effort; list still refreshes below */
+        }
+      }
+
       await refreshDashboard();
 
       if (switchToList) {
@@ -267,7 +276,7 @@ const GoogleNewsAdmin = () => {
   const enrichNow = async () => {
     setEnriching(true);
     try {
-      const { data } = await googleNewsService.enrichExisting(40);
+      const { data } = await googleNewsService.enrichExisting(100);
       toast.success(data.message || 'Enrichment complete');
       await loadItems();
     } catch (err) { toast.error(err.response?.data?.message || 'Enrichment failed'); }
