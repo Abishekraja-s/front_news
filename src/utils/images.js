@@ -6,6 +6,9 @@ export const getImageUrl = (url, seed = 'news') => {
   if (!url || url.trim() === '') {
     return `https://picsum.photos/seed/${seed}/800/450`;
   }
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
   if (url.startsWith('http://')) {
     return url.replace(/^http:/i, 'https:');
   }
@@ -24,6 +27,7 @@ export const getArticleImage = (article) =>
 
 export const getMediaUrl = (url) => {
   if (!url || url.trim() === '') return '';
+  if (url.startsWith('blob:') || url.startsWith('data:')) return url;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   if (url.startsWith('/')) {
     return API_BASE ? `${API_BASE}${url}` : url;

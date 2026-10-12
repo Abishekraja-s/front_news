@@ -8,11 +8,8 @@ import Advertisement from '../components/Advertisement';
 import AdSenseSlot from '../components/AdSenseSlot';
 import NewsCard from '../components/NewsCard';
 import YoutubeVideoSlider from '../components/YoutubeVideoSlider';
-import MustWatchSection from '../components/MustWatchSection';
 import InstagramPostsSection from '../components/InstagramPostsSection';
 import GoogleNewsSection from '../components/GoogleNewsSection';
-import TravelUpdatesSection from '../components/TravelUpdatesSection';
-import SportsWidgets from '../components/SportsWidgets';
 import GovernmentNotificationsSection from '../components/GovernmentNotificationsSection';
 import { SkeletonCard } from '../components/Loading';
 import { CATEGORY_SLUGS } from '../utils/helpers';
@@ -129,17 +126,11 @@ const Home = () => {
         <Advertisement position="homepage_middle" className="mb-8" />
         <AdSenseSlot location="homepage_middle" page="home" className="mb-8" />
 
-        <MustWatchSection />
-
         <YoutubeVideoSlider />
 
         <InstagramPostsSection />
 
         <GoogleNewsSection />
-
-        <TravelUpdatesSection />
-
-        <SportsWidgets page="homepage" />
 
         <GovernmentNotificationsSection />
 

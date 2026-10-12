@@ -42,11 +42,6 @@ const GoogleNewsSection = () => {
           <GoogleNewsCard key={item._id} item={item} />
         ))}
       </div>
-      <div className="mt-4 text-center sm:text-right">
-        <Link to="/google-news" className="text-sm text-brand-600 hover:underline font-medium">
-          அனைத்தும் →
-        </Link>
-      </div>
     </section>
   );
 };

@@ -12,6 +12,19 @@ import FeatureDetail from './pages/FeatureDetail';
 import WeatherDistricts from './pages/WeatherDistricts';
 import WeatherDistrictDetail from './pages/WeatherDistrictDetail';
 import PreciousMetalsPage from './pages/PreciousMetalsPage';
+import CurrencyRatesPage from './pages/CurrencyRatesPage';
+import MarketIndexesPage from './pages/MarketIndexesPage';
+import TrafficAreasPage from './pages/TrafficAreasPage';
+import LocalUpdatesPage from './pages/LocalUpdatesPage';
+import RandomGamePage from './pages/RandomGamePage';
+import TodayInHistoryPage from './pages/TodayInHistoryPage';
+import StockWatchlistPage from './pages/StockWatchlistPage';
+import ExamHubPage from './pages/ExamHubPage';
+import ExamTestPage from './pages/ExamTestPage';
+import TrendingNowPage from './pages/TrendingNowPage';
+import CommunityFeedPage from './pages/CommunityFeedPage';
+import NewsQuizPage from './pages/NewsQuizPage';
+import DailyDosePage from './pages/DailyDosePage';
 import FuelDistricts from './pages/FuelDistricts';
 import FuelDistrictDetail from './pages/FuelDistrictDetail';
 import Marketplace from './pages/Marketplace';
@@ -44,6 +57,7 @@ import Authors from './admin/Authors';
 import Media from './admin/Media';
 import BreakingNewsAdmin from './admin/BreakingNewsAdmin';
 import Advertisements from './admin/Advertisements';
+import EventGifAdmin from './admin/EventGifAdmin';
 import Users from './admin/Users';
 import RolePermissions from './admin/RolePermissions';
 import Settings from './admin/Settings';
@@ -109,6 +123,24 @@ function App() {
         <Route path="explore/weather/:district" element={<WeatherDistrictDetail />} />
         <Route path="explore/weather" element={<WeatherDistricts />} />
         <Route path="explore/gold" element={<PreciousMetalsPage />} />
+        <Route path="explore/currency" element={<CurrencyRatesPage />} />
+        <Route path="explore/market" element={<MarketIndexesPage />} />
+        <Route path="explore/stocks" element={<StockWatchlistPage />} />
+        <Route path="explore/stock-watchlist" element={<StockWatchlistPage />} />
+        <Route path="explore/traffic" element={<TrafficAreasPage />} />
+        <Route path="explore/local-updates" element={<LocalUpdatesPage />} />
+        <Route path="explore/local_updates" element={<LocalUpdatesPage />} />
+        <Route path="explore/random-game" element={<RandomGamePage />} />
+        <Route path="explore/today-in-history" element={<TodayInHistoryPage />} />
+        <Route path="explore/exams/:slug/:mode" element={<ExamTestPage />} />
+        <Route path="explore/exams" element={<ExamHubPage />} />
+        <Route path="explore/news-quiz" element={<NewsQuizPage />} />
+        <Route path="explore/news_quiz" element={<NewsQuizPage />} />
+        <Route path="explore/daily-dose" element={<DailyDosePage />} />
+        <Route path="explore/daily_dose" element={<DailyDosePage />} />
+        <Route path="explore/trending" element={<TrendingNowPage />} />
+        <Route path="explore/community" element={<CommunityFeedPage />} />
+        <Route path="explore/community_feed" element={<CommunityFeedPage />} />
         <Route path="explore/fuel/:district" element={<FuelDistrictDetail />} />
         <Route path="explore/fuel" element={<FuelDistricts />} />
         <Route path="explore/:key" element={<FeatureDetail />} />
@@ -176,6 +208,7 @@ function App() {
         <Route path="media" element={<Media />} />
         <Route path="breaking-news" element={<BreakingNewsAdmin />} />
         <Route path="advertisements" element={<Advertisements />} />
+        <Route path="event-gif" element={<EventGifAdmin />} />
         <Route path="adsense" element={<AdSenseAdmin />} />
         <Route path="google-analytics" element={<GoogleAnalyticsAdmin />} />
         <Route path="features" element={<FeaturesAdmin />} />

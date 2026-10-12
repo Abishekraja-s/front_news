@@ -50,7 +50,7 @@ const SellerLogin = () => {
           <p className="text-sm text-slate-500">
             New seller?{' '}
             <Link to="/seller/register" className="text-teal-700 font-semibold">
-              Register
+              Register with email OTP
             </Link>
           </p>
           <SellerBackLink />

@@ -81,7 +81,15 @@ const AstrologySyncHistory = () => {
     {
       key: 'trigger',
       header: 'Trigger',
-      render: (row) => <span className="text-xs uppercase text-slate-500">{row.trigger}</span>,
+      render: (row) => {
+        const t = String(row.trigger || 'manual').toLowerCase();
+        const label = t === 'manual' ? 'MANUAL' : 'AUTO';
+        return (
+          <span className={`text-xs uppercase font-medium ${label === 'AUTO' ? 'text-teal-700' : 'text-slate-500'}`}>
+            {label}
+          </span>
+        );
+      },
     },
     {
       key: 'actions',

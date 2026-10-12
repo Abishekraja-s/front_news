@@ -7,12 +7,16 @@ import AdminPageHeader from './AdminPageHeader';
 import DataTable from './DataTable';
 
 const Users = () => {
-  const { hasRole } = useAuth();
+  const { hasRole, user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'REPORTER', status: 'active' });
+
+  const fetchUsers = () =>
+    userService.getAll().then(({ data }) => setUsers(data.data || []));
 
   useEffect(() => {
     Promise.all([
@@ -31,10 +35,30 @@ const Users = () => {
       toast.success('User created');
       setShowForm(false);
       setForm({ name: '', email: '', password: '', role: 'REPORTER', status: 'active' });
-      const { data } = await userService.getAll();
-      setUsers(data.data || []);
+      await fetchUsers();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed');
+    }
+  };
+
+  const handleDelete = async (row) => {
+    if (String(currentUser?._id) === String(row._id)) {
+      toast.error('You cannot delete your own account');
+      return;
+    }
+    const ok = window.confirm(
+      `Delete ${row.name} (${row.email})?\nThis also removes their matrimony profile or seller products.`
+    );
+    if (!ok) return;
+    setDeletingId(row._id);
+    try {
+      await userService.delete(row._id);
+      toast.success('User deleted');
+      await fetchUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Delete failed');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -61,7 +85,23 @@ const Users = () => {
         </span>
       ),
     },
-  ], []);
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row) => (
+        <div className="data-table-actions">
+          <button
+            type="button"
+            disabled={deletingId === row._id || String(currentUser?._id) === String(row._id)}
+            onClick={() => handleDelete(row)}
+            className="data-table-action data-table-action-delete disabled:opacity-50"
+          >
+            {deletingId === row._id ? 'Deleting…' : 'Delete'}
+          </button>
+        </div>
+      ),
+    },
+  ], [currentUser?._id, deletingId]);
 
   return (
     <div>

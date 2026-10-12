@@ -18,8 +18,41 @@ const FeatureDetail = () => {
   if (key === 'gold_price') {
     return <Navigate to="/explore/gold" replace />;
   }
+  if (key === 'currency') {
+    return <Navigate to="/explore/currency" replace />;
+  }
+  if (key === 'market') {
+    return <Navigate to="/explore/market" replace />;
+  }
+  if (key === 'stocks' || key === 'stock_watchlist') {
+    return <Navigate to="/explore/stocks" replace />;
+  }
+  if (key === 'traffic') {
+    return <Navigate to="/explore/traffic" replace />;
+  }
   if (key === 'fuel_price') {
     return <Navigate to="/explore/fuel" replace />;
+  }
+  if (key === 'local_updates') {
+    return <Navigate to="/explore/local-updates" replace />;
+  }
+  if (key === 'today_in_history' || key === 'history') {
+    return <Navigate to="/explore/today-in-history" replace />;
+  }
+  if (key === 'news_quiz' || key === 'news-quiz') {
+    return <Navigate to="/explore/news-quiz" replace />;
+  }
+  if (key === 'exams' || key === 'daily_quiz') {
+    return <Navigate to="/explore/exams" replace />;
+  }
+  if (key === 'daily_dose' || key === 'daily-dose') {
+    return <Navigate to="/explore/daily-dose" replace />;
+  }
+  if (key === 'trending') {
+    return <Navigate to="/explore/trending" replace />;
+  }
+  if (key === 'community_feed' || key === 'community') {
+    return <Navigate to="/explore/community" replace />;
   }
   if (key === 'jobs' || key === 'government_notifications') {
     return <Navigate to="/government-notifications" replace />;
@@ -102,7 +135,7 @@ const FeatureDetail = () => {
       </div>
 
       <div className="container-news py-6 space-y-6">
-        {['weather', 'gold_price', 'currency', 'market', 'fuel_price', 'traffic'].includes(feature.key) && (
+        {['weather', 'gold_price', 'fuel_price'].includes(feature.key) && (
           <div className={['weather', 'gold_price'].includes(feature.key) ? 'max-w-md' : 'max-w-sm'}>
             <FeatureModule feature={{ ...feature, items: [] }} detail={['weather', 'gold_price'].includes(feature.key)} />
           </div>

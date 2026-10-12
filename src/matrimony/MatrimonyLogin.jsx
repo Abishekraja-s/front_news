@@ -15,14 +15,25 @@ const MatrimonyLogin = () => {
 
   const from = location.state?.from;
   const loginMessage = location.state?.message;
+  const successMessage = location.state?.successMessage;
+  const registeredEmail = location.state?.registeredEmail;
   const postLoginPath = resolvePostLoginPath(from, '/matrimony/member');
 
   useEffect(() => {
+    if (registeredEmail) setEmail(registeredEmail);
+  }, [registeredEmail]);
+
+  useEffect(() => {
+    if (successMessage && !messageShown.current) {
+      messageShown.current = true;
+      toast.success(successMessage);
+      return;
+    }
     if (loginMessage && !messageShown.current) {
       messageShown.current = true;
       toast.error(loginMessage);
     }
-  }, [loginMessage]);
+  }, [loginMessage, successMessage]);
 
   if (user) {
     if (from) {

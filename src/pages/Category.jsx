@@ -5,6 +5,7 @@ import { articleService } from '../services/articleService';
 import NewsCard from '../components/NewsCard';
 import { SkeletonCard } from '../components/Loading';
 import Advertisement from '../components/Advertisement';
+import CategoryBanner from '../components/CategoryBanner';
 import AdSenseSlot from '../components/AdSenseSlot';
 import SportsWidgets from '../components/SportsWidgets';
 
@@ -119,6 +120,8 @@ const Category = () => {
             )}
           </>
         )}
+
+        <CategoryBanner slug={categorySlug} className="mt-6" />
       </div>
     </>
   );

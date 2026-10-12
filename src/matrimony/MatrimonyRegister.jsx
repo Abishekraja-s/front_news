@@ -16,15 +16,19 @@ import {
 const emptyAccount = () => ({ name: '', email: '', password: '', phone: '', city: '' });
 
 const MatrimonyRegister = () => {
-  const { user, registerMatrimonyMember } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [account, setAccount] = useState(emptyAccount());
   const [form, setForm] = useState(emptyMatrimonyForm());
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pendingUploads, setPendingUploads] = useState([]);
+  const [step, setStep] = useState('form');
+  const [otp, setOtp] = useState('');
+  const [resendIn, setResendIn] = useState(0);
+  const [done, setDone] = useState(null);
 
-  if (user) {
+  if (user && !done) {
     return <Navigate to={user.role === 'MATRIMONY' ? '/matrimony/member' : '/admin'} replace />;
   }
 
@@ -53,7 +57,11 @@ const MatrimonyRegister = () => {
 
   const handleHoroscope = (e) => {
     const file = e.target.files?.[0];
-    if (file) queueFile(file, 'horoscope');
+    if (file) {
+      queueFile(file, 'horoscope');
+      set('horoscopeFileName', file.name);
+      set('horoscopeMime', file.type);
+    }
     e.target.value = '';
   };
 
@@ -90,8 +98,8 @@ const MatrimonyRegister = () => {
       const fd = new FormData();
       fd.append('file', item.file);
       const { data } = item.target === 'horoscope'
-        ? await matrimonyService.uploadMemberDocument(fd)
-        : await matrimonyService.uploadMemberPhoto(fd);
+        ? await matrimonyService.uploadRegisterDocument(fd)
+        : await matrimonyService.uploadRegisterPhoto(fd);
       const url = data.data?.url;
       if (!url) continue;
 
@@ -101,6 +109,41 @@ const MatrimonyRegister = () => {
     }
 
     return { profilePhoto, horoscopeUrl, photos };
+  };
+
+  const startResendTimer = () => {
+    setResendIn(60);
+    const id = setInterval(() => {
+      setResendIn((n) => {
+        if (n <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return n - 1;
+      });
+    }, 1000);
+  };
+
+  const sendOtp = async () => {
+    const name = account.name.trim() || form.fullName.trim() || account.email.trim().split('@')[0];
+    const uploads = await uploadPendingFiles();
+    const profile = buildProfilePayload({
+      ...form,
+      ...uploads,
+      fullName: form.fullName || name,
+      mobile: form.mobile || account.phone,
+      email: form.email || account.email,
+      city: form.city || account.city,
+    });
+    const { data } = await matrimonyService.sendRegisterOtp({
+      name,
+      email: account.email.trim(),
+      password: account.password,
+      phone: account.phone,
+      city: account.city,
+      profile,
+    });
+    return data;
   };
 
   const handleSubmit = async (e) => {
@@ -137,47 +180,160 @@ const MatrimonyRegister = () => {
 
     setLoading(true);
     try {
-      const name = account.name.trim() || form.fullName.trim() || account.email.trim().split('@')[0];
-      await registerMatrimonyMember({
-        name,
-        email: account.email.trim(),
-        password: account.password,
-        phone: account.phone,
-        city: account.city,
-      });
-
-      const uploads = await uploadPendingFiles();
-      const payload = buildProfilePayload({
-        ...form,
-        ...uploads,
-        fullName: form.fullName || name,
-        mobile: form.mobile || account.phone,
-        email: form.email || account.email,
-        city: form.city || account.city,
-      });
-
-      const { data } = await matrimonyService.createMemberProfile(payload);
-      toast.success(data.message || 'Registration complete — profile submitted for approval');
-      navigate('/matrimony/member');
+      const data = await sendOtp();
+      toast.success(data.message || 'OTP sent to your email');
+      setStep('otp');
+      setOtp('');
+      startResendTimer();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      toast.error(err.response?.data?.message || 'Could not send OTP. Nothing was saved.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    const code = String(otp).replace(/\D/g, '');
+    if (code.length !== 6) {
+      toast.error('Enter the 6-digit OTP from your email');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data } = await matrimonyService.verifyRegisterOtp({
+        email: account.email.trim(),
+        otp: code,
+      });
+      setDone({
+        email: account.email.trim(),
+        message: data.message || 'Registration successful. Please sign in.',
+        emailSent: true,
+        profileId: data.data?.profileId,
+      });
+      toast.success(data.message || 'OTP verified. Profile saved.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'OTP verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendIn > 0 || loading) return;
+    setLoading(true);
+    try {
+      const data = await sendOtp();
+      toast.success(data.message || 'New OTP sent');
+      startResendTimer();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not resend OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (done) {
+    return (
+      <div className="min-h-screen bg-stone-100 flex items-center justify-center px-4 py-8 sm:p-6">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-md border border-stone-200 p-5 sm:p-8 text-center">
+          <div className="w-12 h-12 mx-auto rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center text-2xl font-bold">✓</div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 font-headline mt-4">Registration successful</h1>
+          <p className="text-sm text-slate-600 mt-2 break-words">{done.message}</p>
+          {done.profileId && (
+            <p className="text-sm text-slate-500 mt-2">
+              Profile ID: <span className="font-semibold text-slate-800">{done.profileId}</span>
+            </p>
+          )}
+          <p className="text-sm text-slate-600 mt-3 break-words">
+            Sign in with <span className="font-medium break-all">{done.email}</span> and your password.
+          </p>
+          <button
+            type="button"
+            className="btn-primary w-full mt-6 py-3"
+            onClick={() =>
+              navigate('/matrimony/login', {
+                replace: true,
+                state: { registeredEmail: done.email, successMessage: 'Registration complete. Please sign in.' },
+              })
+            }
+          >
+            Continue to login
+          </button>
+          <p className="text-xs text-center mt-4">
+            <Link to="/matrimony" className="text-slate-400 hover:text-slate-600">← Back to Matrimony</Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-stone-100 py-8 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-6">
+    <div className="min-h-screen bg-stone-100 px-3 py-5 sm:px-4 sm:py-8">
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="mb-5 sm:mb-6">
           <Link to="/matrimony" className="text-sm text-teal-700 font-semibold hover:underline">← Back to Matrimony</Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-headline mt-3">Matrimony Registration</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Account (email + password) and every admin matrimony field — nothing missing
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 font-headline mt-2 sm:mt-3">Matrimony Registration</h1>
+          <p className="text-sm text-slate-500 mt-1 max-w-2xl">
+            Fill every field, then we email an OTP. Your profile is stored only after the OTP is correct.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-1 pb-24">
+        {step === 'otp' ? (
+          <div className="flex justify-center">
+            <form
+              onSubmit={handleVerifyOtp}
+              className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-4"
+            >
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">Enter OTP</h2>
+              <p className="text-sm text-slate-600 break-words">
+                We sent a 6-digit code to <strong className="break-all">{account.email}</strong>. Verify it to save your profile.
+              </p>
+              <label className="block text-sm">
+                <span className="text-slate-600 font-medium">OTP</span>
+                <input
+                  required
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  className={`${inputCls} tracking-[0.4em] text-center text-xl sm:text-2xl font-semibold mt-1 h-12 sm:h-14`}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="••••••"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={loading || otp.replace(/\D/g, '').length !== 6}
+                className="btn-primary w-full py-3 text-sm sm:text-base disabled:opacity-50"
+              >
+                {loading ? 'Verifying…' : 'Verify OTP & save profile'}
+              </button>
+              <div className="flex flex-col-reverse xs:flex-row sm:flex-row items-stretch sm:items-center justify-between gap-3 text-sm">
+                <button
+                  type="button"
+                  className="text-slate-500 font-medium text-left sm:text-right order-2 sm:order-2"
+                  disabled={loading}
+                  onClick={() => {
+                    setStep('form');
+                    setOtp('');
+                  }}
+                >
+                  ← Edit details
+                </button>
+                <button
+                  type="button"
+                  className="text-teal-700 font-semibold disabled:opacity-40 text-left order-1 sm:order-1"
+                  disabled={loading || resendIn > 0}
+                  onClick={handleResend}
+                >
+                  {resendIn > 0 ? `Resend OTP in ${resendIn}s` : 'Resend OTP'}
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+        <form onSubmit={handleSubmit} className="space-y-1 pb-28 sm:pb-24">
           <Section title="Account Login Details">
             <Field label="Your Name" required>
               <input
@@ -251,13 +407,18 @@ const MatrimonyRegister = () => {
             requireAllFields
           />
 
-          <div className="sticky bottom-0 bg-stone-100/95 backdrop-blur border-t border-slate-200 py-3 flex flex-wrap gap-2 justify-end">
-            <Link to="/matrimony/login" className="btn-secondary text-sm py-2.5 px-4">Already registered?</Link>
-            <button type="submit" disabled={loading} className="btn-primary text-sm py-2.5 px-5 disabled:opacity-50">
-              {loading ? 'Submitting…' : 'Register & Submit Profile'}
-            </button>
+          <div className="fixed sm:sticky bottom-0 inset-x-0 sm:inset-x-auto bg-stone-100/95 backdrop-blur border-t border-slate-200 py-3 px-3 sm:px-0 z-20">
+            <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+              <Link to="/matrimony/login" className="btn-secondary text-sm py-3 sm:py-2.5 px-4 w-full sm:w-auto text-center">
+                Already registered?
+              </Link>
+              <button type="submit" disabled={loading} className="btn-primary text-sm py-3 sm:py-2.5 px-5 w-full sm:w-auto disabled:opacity-50">
+                {loading ? 'Sending OTP…' : 'Register & Submit Profile'}
+              </button>
+            </div>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

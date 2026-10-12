@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet-async';
 import { featureService, articleService } from '../services/articleService';
 import { FeatureModule } from '../features/FeatureWidgets';
 import { colSpanClass, StatusPill } from '../features/FeatureIcons';
+import TravelUpdatesSection from '../components/TravelUpdatesSection';
+import SportsWidgets from '../components/SportsWidgets';
 
 const Explore = () => {
   const [features, setFeatures] = useState([]);
@@ -126,6 +128,11 @@ const Explore = () => {
                 </div>
               );
             })}
+
+            <div className="pt-2 sm:pt-4 space-y-8 border-t border-stone-200/80">
+              <TravelUpdatesSection />
+              <SportsWidgets page="homepage" />
+            </div>
           </>
         )}
       </div>

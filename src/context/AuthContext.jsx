@@ -35,9 +35,16 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const sendSellerRegisterOtp = async (payload) => authService.sendSellerRegisterOtp(payload);
+
+  const verifySellerRegisterOtp = async (payload) => {
+    const data = await authService.verifySellerRegisterOtp(payload);
+    setUser(data.user);
+    return data;
+  };
+
   const registerMatrimonyMember = async (payload) => {
     const data = await authService.registerMatrimonyMember(payload);
-    setUser(data.user);
     return data;
   };
 
@@ -54,7 +61,20 @@ export const AuthProvider = ({ children }) => {
   const hasRole = (...roles) => user && roles.includes(user.role);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, registerSeller, registerMatrimonyMember, logout, updateUser, hasRole }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        registerSeller,
+        sendSellerRegisterOtp,
+        verifySellerRegisterOtp,
+        registerMatrimonyMember,
+        logout,
+        updateUser,
+        hasRole,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

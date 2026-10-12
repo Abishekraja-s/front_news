@@ -8,6 +8,7 @@ export const ADMIN_PAGES = [
   { key: 'media', label: 'Media', path: '/admin/media', icon: '🖼️' },
   { key: 'breaking-news', label: 'Breaking News', path: '/admin/breaking-news', icon: '🔴' },
   { key: 'advertisements', label: 'Advertisements', path: '/admin/advertisements', icon: '📢' },
+  { key: 'event-gif', label: 'Event GIF', path: '/admin/event-gif', icon: '🎉' },
   { key: 'adsense', label: 'AdSense Placement', path: '/admin/adsense', icon: '💹' },
   { key: 'google-analytics', label: 'Google Analytics', path: '/admin/google-analytics', icon: '📈' },
   { key: 'features', label: 'Features', path: '/admin/features', icon: '🧩' },

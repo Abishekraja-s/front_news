@@ -56,6 +56,14 @@ export const adService = {
   delete: (id) => api.delete(`/advertisements/${id}`),
 };
 
+export const eventGifService = {
+  getActive: () => api.get('/event-gifs/active'),
+  getAll: () => api.get('/event-gifs'),
+  create: (data) => api.post('/event-gifs', data),
+  update: (id, data) => api.put(`/event-gifs/${id}`, data),
+  delete: (id) => api.delete(`/event-gifs/${id}`),
+};
+
 export const mediaService = {
   getAll: (params = {}) => api.get('/media', { params }),
   upload: (formData) => api.post('/media/upload', formData),
@@ -99,11 +107,29 @@ export const userService = {
   delete: (id) => api.delete(`/users/${id}`),
 };
 
+export const examService = {
+  getCatalog: () => api.get('/exams/catalog'),
+  getDaily: (slug) => api.get(`/exams/${slug}/daily`),
+  getTest: (slug) => api.get(`/exams/${slug}/test`),
+  submit: (slug, data) => api.post(`/exams/${slug}/submit`, data),
+};
+
 export const featureService = {
   getHub: () => api.get('/features/hub'),
   getByKey: (key) => api.get(`/features/key/${key}`),
   getWeatherLive: (params) => api.get('/features/weather/live', { params }),
   getGoldLive: () => api.get('/features/gold/live'),
+  getCurrencyLive: (params) => api.get('/features/currency/live', { params }),
+  getMarketLive: (params) => api.get('/features/market/live', { params }),
+  getTrafficLive: (params) => api.get('/features/traffic/live', { params }),
+  getLocalUpdatesLive: (params) => api.get('/features/local-updates/live', { params }),
+  getTodayInHistoryLive: (params) => api.get('/features/today-in-history/live', { params }),
+  getStocksLive: (params) => api.get('/features/stocks/live', { params }),
+  getTrendingLive: (params) => api.get('/features/trending/live', { params }),
+  getCommunityLive: (params) => api.get('/features/community/live', { params }),
+  getNewsQuizInfo: () => api.get('/features/news-quiz'),
+  getNewsQuizDaily: () => api.get('/features/news-quiz/daily'),
+  submitNewsQuiz: (data) => api.post('/features/news-quiz/submit', data),
   getFuelLive: (params) => api.get('/features/fuel/live', { params }),
   getFuelDistricts: () => api.get('/features/fuel/districts'),
   getWeatherDistricts: () => api.get('/features/weather/districts'),
@@ -286,10 +312,15 @@ export const matrimonyService = {
   uploadPhoto: (formData) => api.post('/matrimony/admin/upload', formData),
   uploadDocument: (formData) => api.post('/matrimony/admin/upload-document', formData),
   registerMember: (data) => api.post('/matrimony/member/register', data),
+  sendRegisterOtp: (data) => api.post('/matrimony/member/register/send-otp', data),
+  verifyRegisterOtp: (data) => api.post('/matrimony/member/register/verify-otp', data),
+  uploadRegisterPhoto: (formData) => api.post('/matrimony/member/register/upload', formData),
+  uploadRegisterDocument: (formData) => api.post('/matrimony/member/register/upload-document', formData),
   getMemberProfile: () => api.get('/matrimony/member/profile'),
   createMemberProfile: (data) => api.post('/matrimony/member/profile', data),
   updateMemberProfile: (data) => api.put('/matrimony/member/profile', data),
   deleteMemberProfile: () => api.delete('/matrimony/member/profile'),
+  rollbackIncompleteRegistration: () => api.delete('/matrimony/member/incomplete'),
   uploadMemberPhoto: (formData) => api.post('/matrimony/member/upload', formData),
   uploadMemberDocument: (formData) => api.post('/matrimony/member/upload-document', formData),
   sendEnquiry: (profileId, data) => api.post(`/matrimony/public/${profileId}/enquiries`, data),

@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { timeAgo } from '../utils/helpers';
 import NewsImage from './NewsImage';
 
 const NewsCard = ({ article, variant = 'default' }) => {
@@ -18,7 +17,7 @@ const NewsCard = ({ article, variant = 'default' }) => {
             decoding="async"
           />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 self-center">
           {article.category && (
             <span className="text-xs text-brand-600 font-medium">
               {article.category.nameTamil || article.category.name}
@@ -27,7 +26,6 @@ const NewsCard = ({ article, variant = 'default' }) => {
           <h3 className="text-sm md:text-base font-semibold text-slate-900 group-hover:text-brand-700 line-clamp-2 leading-snug mt-0.5">
             {article.title}
           </h3>
-          <span className="text-xs text-slate-500 mt-1 block">{timeAgo(article.publishedAt)}</span>
         </div>
       </Link>
     );
@@ -39,7 +37,6 @@ const NewsCard = ({ article, variant = 'default' }) => {
         <h3 className="text-sm font-medium text-gray-900 group-hover:text-brand-600 line-clamp-2">
           {article.title}
         </h3>
-        <span className="text-xs text-gray-400">{timeAgo(article.publishedAt)}</span>
       </Link>
     );
   }
@@ -67,10 +64,6 @@ const NewsCard = ({ article, variant = 'default' }) => {
         {article.excerpt && (
           <p className="text-sm text-gray-500 mt-2 line-clamp-2">{article.excerpt}</p>
         )}
-        <div className="flex items-center justify-between mt-3 text-xs text-gray-400">
-          <span>{timeAgo(article.publishedAt)}</span>
-          {article.author && <span>{article.author.name}</span>}
-        </div>
       </div>
     </Link>
   );

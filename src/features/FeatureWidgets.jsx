@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FeatureIcon } from './FeatureIcons';
 import NewsImage from '../components/NewsImage';
-import { timeAgo } from '../utils/helpers';
 import { marketplaceService, matrimonyService, governmentNotificationService, featureService } from '../services/articleService';
 import { useAuth } from '../context/AuthContext';
 import { matrimonyLoginRedirect } from '../matrimony/matrimonyAuthRedirect';
@@ -317,28 +316,242 @@ export const FuelPriceWidget = ({ feature }) => {
   );
 };
 
+export const CurrencyWidget = ({ feature }) => {
+  const fallback = feature.config || {};
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    featureService
+      .getCurrencyLive()
+      .then(({ data: res }) => {
+        if (!cancelled) setData(res.data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const c = data || fallback;
+  const preview = (c.rates || []).slice(0, 3);
+
+  return (
+    <div className="util-tile">
+      <div className="flex items-center justify-between gap-2 text-brand-800 mb-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center text-brand-700 shrink-0">
+            <FeatureIcon name={feature.icon} className="w-3.5 h-3.5" />
+          </span>
+          <span className="text-[11px] font-bold uppercase tracking-wider truncate">{feature.name}</span>
+        </div>
+        <Link
+          to="/explore/currency"
+          className="text-[10px] font-semibold text-brand-700 hover:text-brand-900 whitespace-nowrap shrink-0"
+        >
+          View All →
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="space-y-2 animate-pulse">
+          <div className="h-4 w-24 bg-stone-200 rounded" />
+          <div className="h-7 w-20 bg-stone-200 rounded" />
+        </div>
+      ) : (
+        <>
+          <p className="text-[11px] text-slate-600 font-medium">{c.pair || 'USD / INR'}</p>
+          <p className="text-xl font-extrabold text-slate-900 mt-0.5">
+            {c.rate != null ? `₹${Number(c.rate).toLocaleString('en-IN', { maximumFractionDigits: 4 })}` : '—'}
+          </p>
+          <ChangeBadge value={c.changePercent} />
+          {preview.length > 1 && (
+            <div className="mt-2 space-y-1">
+              {preview
+                .filter((r) => r.code !== (c.highlight || 'USD'))
+                .slice(0, 2)
+                .map((r) => (
+                  <p key={r.code} className="text-[11px] text-slate-600 flex justify-between gap-2">
+                    <span>{r.code}</span>
+                    <span className="font-semibold text-slate-900">₹{Number(r.rate).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                  </p>
+                ))}
+            </div>
+          )}
+          {c.source && c.source !== 'config' && (
+            <p className="text-[10px] text-slate-400 mt-1.5">Live · {c.rates?.length || 0} currencies</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export const MarketWidget = ({ feature }) => {
+  const fallback = feature.config || {};
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    featureService
+      .getMarketLive()
+      .then(({ data: res }) => {
+        if (!cancelled) setData(res.data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const c = data || fallback;
+  const preview = (c.indexes || []).filter((r) => r.symbol !== (c.highlight || '^NSEI')).slice(0, 2);
+
+  return (
+    <div className="util-tile">
+      <div className="flex items-center justify-between gap-2 text-brand-800 mb-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center text-brand-700 shrink-0">
+            <FeatureIcon name={feature.icon} className="w-3.5 h-3.5" />
+          </span>
+          <span className="text-[11px] font-bold uppercase tracking-wider truncate">{feature.name}</span>
+        </div>
+        <Link
+          to="/explore/market"
+          className="text-[10px] font-semibold text-brand-700 hover:text-brand-900 whitespace-nowrap shrink-0"
+        >
+          View All →
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="space-y-2 animate-pulse">
+          <div className="h-4 w-24 bg-stone-200 rounded" />
+          <div className="h-7 w-28 bg-stone-200 rounded" />
+        </div>
+      ) : (
+        <>
+          <p className="text-[11px] text-slate-600 font-medium">{c.index || 'NIFTY 50'}</p>
+          <p className="text-xl font-extrabold text-slate-900 mt-0.5">
+            {c.value != null ? Number(c.value).toLocaleString('en-IN') : '—'}
+          </p>
+          <ChangeBadge value={c.changePercent} />
+          {preview.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {preview.map((r) => (
+                <p key={r.symbol || r.name} className="text-[11px] text-slate-600 flex justify-between gap-2">
+                  <span className="truncate">{r.name}</span>
+                  <span className="font-semibold text-slate-900">{Number(r.value).toLocaleString('en-IN')}</span>
+                </p>
+              ))}
+            </div>
+          )}
+          {c.source && c.source !== 'config' && (
+            <p className="text-[10px] text-slate-400 mt-1.5">Live · {c.indexes?.length || 0} indexes</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export const TrafficWidget = ({ feature }) => {
+  const fallback = feature.config || {};
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    featureService
+      .getTrafficLive()
+      .then(({ data: res }) => {
+        if (!cancelled) setData(res.data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const c = data || fallback;
+  const highlightSlug = c.highlight || 'chennai';
+  const preview = (c.areas || [])
+    .filter((r) => r.slug !== highlightSlug)
+    .slice(0, 2);
+  const level = c.level || 'normal';
+  const dot =
+    level === 'heavy' || level === 'slow'
+      ? 'bg-rose-500 ring-rose-100'
+      : level === 'moderate'
+        ? 'bg-amber-500 ring-amber-100'
+        : 'bg-emerald-500 ring-emerald-100';
+
+  return (
+    <div className="util-tile">
+      <div className="flex items-center justify-between gap-2 text-brand-800 mb-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-7 h-7 rounded-lg bg-brand-50 flex items-center justify-center text-brand-700 shrink-0">
+            <FeatureIcon name={feature.icon} className="w-3.5 h-3.5" />
+          </span>
+          <span className="text-[11px] font-bold uppercase tracking-wider truncate">{feature.name}</span>
+        </div>
+        <Link
+          to="/explore/traffic"
+          className="text-[10px] font-semibold text-brand-700 hover:text-brand-900 whitespace-nowrap shrink-0"
+        >
+          View All →
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="space-y-2 animate-pulse">
+          <div className="h-4 w-24 bg-stone-200 rounded" />
+          <div className="h-4 w-32 bg-stone-200 rounded" />
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2">
+            <span className={`w-2.5 h-2.5 rounded-full ring-4 ${dot}`} />
+            <p className="text-sm font-bold text-slate-900">{c.statusLabel || 'Normal'}</p>
+          </div>
+          <p className="text-[11px] text-slate-600 mt-1.5">{c.detail}</p>
+          <p className="text-[11px] text-slate-500">{c.city || 'Chennai'} Traffic</p>
+          {preview.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {preview.map((r) => (
+                <p key={r.slug || r.name} className="text-[11px] text-slate-600 flex justify-between gap-2">
+                  <span className="truncate">{r.name}</span>
+                  <span className="font-semibold text-slate-900">{r.statusLabel}</span>
+                </p>
+              ))}
+            </div>
+          )}
+          {c.source && c.source !== 'config' && (
+            <p className="text-[10px] text-slate-400 mt-1.5">Live · {c.areas?.length || 0} areas</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
 export const UtilityWidget = ({ feature }) => {
   const c = feature.config || {};
   const key = feature.key;
 
   let body = null;
-  if (key === 'currency') {
-    body = (
-      <>
-        <p className="text-[11px] text-slate-600 font-medium">{c.pair}</p>
-        <p className="text-xl font-extrabold text-slate-900 mt-0.5">{c.rate}</p>
-        <ChangeBadge value={c.changePercent} />
-      </>
-    );
-  } else if (key === 'market') {
-    body = (
-      <>
-        <p className="text-[11px] text-slate-600 font-medium">{c.index}</p>
-        <p className="text-xl font-extrabold text-slate-900 mt-0.5">{Number(c.value).toLocaleString('en-IN')}</p>
-        <ChangeBadge value={c.changePercent} />
-      </>
-    );
-  } else if (key === 'traffic') {
+  if (key === 'traffic') {
     body = (
       <>
         <div className="flex items-center gap-2">
@@ -398,11 +611,10 @@ export const TopNewsWidget = ({ feature, articles = [] }) => {
                   alt=""
                   className="w-16 h-14 rounded-xl object-cover shrink-0 ring-1 ring-black/5"
                 />
-                <div className="min-w-0">
+                <div className="min-w-0 self-center">
                   <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 group-hover:text-brand-800 font-tamil transition-colors">
                     {a.titleTamil || a.title}
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-1">{timeAgo(a.publishedAt || a.createdAt)}</p>
                 </div>
               </Link>
             ))}
@@ -681,30 +893,44 @@ export const MarketplaceWidget = ({ feature }) => {
   );
 };
 
+const dailyDoseHref = (item, featureKey) => {
+  const slug = item.meta?.slug;
+  if (slug === 'astrology' || slug === 'horoscope' || item.link === '/astrology' || item.title === 'Astrology') {
+    return '/astrology';
+  }
+  if (slug === 'game' || item.title === 'Random Game') return '/explore/random-game';
+  if (slug === 'stocks' || item.title === 'Stock Watchlist') return '/explore/stocks';
+  if (slug === 'quiz' || item.title === 'Daily Quiz') return '/explore/exams';
+  if (slug === 'history' || item.title === 'Today in History') return '/explore/today-in-history';
+  return item.link || `/explore/daily-dose`;
+};
+
 export const DailyDoseWidget = ({ feature }) => (
-  <CardShell title={feature.name} titleTamil={feature.nameTamil} viewAllTo={`/explore/${feature.key}`}>
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3">
+  <CardShell title={feature.name} titleTamil={feature.nameTamil} viewAllTo="/explore/daily-dose">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3 pb-1">
       {(feature.items || []).map((item) => {
         const isAstrology = item.link === '/astrology' || item.meta?.slug === 'astrology' || item.meta?.slug === 'horoscope';
         return (
           <Link
             key={item._id}
-            to={item.link || `/explore/${feature.key}`}
-            className="flex flex-col items-center text-center gap-2 p-3 rounded-2xl bg-stone-100/70 ring-1 ring-stone-200 hover:ring-brand-300 hover:bg-brand-50/50 transition-all"
+            to={dailyDoseHref(item, feature.key)}
+            className="flex flex-col items-center text-center gap-1.5 p-3 pb-3.5 rounded-2xl bg-stone-100/70 ring-1 ring-stone-200 hover:ring-brand-300 hover:bg-brand-50/50 transition-all min-h-[118px]"
           >
             {isAstrology ? (
-              <RasiImage slug="mesham" size="sm" alt={item.titleTamil || item.title || 'Astrology'} />
+              <RasiImage slug="mesham" size="sm" alt={item.titleTamil || item.title || 'Astrology'} className="shrink-0" />
             ) : (
               <span
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-soft"
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-soft shrink-0"
                 style={{ backgroundColor: item.color || '#0d9488' }}
               >
                 <FeatureIcon name={item.icon || 'spark'} className="w-5 h-5" />
               </span>
             )}
-            <span className="text-xs font-bold text-slate-900">{item.title}</span>
+            <span className="text-xs font-bold text-slate-900 leading-tight">{item.title}</span>
             {item.titleTamil && (
-              <span className="text-[10px] text-slate-600 font-tamil leading-tight">{item.titleTamil}</span>
+              <span className="text-[10px] text-slate-600 font-tamil leading-relaxed w-full whitespace-normal break-words px-0.5">
+                {item.titleTamil}
+              </span>
             )}
           </Link>
         );
@@ -713,83 +939,284 @@ export const DailyDoseWidget = ({ feature }) => (
   </CardShell>
 );
 
-export const NewsQuizWidget = ({ feature }) => (
-  <div className="rounded-2xl overflow-hidden h-full relative min-h-[168px] shadow-lift text-white p-5 sm:p-6 flex flex-col justify-between
-    bg-gradient-to-br from-slate-950 via-slate-900 to-brand-800">
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.25),transparent_45%)] pointer-events-none" />
-    <div className="relative">
-      <div className="flex items-center gap-2.5 mb-2">
-        <span className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
-          <FeatureIcon name="trophy" className="w-5 h-5 text-amber-300" />
-        </span>
-        <h2 className="font-bold text-lg font-headline">{feature.name}</h2>
-      </div>
-      <p className="text-sm text-white/70 leading-relaxed">{feature.config?.tagline || feature.description}</p>
-    </div>
-    <Link
-      to={`/explore/${feature.key}`}
-      className="relative mt-4 inline-flex self-start items-center px-5 py-2.5 rounded-2xl bg-brand-400 text-slate-900 text-sm font-bold hover:bg-brand-300 transition-colors shadow-soft"
-    >
-      {feature.config?.cta || 'Start Quiz'}
-    </Link>
-  </div>
-);
+export const NewsQuizWidget = ({ feature }) => {
+  const [meta, setMeta] = useState(null);
 
-export const LocalUpdatesWidget = ({ feature }) => (
-  <CardShell
-    title={`${feature.name}${feature.config?.city ? ` – ${feature.config.city}` : ''}`}
-    titleTamil={feature.nameTamil}
-    viewAllTo={`/explore/${feature.key}`}
-  >
-    <div className="grid grid-cols-2 gap-2.5">
-      {(feature.items || []).map((item) => (
-        <div key={item._id} className="rounded-2xl bg-stone-100/80 ring-1 ring-stone-200 p-3.5">
-          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{item.title}</p>
-          <p className="text-sm font-bold text-slate-900 mt-1">{item.meta?.status}</p>
-          <p className="text-[11px] text-slate-500">{item.meta?.detail}</p>
-        </div>
-      ))}
-    </div>
-  </CardShell>
-);
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      featureService
+        .getNewsQuizInfo()
+        .then(({ data: res }) => {
+          if (!cancelled) setMeta(res.data);
+        })
+        .catch(() => {});
+    };
+    load();
+    const id = setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
 
-export const TrendingWidget = ({ feature }) => (
-  <CardShell title={feature.name} titleTamil={feature.nameTamil} viewAllTo={`/explore/${feature.key}`}>
-    <ol className="space-y-2">
-      {(feature.items || []).map((item, i) => (
-        <li key={item._id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-stone-100/70 transition-colors">
-          <span className="w-7 h-7 rounded-lg bg-brand-50 text-brand-800 text-xs font-extrabold flex items-center justify-center">
-            {i + 1}
+  return (
+    <div className="rounded-2xl overflow-hidden h-full relative min-h-[168px] shadow-lift text-white p-5 sm:p-6 flex flex-col justify-between
+      bg-gradient-to-br from-slate-950 via-slate-900 to-brand-800">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.25),transparent_45%)] pointer-events-none" />
+      <div className="relative">
+        <div className="flex items-center gap-2.5 mb-2">
+          <span className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
+            <FeatureIcon name="trophy" className="w-5 h-5 text-amber-300" />
           </span>
-          <span className="flex-1 text-sm font-semibold text-slate-900">{item.title}</span>
-          <span className="text-[11px] text-slate-500 tabular-nums">{item.meta?.posts}</span>
-        </li>
-      ))}
-    </ol>
-  </CardShell>
-);
-
-export const CommunityWidget = ({ feature }) => (
-  <CardShell title={feature.name} titleTamil={feature.nameTamil} viewAllTo={`/explore/${feature.key}`}>
-    <ul className="space-y-4">
-      {(feature.items || []).map((item) => (
-        <li key={item._id} className="flex gap-3">
-          <NewsImage src={item.image} seed={item._id} alt="" className="w-10 h-10 rounded-full object-cover shrink-0 ring-2 ring-brand-100" />
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-900">
-              {item.title}{' '}
-              <span className="font-normal text-slate-400">· {item.meta?.postedAgo}</span>
-            </p>
-            <p className="text-sm text-slate-600 mt-1 font-tamil leading-snug">{item.titleTamil || item.description}</p>
-            <p className="text-[11px] text-slate-400 mt-1.5">
-              ♥ {item.meta?.likes || 0} · 💬 {item.meta?.comments || 0}
-            </p>
+          <div>
+            <h2 className="font-bold text-lg font-headline">{feature.name}</h2>
+            {feature.nameTamil ? (
+              <p className="text-[11px] font-tamil text-white/65">{feature.nameTamil}</p>
+            ) : null}
           </div>
-        </li>
-      ))}
-    </ul>
-  </CardShell>
-);
+        </div>
+        <p className="text-sm text-white/70 leading-relaxed">
+          {meta?.taglineTamil || feature.config?.tagline || feature.description}
+        </p>
+        {meta?.dateKey ? (
+          <p className="text-[10px] font-bold uppercase tracking-wide text-teal-300/90 mt-2">
+            Daily · {meta.dailySize || 5} Q · {meta.dateKey}
+          </p>
+        ) : null}
+      </div>
+      <Link
+        to="/explore/news-quiz"
+        className="relative mt-4 inline-flex self-start items-center px-5 py-2.5 rounded-2xl bg-brand-400 text-slate-900 text-sm font-bold hover:bg-brand-300 transition-colors shadow-soft"
+      >
+        {feature.config?.cta || 'Start Quiz'}
+      </Link>
+    </div>
+  );
+};
+
+export const LocalUpdatesWidget = ({ feature }) => {
+  const fallbackItems = feature.items || [];
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      featureService
+        .getLocalUpdatesLive()
+        .then(({ data: res }) => {
+          if (!cancelled) setData(res.data);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    };
+    load();
+    const id = setInterval(load, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  const city = data?.city || feature.config?.city || 'Chennai';
+  const items = data?.items?.length
+    ? data.items
+    : fallbackItems.map((item) => ({
+        key: item._id,
+        title: item.title,
+        status: item.meta?.status,
+        detail: item.meta?.detail,
+      }));
+
+  return (
+    <CardShell
+      title={`${feature.name}${city ? ` – ${city}` : ''}`}
+      titleTamil={feature.nameTamil}
+      viewAllTo="/explore/local-updates"
+      headerRight={
+        <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+          Live
+        </span>
+      }
+    >
+      {loading && !items.length ? (
+        <div className="grid grid-cols-2 gap-2.5">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="rounded-2xl bg-stone-100/80 h-[76px] animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2.5">
+          {items.map((item) => (
+            <div key={item.key || item.title} className="rounded-2xl bg-stone-100/80 ring-1 ring-stone-200 p-3.5">
+              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{item.title}</p>
+              <p className="text-sm font-bold text-slate-900 mt-1">{item.status || '—'}</p>
+              <p className="text-[11px] text-slate-500">{item.detail}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </CardShell>
+  );
+};
+
+export const TrendingWidget = ({ feature }) => {
+  const fallbackItems = feature.items || [];
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      featureService
+        .getTrendingLive({ limit: 4 })
+        .then(({ data: res }) => {
+          if (!cancelled) setData(res.data);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    };
+    load();
+    const id = setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  const items = data?.items?.length
+    ? data.items
+    : fallbackItems.map((item, i) => ({
+        id: item._id || `fb-${i}`,
+        rank: i + 1,
+        title: item.title,
+        posts: item.meta?.posts,
+      }));
+
+  return (
+    <CardShell
+      title={feature.name}
+      titleTamil={feature.nameTamil}
+      viewAllTo="/explore/trending"
+      headerRight={
+        <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700">
+          Daily
+        </span>
+      }
+    >
+      {loading && !items.length ? (
+        <ol className="space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <li key={i} className="h-10 rounded-xl bg-stone-100/80 animate-pulse" />
+          ))}
+        </ol>
+      ) : (
+        <ol className="space-y-2">
+          {items.map((item, i) => (
+            <li
+              key={item.id || item.title}
+              className="flex items-center gap-3 p-2 rounded-xl hover:bg-stone-100/70 transition-colors"
+            >
+              <span className="w-7 h-7 rounded-lg bg-brand-50 text-brand-800 text-xs font-extrabold flex items-center justify-center">
+                {item.rank || i + 1}
+              </span>
+              <span className="flex-1 text-sm font-semibold text-slate-900">{item.title}</span>
+              <span className="text-[11px] text-slate-500 tabular-nums">{item.posts}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </CardShell>
+  );
+};
+
+export const CommunityWidget = ({ feature }) => {
+  const fallbackItems = feature.items || [];
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      featureService
+        .getCommunityLive({ limit: 2 })
+        .then(({ data: res }) => {
+          if (!cancelled) setData(res.data);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    };
+    load();
+    const id = setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  const items = data?.items?.length
+    ? data.items
+    : fallbackItems.map((item) => ({
+        id: item._id,
+        author: item.title,
+        avatar: item.image,
+        text: item.titleTamil || item.description,
+        postedAgo: item.meta?.postedAgo,
+        likes: item.meta?.likes || 0,
+        comments: item.meta?.comments || 0,
+      }));
+
+  return (
+    <CardShell
+      title={feature.name}
+      titleTamil={feature.nameTamil}
+      viewAllTo="/explore/community"
+      headerRight={
+        <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-700">
+          Daily
+        </span>
+      }
+    >
+      {loading && !items.length ? (
+        <ul className="space-y-4">
+          {[1, 2].map((i) => (
+            <li key={i} className="h-16 rounded-xl bg-stone-100/80 animate-pulse" />
+          ))}
+        </ul>
+      ) : (
+        <ul className="space-y-4">
+          {items.map((item) => (
+            <li key={item.id || item.author} className="flex gap-3">
+              <NewsImage
+                src={item.avatar}
+                seed={item.id || item.author}
+                alt=""
+                className="w-10 h-10 rounded-full object-cover shrink-0 ring-2 ring-brand-100"
+              />
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900">
+                  {item.author}{' '}
+                  <span className="font-normal text-slate-400">· {item.postedAgo}</span>
+                </p>
+                <p className="text-sm text-slate-600 mt-1 font-tamil leading-snug">{item.text}</p>
+                <p className="text-[11px] text-slate-400 mt-1.5">
+                  ♥ {item.likes || 0} · 💬 {item.comments || 0}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </CardShell>
+  );
+};
 
 export const PortalWidget = ({ feature }) => (
   <CardShell title={feature.name} titleTamil={feature.nameTamil}>
@@ -806,10 +1233,10 @@ export const PortalWidget = ({ feature }) => (
 export const FEATURE_RENDERERS = {
   weather: WeatherWidget,
   gold_price: GoldPriceWidget,
-  currency: UtilityWidget,
-  market: UtilityWidget,
+  currency: CurrencyWidget,
+  market: MarketWidget,
   fuel_price: FuelPriceWidget,
-  traffic: UtilityWidget,
+  traffic: TrafficWidget,
   top_news: TopNewsWidget,
   important_today: ImportantTodayWidget,
   jobs: GovernmentNotificationsWidget,

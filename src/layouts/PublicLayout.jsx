@@ -8,6 +8,8 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import WhatsAppChannelSection from '../components/WhatsAppChannelSection';
 import Advertisement from '../components/Advertisement';
 import AdSenseSlot from '../components/AdSenseSlot';
+import EventGifFloat from '../components/EventGifFloat';
+import NewsReelButton from '../components/NewsReelButton';
 import AnalyticsTracker from '../components/AnalyticsTracker';
 import { settingService } from '../services/articleService';
 import { resolveTrackingIds } from '../utils/analyticsIds';
@@ -133,6 +135,8 @@ const PublicLayout = () => {
         <AdSenseSlot location="mobile_sticky" page="all" />
       </div>
       <MobileBottomNav />
+      <EventGifFloat />
+      <NewsReelButton />
     </div>
   );
 };

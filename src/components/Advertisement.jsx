@@ -40,7 +40,11 @@ const Advertisement = ({ position, className = '', label = true }) => {
       src={ad.image}
       seed={`ad-${ad._id || position}`}
       alt={ad.title || 'Advertisement'}
-      className="w-full rounded-md max-h-64 object-contain mx-auto bg-stone-50"
+      className={`w-full rounded-xl mx-auto block ${
+        String(position).startsWith('category_') || position === 'category_below'
+          ? 'h-auto'
+          : 'max-h-64 object-contain bg-stone-50'
+      }`}
       loading="lazy"
     />
   ) : (

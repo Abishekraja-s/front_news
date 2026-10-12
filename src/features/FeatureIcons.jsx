@@ -83,6 +83,30 @@ export const FeatureIcon = ({ name = 'spark', className = 'w-5 h-5' }) => {
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.8 7.1 18.2l.9-5.5-4-3.9 5.5-.8L12 3z" />
         </svg>
       );
+    case 'quiz':
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.1 9a3 3 0 015.8 1c0 2-3 2.5-3 4m.1 3h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
+        </svg>
+      );
+    case 'history':
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l2.5 1.5M3 12a9 9 0 101.5-5M3 4v4h4" />
+        </svg>
+      );
+    case 'game':
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 9h4M8 7v4M15.5 10h.01M18 10h.01M4 12a4 4 0 014-4h8a4 4 0 014 4v2a3 3 0 01-3 3h-1l-2-2H10l-2 2H7a3 3 0 01-3-3v-2z" />
+        </svg>
+      );
+    case 'spark':
+      return (
+        <svg {...props}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l1.2 4.2L17 8.5l-3.8 1.3L12 14l-1.2-4.2L7 8.5l3.8-1.3L12 3zM5 16l.7 2.3L8 19l-2.3.7L5 22l-.7-2.3L2 19l2.3-.7L5 16zm14-1l.6 2L21 18l-1.4.5L19 21l-.6-2.5L17 18l1.4-.5L19 15z" />
+        </svg>
+      );
     case 'water':
     case 'power':
     case 'metro':
@@ -91,10 +115,6 @@ export const FeatureIcon = ({ name = 'spark', className = 'w-5 h-5' }) => {
     case 'trend':
     case 'alert':
     case 'news':
-    case 'spark':
-    case 'quiz':
-    case 'history':
-    case 'game':
     case 'doc':
     case 'wallet':
     case 'id':

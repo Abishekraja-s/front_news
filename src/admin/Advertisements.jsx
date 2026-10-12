@@ -6,10 +6,42 @@ import DataTable from './DataTable';
 import NewsImage from '../components/NewsImage';
 import ImageUploadField from '../components/ImageUploadField';
 
+const CATEGORY_BANNER_LABELS = {
+  'tamil-nadu': 'Tamil Nadu / தமிழ்நாடு',
+  chennai: 'Chennai / சென்னை',
+  india: 'India / இந்தியா',
+  world: 'World / உலகம்',
+  politics: 'Politics / அரசியல்',
+  business: 'Business / வணிகம்',
+  sports: 'Sports / விளையாட்டு',
+  cinema: 'Cinema / சினிமா',
+  technology: 'Technology / தொழில்நுட்பம்',
+  education: 'Education / கல்வி',
+  jobs: 'Jobs / வேலைவாய்ப்பு',
+  spiritual: 'Spiritual / ஆன்மிகம்',
+  special: 'Special / சிறப்பு',
+};
+
 const AD_POSITIONS = [
-  'header', 'top_banner', 'homepage_top', 'homepage_middle',
-  'sidebar', 'article_top', 'article_middle', 'article_bottom', 'footer', 'mobile_sticky',
+  { value: 'header', label: 'Header' },
+  { value: 'top_banner', label: 'Top banner' },
+  { value: 'homepage_top', label: 'Homepage top' },
+  { value: 'homepage_middle', label: 'Homepage middle' },
+  { value: 'sidebar', label: 'Sidebar' },
+  { value: 'article_top', label: 'Article top' },
+  { value: 'article_middle', label: 'Article middle' },
+  { value: 'article_bottom', label: 'Article bottom' },
+  { value: 'footer', label: 'Footer' },
+  { value: 'mobile_sticky', label: 'Mobile sticky' },
+  { value: 'category_below', label: 'All categories — below title (shared)' },
+  ...Object.entries(CATEGORY_BANNER_LABELS).map(([slug, name]) => ({
+    value: `category_${slug}`,
+    label: `Category banner — ${name}`,
+  })),
 ];
+
+const positionLabel = (value) =>
+  AD_POSITIONS.find((p) => p.value === value)?.label || String(value || '').replace(/_/g, ' ');
 
 const emptyForm = {
   title: '',
@@ -170,7 +202,7 @@ const Advertisements = () => {
         header: 'Position',
         sortable: true,
         render: (row) => (
-          <span className="capitalize text-slate-600 whitespace-nowrap">{row.position.replace(/_/g, ' ')}</span>
+          <span className="text-slate-600 whitespace-nowrap text-xs sm:text-sm">{positionLabel(row.position)}</span>
         ),
       },
       {
@@ -269,7 +301,7 @@ const Advertisements = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               <select value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} className="admin-input">
                 {AD_POSITIONS.map((p) => (
-                  <option key={p} value={p}>{p.replace(/_/g, ' ')}</option>
+                  <option key={p.value} value={p.value}>{p.label}</option>
                 ))}
               </select>
               <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="admin-input">

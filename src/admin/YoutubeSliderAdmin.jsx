@@ -32,8 +32,8 @@ const YoutubeSliderAdmin = () => {
   const [channelForm, setChannelForm] = useState({
     channelUrl: '',
     name: '',
-    sliderTitle: 'YouTube',
-    sliderTitleTamil: 'யூடியூப்',
+    sliderTitle: 'Videos',
+    sliderTitleTamil: 'வீடியோக்கள்',
     maxVideos: 15,
     autoFetchEnabled: true,
     sliderEnabled: true,
@@ -51,8 +51,8 @@ const YoutubeSliderAdmin = () => {
       setChannelForm({
         channelUrl: ch.channelUrl || '',
         name: ch.name || '',
-        sliderTitle: ch.sliderTitle || 'YouTube',
-        sliderTitleTamil: ch.sliderTitleTamil || 'யூடியூப்',
+        sliderTitle: ch.sliderTitle || 'Videos',
+        sliderTitleTamil: ch.sliderTitleTamil || 'வீடியோக்கள்',
         maxVideos: ch.maxVideos || 15,
         autoFetchEnabled: ch.autoFetchEnabled !== false,
         sliderEnabled: ch.sliderEnabled !== false,

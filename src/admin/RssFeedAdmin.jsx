@@ -967,11 +967,11 @@ const RssFeedAdmin = () => {
                 onChange={(e) => setForm({ ...form, translateToTamil: e.target.checked })}
                 className="rounded border-slate-300"
               />
-              Translate to Tamil (Gemini)
+              Translate to Tamil on fetch
             </label>
           </div>
           <p className="text-xs text-slate-500">
-            Opens each story page and pulls the full article body (RSS feeds usually send only a short description). Then translates title + full body to Tamil. Needs Gemini API key in Admin → AEO & GEO (or GEMINI_API_KEY in server .env).
+            Opens each story page and pulls the full article body (RSS feeds usually send only a short description). Then translates title + full body to Tamil (Gemini when available, otherwise free MyMemory). Keep Auto-fetch ON so new items convert automatically.
           </p>
           <div className="flex gap-2">
             <button type="submit" disabled={saving} className="btn-primary text-sm disabled:opacity-50">

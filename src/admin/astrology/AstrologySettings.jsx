@@ -240,7 +240,10 @@ const AstrologySettings = () => {
               onChange={(e) => setField('syncTime', e.target.value)}
               placeholder="00:05"
             />
-            <p className="text-xs text-slate-500 mt-1">Default 12:05 AM Asia/Kolkata</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Runs once daily at this time (Asia/Kolkata by default). If the server was offline then, auto sync
+              also catch-ups on startup and every 30 minutes when today&apos;s 12 Rasis are missing.
+            </p>
           </label>
 
           <label className="flex items-center gap-2 text-sm mt-6">

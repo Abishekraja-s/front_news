@@ -1,5 +1,19 @@
 import { getImageUrl } from '../utils/images';
 
+const previewUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('blob:') || url.startsWith('data:')) return url;
+  return getImageUrl(url);
+};
+
+const looksLikeImage = (url, mime) => {
+  if (mime && mime.startsWith('image/')) return true;
+  if (mime && mime.includes('pdf')) return false;
+  const clean = String(url || '').split('?')[0].toLowerCase();
+  if (clean.startsWith('blob:')) return !mime || mime.startsWith('image/');
+  return /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i.test(clean);
+};
+
 export const emptyMatrimonyForm = () => ({
   profileId: '',
   fullName: '',
@@ -23,6 +37,8 @@ export const emptyMatrimonyForm = () => ({
   birthStar: '',
   dosham: '',
   horoscopeUrl: '',
+  horoscopeFileName: '',
+  horoscopeMime: '',
   height: '',
   weight: '',
   bodyType: '',
@@ -154,6 +170,11 @@ export const buildProfilePayload = (form, { includeProfileId = false } = {}) => 
     delete payload.profileId;
   }
   delete payload.adminNotes;
+  delete payload.horoscopeFileName;
+  delete payload.horoscopeMime;
+  delete payload.age;
+  const years = calcAge(form.dateOfBirth);
+  if (years !== '' && years >= 18) payload.age = years;
   return payload;
 };
 
@@ -257,25 +278,32 @@ export const validateMatrimonyProfileForm = (form) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(form.email || '').trim())) {
     return 'Enter a valid email address';
   }
+  const years = calcAge(form.dateOfBirth);
+  if (years === '' || years < 18) {
+    return 'Date of birth must make age 18 or above';
+  }
+  if (years > 100) {
+    return 'Enter a valid date of birth';
+  }
   return null;
 };
 
-export const Field = ({ label, children, required }) => (
-  <label className="block text-sm">
+export const Field = ({ label, children, required, className = '' }) => (
+  <label className={`block text-sm min-w-0 ${className}`}>
     <span className="text-slate-600 font-medium">
       {label}
       {required && <span className="text-rose-500"> *</span>}
     </span>
-    <div className="mt-1">{children}</div>
+    <div className="mt-1 min-w-0">{children}</div>
   </label>
 );
 
-export const inputCls = 'w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white';
+export const inputCls = 'w-full min-w-0 max-w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white';
 
 export const Section = ({ title, children }) => (
-  <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 mb-4">
+  <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 mb-4 overflow-hidden">
     <h2 className="text-sm font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100">{title}</h2>
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{children}</div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{children}</div>
   </section>
 );
 
@@ -354,6 +382,8 @@ export const MatrimonyProfileFields = ({
             type="date"
             className={inputCls}
             required={r}
+            max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().slice(0, 10)}
+            min={new Date(new Date().setFullYear(new Date().getFullYear() - 80)).toISOString().slice(0, 10)}
             value={form.dateOfBirth}
             onChange={(e) => set('dateOfBirth', e.target.value)}
           />
@@ -404,17 +434,17 @@ export const MatrimonyProfileFields = ({
         </Field>
         <div className="sm:col-span-2 lg:col-span-3">
           <Field label="Profile Photo" required={r}>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 min-w-0">
               {form.profilePhoto && (
                 <img
-                  src={getImageUrl(form.profilePhoto)}
-                  alt=""
-                  className="w-20 h-20 rounded-full object-cover border border-slate-200"
+                  src={previewUrl(form.profilePhoto)}
+                  alt="Profile preview"
+                  className="w-20 h-20 rounded-full object-cover border border-slate-200 bg-stone-100 shrink-0"
                 />
               )}
-              <input type="file" accept="image/*" onChange={onPhoto} disabled={uploading} className="text-sm" />
+              <input type="file" accept="image/*" onChange={onPhoto} disabled={uploading} className="text-sm w-full sm:w-auto max-w-full" />
               <input
-                className={`${inputCls} max-w-md`}
+                className={`${inputCls} sm:max-w-md`}
                 required={r && !form.profilePhoto}
                 value={form.profilePhoto?.startsWith('blob:') ? '' : form.profilePhoto}
                 onChange={(e) => set('profilePhoto', e.target.value)}
@@ -431,9 +461,9 @@ export const MatrimonyProfileFields = ({
                   {form.photos.map((url, index) => (
                     <div key={`${url}-${index}`} className="relative">
                       <img
-                        src={getImageUrl(url)}
-                        alt=""
-                        className="w-16 h-16 rounded-lg object-cover border border-slate-200"
+                        src={previewUrl(url)}
+                        alt={`Photo ${index + 1}`}
+                        className="w-16 h-16 rounded-lg object-cover border border-slate-200 bg-stone-100"
                       />
                       <button
                         type="button"
@@ -447,12 +477,12 @@ export const MatrimonyProfileFields = ({
                   ))}
                 </div>
               )}
-              <div className="flex flex-wrap items-center gap-3">
-                <input type="file" accept="image/*" onChange={onGalleryPhoto} disabled={uploading} className="text-sm" required={r && !(form.photos || []).length} />
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 min-w-0">
+                <input type="file" accept="image/*" onChange={onGalleryPhoto} disabled={uploading} className="text-sm w-full sm:w-auto max-w-full" required={r && !(form.photos || []).length} />
                 {onAddGalleryPhotoUrl && (
-                  <div className="flex flex-wrap gap-2 items-center">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:items-center min-w-0">
                     <input
-                      className={`${inputCls} max-w-xs`}
+                      className={`${inputCls} sm:max-w-xs`}
                       id="gallery-url-input"
                       placeholder="Paste photo URL"
                       onKeyDown={(e) => {
@@ -465,7 +495,7 @@ export const MatrimonyProfileFields = ({
                     />
                     <button
                       type="button"
-                      className="btn-secondary text-xs py-2 px-3"
+                      className="btn-secondary text-xs py-2 px-3 w-full sm:w-auto"
                       onClick={() => {
                         const el = document.getElementById('gallery-url-input');
                         if (el?.value) {
@@ -532,17 +562,29 @@ export const MatrimonyProfileFields = ({
         <Field label="Dosham" required={r}><input className={inputCls} required={r} value={form.dosham} onChange={(e) => set('dosham', e.target.value)} /></Field>
         <div className="sm:col-span-2 lg:col-span-3">
           <Field label="Horoscope / Jathagam Upload" required={r}>
-            <div className="flex flex-wrap items-center gap-3">
-              <input type="file" accept="image/*,.pdf" onChange={onHoroscope} disabled={uploading} className="text-sm" />
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 min-w-0">
+              {form.horoscopeUrl && looksLikeImage(form.horoscopeUrl, form.horoscopeMime) && (
+                <img
+                  src={previewUrl(form.horoscopeUrl)}
+                  alt="Horoscope preview"
+                  className="w-20 h-20 rounded-lg object-cover border border-slate-200 bg-stone-100 shrink-0"
+                />
+              )}
+              {form.horoscopeUrl && !looksLikeImage(form.horoscopeUrl, form.horoscopeMime) && (
+                <span className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5 break-all">
+                  {form.horoscopeFileName || 'Document selected'}
+                </span>
+              )}
+              <input type="file" accept="image/*,.pdf" onChange={onHoroscope} disabled={uploading} className="text-sm w-full sm:w-auto max-w-full" />
               <input
-                className={`${inputCls} max-w-md`}
+                className={`${inputCls} sm:max-w-md`}
                 required={r && !form.horoscopeUrl}
                 value={form.horoscopeUrl?.startsWith('blob:') ? '' : form.horoscopeUrl}
                 onChange={(e) => set('horoscopeUrl', e.target.value)}
                 placeholder="Or paste document URL"
               />
               {form.horoscopeUrl && (
-                <a href={getImageUrl(form.horoscopeUrl)} target="_blank" rel="noreferrer" className="text-sm text-brand-700 font-medium">
+                <a href={previewUrl(form.horoscopeUrl)} target="_blank" rel="noreferrer" className="text-sm text-brand-700 font-medium">
                   View file
                 </a>
               )}
@@ -715,8 +757,16 @@ export const createMatrimonyUploadHandlers = ({
       e.target.value = '';
     },
     handleHoroscope: async (e) => {
-      const url = await uploadFile(e.target.files?.[0], true);
-      if (url) set('horoscopeUrl', url);
+      const file = e.target.files?.[0];
+      const url = await uploadFile(file, true);
+      if (url) {
+        setForm((f) => ({
+          ...f,
+          horoscopeUrl: url,
+          horoscopeFileName: file?.name || f.horoscopeFileName || '',
+          horoscopeMime: file?.type || '',
+        }));
+      }
       e.target.value = '';
     },
     handleGalleryPhoto: async (e) => {

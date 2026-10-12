@@ -33,7 +33,7 @@ const YoutubeVideoSlider = () => {
 
   if (loading || !channel || videos.length === 0) return null;
 
-  const title = channel.sliderTitleTamil || channel.sliderTitle || 'YouTube';
+  const title = channel.sliderTitleTamil || channel.sliderTitle || 'வீடியோக்கள்';
 
   return (
     <section className="mb-10" aria-labelledby="youtube-slider-heading">

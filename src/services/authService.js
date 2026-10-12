@@ -22,6 +22,23 @@ export const authService = {
     }
     return data;
   },
+  sendSellerRegisterOtp: (payload) =>
+    api.post('/marketplace/seller/register/send-otp', {
+      ...payload,
+      email: String(payload.email || '').trim().toLowerCase(),
+    }),
+  verifySellerRegisterOtp: async (payload) => {
+    const { data } = await api.post('/marketplace/seller/register/verify-otp', {
+      email: String(payload.email || '').trim().toLowerCase(),
+      otp: String(payload.otp || '').replace(/\D/g, ''),
+    });
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+    return data;
+  },
   registerMatrimonyMember: async (payload) => {
     const { data } = await api.post('/matrimony/member/register', {
       ...payload,

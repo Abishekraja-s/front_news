@@ -275,7 +275,7 @@ const FeaturesAdmin = () => {
               Enabled on website
             </label>
             <label className="block text-sm sm:col-span-2">
-              <span className="text-slate-600">Config (JSON) — rates, city, API settings, links…</span>
+              <span className="text-slate-600">Config (JSON) — rates, city, API settings, links. Currency, Market and Traffic fetch live automatically.</span>
               <textarea rows={6} className="mt-1 w-full border rounded-lg px-3 py-2 font-mono text-xs" value={configText} onChange={(e) => setConfigText(e.target.value)} />
             </label>
           </div>
