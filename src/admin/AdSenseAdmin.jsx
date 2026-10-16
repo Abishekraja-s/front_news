@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { adSenseService, categoryService } from '../services/articleService';
+import AdSenseUnit from '../components/AdSenseUnit';
 import AdminPageHeader, { StatusBadge } from './AdminPageHeader';
+import { isValidAdSlotId, isValidPublisherId } from '../utils/adsense';
 
 const emptyForm = {
   name: '',
@@ -468,31 +470,51 @@ const AdSenseAdmin = () => {
               Close
             </button>
           </div>
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-2">Advertisement</p>
-            <div
-              className="mx-auto bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 text-sm"
-              style={
-                preview.sizeMode === 'fixed'
-                  ? { width: Math.min(preview.width || 336, 100) + '%', maxWidth: preview.width || 336, height: preview.height || 280 }
-                  : { width: '100%', minHeight: 90 }
-              }
-            >
-              <div className="px-4 py-6">
-                <p className="font-medium text-slate-600">{preview.name || 'Ad unit'}</p>
-                <p className="text-xs font-mono mt-1 text-slate-400">{preview.publisherId}</p>
-                <p className="text-xs font-mono text-slate-400">slot: {preview.adSlotId}</p>
-                <p className="text-xs mt-2 text-slate-500">
-                  {LOCATION_LABELS[preview.location] || preview.location}
-                  {preview.location === 'custom' && preview.customLocation ? ` / ${preview.customLocation}` : ''}
-                  {' · '}
-                  {preview.adFormat} · {preview.sizeMode}
-                </p>
-              </div>
-            </div>
-            <p className="text-xs text-slate-400 mt-3">
-              Live AdSense creatives appear on the public site after the unit is approved by Google.
+
+          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1 text-center">
+              Admin configuration preview
             </p>
+            <p className="text-xs text-slate-500 text-center mb-3">
+              Loads the real AdSense unit markup (<span className="font-mono">data-ad-client</span> /{' '}
+              <span className="font-mono">data-ad-slot</span>). A blank fill here is common in admin or on localhost —
+              it does not mean the public placement is broken.
+            </p>
+
+            <div className="mx-auto bg-white border border-slate-200 rounded-lg p-3 min-h-[90px]">
+              {isValidPublisherId(preview.publisherId) && isValidAdSlotId(preview.adSlotId) ? (
+                <AdSenseUnit
+                  key={`preview-${preview._id}-${preview.publisherId}-${preview.adSlotId}-${preview.sizeMode}`}
+                  placement={preview}
+                  previewMode
+                  showLabel={false}
+                />
+              ) : (
+                <div className="px-4 py-6 text-center text-sm text-amber-700">
+                  Enter a valid Publisher ID (<span className="font-mono">ca-pub-…</span>) and numeric Ad Slot ID to preview.
+                </div>
+              )}
+            </div>
+
+            <div className="mt-3 rounded-lg bg-white border border-slate-100 px-3 py-2.5 text-left text-xs text-slate-500 space-y-1">
+              <p>
+                <span className="font-semibold text-slate-700">Name:</span> {preview.name || 'Ad unit'}
+              </p>
+              <p className="font-mono break-all">
+                <span className="font-sans font-semibold text-slate-700">Publisher:</span> {preview.publisherId || '—'}
+              </p>
+              <p className="font-mono">
+                <span className="font-sans font-semibold text-slate-700">Slot:</span> {preview.adSlotId || '—'}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-700">Placement:</span>{' '}
+                {LOCATION_LABELS[preview.location] || preview.location}
+                {preview.location === 'custom' && preview.customLocation ? ` / ${preview.customLocation}` : ''}
+                {' · '}
+                {preview.adFormat} · {preview.sizeMode}
+                {preview.sizeMode === 'fixed' ? ` · ${preview.width || 336}×${preview.height || 280}` : ''}
+              </p>
+            </div>
           </div>
         </div>
       )}

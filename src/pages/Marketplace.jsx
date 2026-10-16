@@ -62,7 +62,7 @@ const Marketplace = () => {
             </div>
             <div className="flex flex-wrap gap-2">
               <Link to="/seller/register" className="btn-primary text-sm">Sell on Marketplace</Link>
-              <Link to="/seller/login" className="btn-secondary text-sm">Seller Login</Link>
+              <Link to="/seller/login" className="btn-secondary text-sm">Marketplace Login</Link>
             </div>
           </div>
           <form onSubmit={handleSearch} className="mt-6 flex flex-wrap gap-2 max-w-3xl">

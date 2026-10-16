@@ -122,14 +122,14 @@ const MobileMenu = ({ isOpen, onClose }) => {
             onClick={onClose}
             className="block w-full text-center px-4 py-2.5 rounded-xl bg-teal-700 text-white text-sm font-semibold"
           >
-            Seller Login
+            Marketplace Login
           </Link>
           <Link
-            to="/seller/register"
+            to="/matrimony/login"
             onClick={onClose}
             className="block w-full text-center px-4 py-2.5 rounded-xl border border-stone-200 text-slate-700 text-sm font-medium"
           >
-            Become a Seller
+            Matrimony Login
           </Link>
         </div>
       </div>

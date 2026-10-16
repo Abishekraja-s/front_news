@@ -720,6 +720,29 @@
   }
 }
 
+/* Mobile only: pin header + bottom nav so they never hide on scroll */
+@media (max-width: 1023px) {
+  .site-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50;
+    transform: none !important;
+  }
+
+  .mobile-bottom-nav {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50;
+    transform: none !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
 /* Hide sticky mobile ad while site menu is open */
 body.mobile-menu-open .mobile-sticky-ad {
   display: none;

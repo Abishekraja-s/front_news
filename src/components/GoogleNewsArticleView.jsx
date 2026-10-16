@@ -6,6 +6,7 @@ import { cleanGoogleNewsContent, toArticleParagraphs, truncateExcerpt } from '..
 import NewsImage from './NewsImage';
 import GoogleNewsCard from './GoogleNewsCard';
 import ShareButtons from './ShareButtons';
+import MustPicksLists from './MustPicksLists';
 
 const GoogleNewsArticleView = ({ item, related = [] }) => {
   const title = item.title || '';
@@ -58,6 +59,12 @@ const GoogleNewsArticleView = ({ item, related = [] }) => {
         {item.isMustRead && (
           <span className="inline-flex px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase mr-2">
             Must Read
+          </span>
+        )}
+        {item.isMustWatch && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-600 text-white text-xs font-bold uppercase mr-2">
+            <span aria-hidden>▶</span>
+            Must Watch
           </span>
         )}
 
@@ -129,6 +136,8 @@ const GoogleNewsArticleView = ({ item, related = [] }) => {
           slug={item.slug}
           url={social.url}
         />
+
+        <MustPicksLists excludeSlug={item.slug} className="mt-8" />
 
         {related.length > 0 && (
           <section className="mt-12 pt-8 border-t" aria-labelledby="related-google-news">

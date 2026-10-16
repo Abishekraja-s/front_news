@@ -200,6 +200,8 @@ export const instagramPostService = {
 export const googleNewsService = {
   getPublic: (limit = 12) => api.get(`/google-news/public?limit=${limit}`),
   getPublicList: (params = {}) => api.get('/google-news/public/list', { params }),
+  getMustPicks: (flag = 'must-read', limit = 6) =>
+    api.get('/google-news/public/must-picks', { params: { flag, limit } }),
   getBySlug: (slug) => api.get(`/google-news/public/slug/${slug}`),
   getRelated: (slug, limit = 6) => api.get(`/google-news/public/slug/${slug}/related`, { params: { limit } }),
   getConfig: () => api.get('/google-news/config'),

@@ -192,7 +192,7 @@ const SellerRegister = () => {
           <p className="text-xs text-slate-500">
             After verification you will be signed in automatically. Next time use{' '}
             <Link to="/seller/login" className="text-teal-700 font-semibold">
-              Seller Login
+              Marketplace Login
             </Link>
             .
           </p>

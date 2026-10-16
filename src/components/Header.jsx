@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import Navigation from './Navigation';
@@ -53,6 +53,8 @@ const Header = ({ settings }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileHeaderH, setMobileHeaderH] = useState(0);
+  const headerRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,6 +67,34 @@ const Header = ({ settings }) => {
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, []);
+
+  // Mobile only: measure fixed header so content isn't covered
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+
+    const sync = () => {
+      const isMobile = window.matchMedia('(max-width: 1023px)').matches;
+      if (!isMobile) {
+        setMobileHeaderH(0);
+        document.documentElement.style.removeProperty('--mobile-header-h');
+        return;
+      }
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      setMobileHeaderH(h);
+      document.documentElement.style.setProperty('--mobile-header-h', `${h}px`);
+    };
+
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    window.addEventListener('resize', sync);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', sync);
+      document.documentElement.style.removeProperty('--mobile-header-h');
+    };
+  }, [searchOpen]);
 
   // Hide sticky bottom ad while menu is open (avoids overlap on mobile)
   useEffect(() => {
@@ -91,7 +121,11 @@ const Header = ({ settings }) => {
   const siteLabel = settings?.siteName || 'The Great India News';
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-stone-200 shadow-sm">
+    <>
+    <header
+      ref={headerRef}
+      className="site-header sticky top-0 z-50 w-full bg-white border-b border-stone-200 shadow-sm lg:self-start max-lg:fixed max-lg:inset-x-0 max-lg:top-0"
+    >
       <TopBar settings={settings} />
 
       <div className="container-news">
@@ -135,7 +169,7 @@ const Header = ({ settings }) => {
               to="/seller/login"
               className="hidden sm:inline-flex items-center px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-teal-200 text-teal-800 bg-teal-50 hover:bg-teal-100 transition-colors whitespace-nowrap"
             >
-              Seller Login
+              Marketplace Login
             </Link>
 
             {!searchOpen && (
@@ -188,6 +222,13 @@ const Header = ({ settings }) => {
 
       <MobileMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
     </header>
+    {/* Mobile spacer for fixed header — desktop sticky needs no spacer */}
+    <div
+      className="lg:hidden shrink-0"
+      style={{ height: mobileHeaderH || 'var(--mobile-header-h, 6.5rem)' }}
+      aria-hidden
+    />
+    </>
   );
 };
 

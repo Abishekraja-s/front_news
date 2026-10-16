@@ -43,7 +43,7 @@ const SellerLogin = () => {
 
   return (
     <SellerAuthShell
-      title="Seller Login"
+      title="Marketplace Login"
       subtitle="Manage your Marketplace listings and enquiries"
       footer={
         <SellerAuthFooter>

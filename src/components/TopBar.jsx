@@ -25,7 +25,7 @@ const TopBar = ({ settings }) => (
           Explore
         </Link>
         <Link to="/seller/login" className="hover:text-brand-300 transition-colors">
-          Seller Login
+          Marketplace Login
         </Link>
         <Link to="/about" className="hover:text-brand-300 transition-colors">
           About

@@ -9,6 +9,7 @@ import { buildArticleSocialMeta } from '../utils/seo';
 import { getYoutubeEmbedUrl } from '../utils/youtube';
 import NewsImage from '../components/NewsImage';
 import ShareButtons from '../components/ShareButtons';
+import MustPicksLists from '../components/MustPicksLists';
 import RelatedNews from '../components/RelatedNews';
 import Advertisement from '../components/Advertisement';
 import AdSenseSlot from '../components/AdSenseSlot';
@@ -235,7 +236,8 @@ const Article = () => {
               </div>
             )}
 
-            <div className="mt-6 pt-6 border-t">
+            {/* Mobile / tablet: share once under article */}
+            <div className="mt-6 pt-6 border-t lg:hidden">
               <ShareButtons
                 title={social.title}
                 description={social.description}
@@ -243,18 +245,25 @@ const Article = () => {
                 image={article.ogImage || article.featuredImage}
                 url={social.url}
               />
+              <MustPicksLists excludeSlug={article.slug} className="mt-6" />
             </div>
           </div>
 
           <aside className="space-y-6">
-            <div className="sticky top-24">
-              <ShareButtons
-                title={social.title}
-                description={social.description}
-                slug={article.slug}
-                image={article.ogImage || article.featuredImage}
-                url={social.url}
-              />
+            <div className="sticky top-24 space-y-6">
+              {/* Desktop: share in sidebar only (avoids mobile duplicate) */}
+              <div className="hidden lg:block">
+                <ShareButtons
+                  title={social.title}
+                  description={social.description}
+                  slug={article.slug}
+                  image={article.ogImage || article.featuredImage}
+                  url={social.url}
+                />
+              </div>
+              <div className="hidden lg:block">
+                <MustPicksLists excludeSlug={article.slug} />
+              </div>
               <Advertisement position="sidebar" className="mt-6" />
               <AdSenseSlot
                 location="sidebar"

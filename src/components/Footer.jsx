@@ -79,6 +79,14 @@ const Footer = ({ settings }) => {
             <li><Link to="/terms" className="hover:text-brand-300 transition-colors">Terms of Use</Link></li>
             <li><Link to="/copyright" className="hover:text-brand-300 transition-colors">Copyright</Link></li>
             <li><Link to="/grievance" className="hover:text-brand-300 transition-colors">Grievance</Link></li>
+            <li>
+              <a
+                href="mailto:grievance@thegreatindianews.com"
+                className="hover:text-brand-300 transition-colors"
+              >
+                Advertisement Us
+              </a>
+            </li>
           </ul>
           {settings?.contactEmail && (
             <p className="text-sm mt-5 text-white/55">

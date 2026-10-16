@@ -59,7 +59,7 @@ const Home = () => {
         await Promise.all(
           CATEGORY_SLUGS.map(async (slug) => {
             try {
-              const { data } = await articleService.getByCategory(slug, 1, 5);
+              const { data } = await articleService.getByCategory(slug, 1, 8);
               catResults[slug] = data.data || [];
             } catch {
               catResults[slug] = [];

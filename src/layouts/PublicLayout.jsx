@@ -8,6 +8,7 @@ import MobileBottomNav from '../components/MobileBottomNav';
 import WhatsAppChannelSection from '../components/WhatsAppChannelSection';
 import Advertisement from '../components/Advertisement';
 import AdSenseSlot from '../components/AdSenseSlot';
+import MobileStickyAdBar from '../components/MobileStickyAdBar';
 import EventGifFloat from '../components/EventGifFloat';
 import NewsReelButton from '../components/NewsReelButton';
 import AnalyticsTracker from '../components/AnalyticsTracker';
@@ -97,7 +98,7 @@ const PublicLayout = () => {
   }, [headerLogoUrl, headerPosterUrl, faviconUrl, settings?.headerLogo, tracking.measurementId, tracking.gtmId]);
 
   return (
-    <div className="min-h-screen flex flex-col pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
+    <div className="min-h-screen flex flex-col pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0 max-lg:bg-slate-950">
       <Helmet>
         {preloadLinks}
         {faviconUrl ? (
@@ -113,27 +114,27 @@ const PublicLayout = () => {
         />
       </Helmet>
       <AnalyticsTracker settings={settings} />
-      <Header settings={settings} />
-      <div className="container-news py-3">
-        <Advertisement position="header" className="mb-2" />
-        <AdSenseSlot location="header" page="all" className="mb-2" />
-        <Advertisement position="top_banner" />
-        <AdSenseSlot location="top_banner" page="all" />
+      {/* Page body keeps light bg; outer shell is dark on mobile so footer→nav gap isn't white */}
+      <div className="flex-1 flex flex-col bg-stone-100 min-h-0">
+        <Header settings={settings} />
+        <div className="container-news py-3">
+          <Advertisement position="header" className="mb-2" />
+          <AdSenseSlot location="header" page="all" className="mb-2" />
+          <Advertisement position="top_banner" />
+          <AdSenseSlot location="top_banner" page="all" />
+        </div>
+        <BreakingNews />
+        <main className="flex-1">
+          <Outlet context={{ settings }} />
+        </main>
+        <div className="container-news py-5">
+          <Advertisement position="footer" />
+          <AdSenseSlot location="footer" page="all" />
+        </div>
+        <WhatsAppChannelSection settings={settings} />
+        <Footer settings={settings} />
       </div>
-      <BreakingNews />
-      <main className="flex-1">
-        <Outlet context={{ settings }} />
-      </main>
-      <div className="container-news py-5">
-        <Advertisement position="footer" />
-        <AdSenseSlot location="footer" page="all" />
-      </div>
-      <WhatsAppChannelSection settings={settings} />
-      <Footer settings={settings} />
-      <div className="lg:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] inset-x-0 z-30 bg-white border-t border-stone-200 p-2 shadow-md mobile-sticky-ad">
-        <Advertisement position="mobile_sticky" label={false} />
-        <AdSenseSlot location="mobile_sticky" page="all" />
-      </div>
+      <MobileStickyAdBar />
       <MobileBottomNav />
       <EventGifFloat />
       <NewsReelButton />

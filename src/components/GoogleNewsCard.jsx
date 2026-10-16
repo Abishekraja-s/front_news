@@ -47,6 +47,9 @@ const GoogleNewsCard = ({ item }) => {
           {item.isMustRead && (
             <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">Must Read</span>
           )}
+          {item.isMustWatch && (
+            <span className="text-[10px] font-bold uppercase text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded">Must Watch</span>
+          )}
         </div>
         <h3 className="text-sm sm:text-base font-semibold text-slate-900 group-hover:text-brand-700 line-clamp-3 leading-snug">
           {title}

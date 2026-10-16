@@ -63,7 +63,7 @@ const SellerResetPassword = () => {
       }
       footer={
         <SellerAuthFooter>
-          <SellerBackLink to="/seller/login" label="← Back to Seller Login" />
+          <SellerBackLink to="/seller/login" label="← Back to Marketplace Login" />
         </SellerAuthFooter>
       }
     >

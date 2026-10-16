@@ -37,7 +37,7 @@ const MobileBottomNav = () => {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 z-40 w-full bg-white border-t border-stone-200 shadow-[0_-4px_20px_rgba(15,23,42,0.08)] mobile-bottom-nav"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-50 w-full bg-white border-t border-stone-200 shadow-[0_-4px_20px_rgba(15,23,42,0.08)] mobile-bottom-nav"
       aria-label="Mobile bottom menu"
     >
       <ul className="flex w-full items-stretch m-0 p-0 list-none pl-2 pr-3 pb-[env(safe-area-inset-bottom,0px)]">

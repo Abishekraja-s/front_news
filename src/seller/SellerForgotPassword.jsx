@@ -46,7 +46,7 @@ const SellerForgotPassword = () => {
               Sign in
             </Link>
           </p>
-          <SellerBackLink to="/seller/login" label="← Back to Seller Login" />
+          <SellerBackLink to="/seller/login" label="← Back to Marketplace Login" />
         </SellerAuthFooter>
       }
     >
