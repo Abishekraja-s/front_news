@@ -1,4 +1,4 @@
-import api from './api';
+import api, { getApiUrl } from './api';
 
 export const articleService = {
   getLatest: (limit = 10) => api.get(`/articles/latest?limit=${limit}`),
@@ -82,6 +82,11 @@ export const settingService = {
     formData.append('file', file);
     return api.post(`/settings/upload-brand?type=${encodeURIComponent(type)}`, formData);
   },
+  uploadApk: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/settings/upload-apk', formData);
+  },
 };
 
 export const commentService = {
@@ -152,6 +157,7 @@ export const marketplaceService = {
   sendEnquiry: (id, data) => api.post(`/marketplace/products/${id}/enquiries`, data),
   registerSeller: (data) => api.post('/marketplace/seller/register', data),
   getSellerStats: () => api.get('/marketplace/seller/stats'),
+  uploadImage: (formData) => api.post('/marketplace/seller/upload', formData),
   getMyProducts: () => api.get('/marketplace/seller/products'),
   createProduct: (data) => api.post('/marketplace/seller/products', data),
   updateProduct: (id, data) => api.put(`/marketplace/seller/products/${id}`, data),
@@ -241,6 +247,50 @@ export const adSenseService = {
   update: (id, data) => api.put(`/adsense/${id}`, data),
   toggle: (id, isActive) => api.put(`/adsense/${id}/toggle`, { isActive }),
   delete: (id) => api.delete(`/adsense/${id}`),
+};
+
+export const databaseBackupService = {
+  getStats: () => api.get('/database-backup/stats'),
+  createJob: (params = {}) => api.post('/database-backup/jobs', params),
+  getJob: (jobId) => api.get(`/database-backup/jobs/${jobId}`),
+  /**
+   * Build backup on server, poll until ready, then trigger a native browser
+   * download (avoids Failed to fetch from buffering huge JSON in memory).
+   */
+  download: async (params = {}, { onProgress } = {}) => {
+    const { data: created } = await api.post('/database-backup/jobs', params);
+    const jobId = created?.data?.jobId;
+    if (!jobId) throw new Error('Failed to start backup job');
+
+    const started = Date.now();
+    const maxWaitMs = 15 * 60 * 1000;
+
+    while (Date.now() - started < maxWaitMs) {
+      await new Promise((r) => setTimeout(r, 1500));
+      const { data: statusRes } = await api.get(`/database-backup/jobs/${jobId}`);
+      const job = statusRes?.data;
+      if (!job) throw new Error('Backup job lost');
+
+      onProgress?.(job);
+
+      if (job.status === 'error') {
+        throw new Error(job.message || 'Backup failed');
+      }
+
+      if (job.status === 'ready' && job.downloadToken) {
+        const fileUrl = getApiUrl(
+          `/database-backup/jobs/${jobId}/file?token=${encodeURIComponent(job.downloadToken)}`
+        );
+        return {
+          fileUrl,
+          filename: job.filename || `database-backup-${params.format || 'json'}.json`,
+          size: job.size || 0,
+        };
+      }
+    }
+
+    throw new Error('Backup timed out — try NDJSON or fewer collections');
+  },
 };
 
 export const travelNotificationService = {

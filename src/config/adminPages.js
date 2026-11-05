@@ -27,6 +27,7 @@ export const ADMIN_PAGES = [
   { key: 'menu-management', label: 'Menu Management', path: '/admin/page-menu', icon: '📋', match: 'page-menu' },
   { key: 'users', label: 'Users', path: '/admin/users', icon: '👥' },
   { key: 'role-permissions', label: 'Role Permissions', path: '/admin/role-permissions', icon: '🔐' },
+  { key: 'database-backup', label: 'Database Backup', path: '/admin/database-backup', icon: '💾' },
   { key: 'settings', label: 'Settings', path: '/admin/settings', icon: '⚙️' },
 ];
 

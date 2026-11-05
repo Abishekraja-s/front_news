@@ -79,7 +79,7 @@ const MatrimonyProfileForm = () => {
     uploadDocument: matrimonyService.uploadDocument,
     setForm,
     setUploading,
-    onUploadError: () => toast.error('Upload failed'),
+    onUploadError: (msg) => toast.error(msg || 'Upload failed'),
   });
 
   const validateLogin = () => {

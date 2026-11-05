@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { settingService } from '../services/articleService';
-import { getBrandAssetUrl, isBrandVideo } from '../utils/images';
+import { getBrandAssetUrl, getMediaUrl, isBrandVideo } from '../utils/images';
 import { patchCachedBrandAsset } from '../utils/brandSettingsCache';
 import toast from 'react-hot-toast';
 import AdminPageHeader from './AdminPageHeader';
@@ -132,6 +132,46 @@ const Settings = () => {
     setSettings((prev) => ({ ...prev, [key]: asset }));
   };
 
+  const apkInputRef = useRef(null);
+  const apkAsset = settings.androidAppApk;
+  const apkUrl = apkAsset?.url ? getMediaUrl(apkAsset.url) : '';
+  const isApkUploading = uploadingKey === 'androidAppApk';
+
+  const handleApkUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.apk')) {
+      toast.error('Only .apk files are allowed');
+      return;
+    }
+    setUploadingKey('androidAppApk');
+    try {
+      const { data } = await settingService.uploadApk(file);
+      setSettings((prev) => ({ ...prev, androidAppApk: data.data.asset }));
+      toast.success('APP uploaded — shown as Download APP');
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'APK upload failed');
+    } finally {
+      setUploadingKey(null);
+    }
+  };
+
+  const handleApkRemove = async () => {
+    if (!apkAsset?.url) return;
+    setUploadingKey('androidAppApk');
+    try {
+      await settingService.update({ androidAppApk: null });
+      setSettings((prev) => ({ ...prev, androidAppApk: null }));
+      toast.success('APK removed');
+    } catch {
+      toast.error('Failed to remove APK');
+    } finally {
+      setUploadingKey(null);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -141,6 +181,7 @@ const Settings = () => {
       delete payload.footerLogo;
       delete payload.favicon;
       delete payload.logo;
+      delete payload.androidAppApk;
       await settingService.update(payload);
       toast.success('Settings saved');
     } catch {
@@ -219,6 +260,60 @@ const Settings = () => {
           </div>
         </div>
 
+        <div className="admin-card">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-1 pb-2 border-b border-slate-100 dark:border-slate-700">
+            Download APP
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 mb-4">
+            Upload your Android <strong>.apk</strong> file. It shows as <strong>Download APP</strong> in the header and mobile menu — users tap to download directly.
+          </p>
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
+            {apkUrl ? (
+              <div className="text-sm text-slate-700 dark:text-slate-300">
+                <p className="font-medium truncate">{apkAsset.fileName || 'webapp.apk'}</p>
+                <a
+                  href={apkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-600 hover:underline text-xs break-all"
+                >
+                  {apkUrl}
+                </a>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">No APP file uploaded yet.</p>
+            )}
+            <input
+              ref={apkInputRef}
+              type="file"
+              accept=".apk,application/vnd.android.package-archive"
+              className="hidden"
+              onChange={handleApkUpload}
+              disabled={isApkUploading}
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => apkInputRef.current?.click()}
+                disabled={isApkUploading}
+                className="btn-secondary text-sm py-2 px-4 disabled:opacity-50"
+              >
+                {isApkUploading ? 'Uploading…' : apkUrl ? 'Replace APP' : 'Upload APP'}
+              </button>
+              {apkUrl && (
+                <button
+                  type="button"
+                  onClick={handleApkRemove}
+                  disabled={isApkUploading}
+                  className="text-sm py-2 px-4 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {sections.map(({ title, fields }) => (
           <div key={title} className="admin-card">
             <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">{title}</h2>
@@ -253,7 +348,7 @@ const Settings = () => {
             Email (SMTP)
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 mb-4">
-            Used for seller forgot-password emails and other system mail. Enable SMTP and save host credentials (Gmail app password, Zoho, SendGrid, etc.).
+            Used for seller/matrimony OTP and password-reset emails. Gmail: host <code className="text-xs">smtp.gmail.com</code>, port <strong>587</strong>, Secure <strong>OFF</strong>, and a Google App Password (not your normal password). Port 465 needs Secure ON.
           </p>
           <div className="space-y-4">
             <label className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -335,8 +430,11 @@ const Settings = () => {
                 onChange={(e) => handleChange('smtpSecure', e.target.checked)}
                 className="rounded border-slate-300"
               />
-              Use SSL/TLS (usually on for port 465)
+              Use SSL (port 465 only — leave unchecked for 587 / STARTTLS)
             </label>
+            <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2">
+              Leaving SSL on with port 587 causes “wrong version number” errors. The server auto-corrects 587→STARTTLS and prefers IPv4.
+            </p>
           </div>
         </div>
 

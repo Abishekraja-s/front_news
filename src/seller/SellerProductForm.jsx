@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { marketplaceService } from '../services/articleService';
 import ImageUploadField from '../components/ImageUploadField';
+import { PORTAL_IMAGE_MAX_BYTES } from '../utils/imageUploadLimits';
 
 const empty = {
   title: '',
@@ -147,6 +148,8 @@ const SellerProductForm = () => {
               placeholder="https://…"
               inputClassName="w-full border rounded-xl px-3 py-2.5"
               seed={id || 'product'}
+              uploadFn={marketplaceService.uploadImage}
+              maxBytes={PORTAL_IMAGE_MAX_BYTES}
             />
           </div>
         </div>

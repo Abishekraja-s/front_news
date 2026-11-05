@@ -24,7 +24,7 @@ const SellerForgotPassword = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await authService.forgotPassword(email);
+      const { data } = await authService.forgotPassword(email, 'seller');
       setSent(true);
       toast.success(data.message || 'Reset link sent to your email');
     } catch (err) {
@@ -51,8 +51,18 @@ const SellerForgotPassword = () => {
       }
     >
       {sent ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          If an account exists for that email, a password reset link has been sent. Check your inbox and spam folder.
+        <div className="space-y-4">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            If a seller account exists for <strong className="font-semibold">{email}</strong>, a reset link has been
+            emailed. It expires in 30 minutes — check inbox and spam.
+          </div>
+          <button
+            type="button"
+            className="text-sm font-semibold text-teal-700 hover:text-teal-800"
+            onClick={() => setSent(false)}
+          >
+            Send again / use another email
+          </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">

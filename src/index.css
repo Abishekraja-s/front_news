@@ -20,8 +20,15 @@
     @apply font-sans antialiased text-slate-900 bg-stone-100;
     /* Solid bg only — fixed multi-layer gradients cause severe scroll jank */
   }
+  html.dark body {
+    @apply text-slate-100 bg-slate-950;
+  }
   ::selection {
     @apply bg-teal-200 text-slate-900;
+  }
+  html.dark ::selection {
+    background-color: rgb(15 118 110);
+    color: #fff;
   }
 }
 
@@ -401,12 +408,12 @@
 
   .admin-shell.dark .text-blue-600 { color: rgb(96 165 250) !important; }
 
-  /* Active tab / filter pills (not code blocks — require .text-white) */
-  .admin-shell.dark :is(button, a, span, div, li).bg-slate-900.text-white {
+  /* Active tab / filter pills — attribute selectors avoid Tailwind @apply circular deps */
+  .admin-shell.dark :is(button, a, span, div, li)[class*="bg-slate-900"][class*="text-white"] {
     background-color: rgb(13 148 136) !important;
   }
 
-  .admin-shell.dark :is(button, a, span, div, li).border-slate-900 {
+  .admin-shell.dark :is(button, a, span, div, li)[class*="border-slate-900"] {
     border-color: rgb(13 148 136) !important;
   }
 
@@ -718,6 +725,29 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .district-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(203 213 225) transparent;
+    padding-bottom: 6px;
+  }
+
+  .district-scroll::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .district-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .district-scroll::-webkit-scrollbar-thumb {
+    background: rgb(203 213 225);
+    border-radius: 999px;
+  }
+
+  .district-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgb(148 163 184);
+  }
 }
 
 /* Mobile only: pin header + bottom nav so they never hide on scroll */
@@ -770,6 +800,60 @@ body.mobile-menu-open .mobile-bottom-nav {
   }
 }
 
+@keyframes apk-download-blink {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55);
+    background-color: rgb(15 23 42);
+  }
+  50% {
+    opacity: 0.88;
+    box-shadow: 0 0 0 6px rgba(20, 184, 166, 0);
+    background-color: rgb(13 148 136);
+  }
+}
+
+.apk-download-blink {
+  animation: apk-download-blink 1.25s ease-in-out infinite;
+}
+
+.apk-download-blink:hover {
+  animation: none;
+  background-color: rgb(13 148 136);
+  opacity: 1;
+}
+
+@keyframes category-quick-blink {
+  0%,
+  100% {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.22), 0 8px 18px rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
+  }
+}
+
+.category-quick-blink {
+  animation: category-quick-blink 1.4s ease-in-out infinite;
+}
+
+.category-quick-blink:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.category-quick-blink:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.category-quick-blink:hover {
+  animation: none;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+}
+
 @keyframes ticker {
   0% { transform: translateX(100vw); }
   100% { transform: translateX(-100%); }
@@ -783,6 +867,82 @@ body.mobile-menu-open .mobile-bottom-nav {
 
 .article-editor .ql-toolbar.ql-snow .ql-formats {
   margin-right: 10px;
+}
+
+.article-editor .ql-toolbar.ql-snow button.ql-undo,
+.article-editor .ql-toolbar.ql-snow button.ql-redo {
+  width: 28px;
+  height: 24px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.article-editor .ql-toolbar.ql-snow button.ql-undo svg,
+.article-editor .ql-toolbar.ql-snow button.ql-redo svg {
+  width: 18px;
+  height: 18px;
+}
+
+.article-editor .ql-toolbar.ql-snow button.ql-undo:disabled,
+.article-editor .ql-toolbar.ql-snow button.ql-redo:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Larger toolbar icons on phone / narrow admin panel */
+@media (max-width: 1023px) {
+  .article-editor .ql-toolbar.ql-snow {
+    padding: 12px 10px 8px !important;
+  }
+
+  .article-editor .ql-toolbar.ql-snow .ql-formats {
+    margin-right: 10px;
+    margin-bottom: 8px;
+  }
+
+  .article-editor .ql-toolbar.ql-snow button {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 8px !important;
+  }
+
+  .article-editor .ql-toolbar.ql-snow button svg {
+    float: none !important;
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .article-editor .ql-toolbar.ql-snow .ql-picker {
+    font-size: 15px;
+    height: 44px;
+  }
+
+  .article-editor .ql-toolbar.ql-snow .ql-picker-label {
+    padding: 8px 10px !important;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .article-editor .ql-toolbar.ql-snow .ql-picker-label svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .article-editor .ql-toolbar.ql-snow button.ql-undo,
+  .article-editor .ql-toolbar.ql-snow button.ql-redo {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .article-editor .ql-toolbar.ql-snow button.ql-undo svg,
+  .article-editor .ql-toolbar.ql-snow button.ql-redo svg {
+    width: 28px !important;
+    height: 28px !important;
+  }
 }
 
 .article-editor .ql-snow .ql-picker.ql-expanded .ql-picker-options {
@@ -808,11 +968,63 @@ body.mobile-menu-open .mobile-bottom-nav {
   color: #cbd5e1;
 }
 
-/* Admin toast notifications in dark theme */
+/* Toast notifications in dark theme (site + admin) */
+html.dark .react-hot-toast > div,
+body.theme-dark .react-hot-toast > div,
 body.admin-theme-dark .react-hot-toast > div {
   background: #1e293b !important;
   color: #f1f5f9 !important;
   border: 1px solid #334155 !important;
+}
+
+/* ——— Public site dark mode surfaces ——— */
+html.dark .site-shell .bg-white {
+  background-color: rgb(15 23 42) !important;
+}
+html.dark .site-shell .bg-stone-50,
+html.dark .site-shell .bg-stone-100 {
+  background-color: rgb(30 41 59) !important;
+}
+html.dark .site-shell .border-stone-100,
+html.dark .site-shell .border-stone-200,
+html.dark .site-shell .border-stone-200\/60,
+html.dark .site-shell .border-stone-200\/80 {
+  border-color: rgb(51 65 85) !important;
+}
+html.dark .site-shell .text-slate-900,
+html.dark .site-shell .text-gray-900,
+html.dark .site-shell .text-news-dark {
+  color: rgb(241 245 249) !important;
+}
+html.dark .site-shell .text-slate-800,
+html.dark .site-shell .text-slate-700 {
+  color: rgb(226 232 240) !important;
+}
+html.dark .site-shell .text-slate-600,
+html.dark .site-shell .text-slate-500,
+html.dark .site-shell .text-gray-500,
+html.dark .site-shell .text-gray-600 {
+  color: rgb(148 163 184) !important;
+}
+html.dark .site-shell .card-news,
+html.dark .site-shell .rounded-2xl.bg-white,
+html.dark .site-shell .rounded-xl.bg-white {
+  background-color: rgb(15 23 42) !important;
+  border-color: rgb(51 65 85);
+}
+html.dark .site-shell .nav-link {
+  color: rgb(203 213 225);
+}
+html.dark .site-shell .nav-link-active {
+  background-color: rgb(19 78 74 / 0.45);
+  color: rgb(94 234 212);
+}
+html.dark .site-shell input,
+html.dark .site-shell textarea,
+html.dark .site-shell select {
+  background-color: rgb(30 41 59);
+  border-color: rgb(51 65 85);
+  color: rgb(241 245 249);
 }
 
 .ql-editor {

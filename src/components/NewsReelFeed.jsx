@@ -2,22 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { articleService, categoryService } from '../services/articleService';
 import { getImageUrl } from '../utils/images';
-import { CATEGORY_SLUGS } from '../utils/helpers';
+import { CATEGORY_SLUGS, CATEGORY_TITLES } from '../utils/helpers';
+import { getArticlePath } from '../utils/articlePaths';
 
 const FALLBACK_TITLES = {
-  'tamil-nadu': 'தமிழ்நாடு',
-  chennai: 'சென்னை',
-  india: 'இந்தியா',
-  world: 'உலகம்',
-  politics: 'அரசியல்',
-  business: 'வணிகம்',
-  sports: 'விளையாட்டு',
+  ...CATEGORY_TITLES,
   cinema: 'சினிமா',
   technology: 'தொழில்நுட்பம்',
-  education: 'கல்வி',
-  jobs: 'வேலைவாய்ப்பு',
-  spiritual: 'ஆன்மிகம்',
-  special: 'சிறப்பு',
 };
 
 const PAGE_SIZE = 12;
@@ -252,7 +243,7 @@ const NewsReelFeed = ({ open, onClose }) => {
                 ) : null}
                 <div className="mt-4 flex flex-wrap items-center gap-3 w-full max-w-full">
                   <Link
-                    to={`/news/${article.slug}`}
+                    to={getArticlePath(article)}
                     onClick={onClose}
                     className="inline-flex items-center px-4 py-2.5 rounded-full bg-rose-500 text-white text-sm font-bold hover:bg-rose-400 shrink-0"
                   >

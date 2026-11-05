@@ -1,4 +1,9 @@
 import { getImageUrl } from '../utils/images';
+import {
+  PORTAL_IMAGE_MAX_LABEL,
+  isPortalImageTooLarge,
+  portalImageSizeError,
+} from '../utils/imageUploadLimits';
 
 const previewUrl = (url) => {
   if (!url) return '';
@@ -443,6 +448,7 @@ export const MatrimonyProfileFields = ({
                 />
               )}
               <input type="file" accept="image/*" onChange={onPhoto} disabled={uploading} className="text-sm w-full sm:w-auto max-w-full" />
+              <p className="text-xs text-slate-500 mt-1">Max image size: {PORTAL_IMAGE_MAX_LABEL}</p>
               <input
                 className={`${inputCls} sm:max-w-md`}
                 required={r && !form.profilePhoto}
@@ -479,6 +485,7 @@ export const MatrimonyProfileFields = ({
               )}
               <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 min-w-0">
                 <input type="file" accept="image/*" onChange={onGalleryPhoto} disabled={uploading} className="text-sm w-full sm:w-auto max-w-full" required={r && !(form.photos || []).length} />
+                <p className="text-xs text-slate-500 mt-1">Max image size: {PORTAL_IMAGE_MAX_LABEL} each</p>
                 {onAddGalleryPhotoUrl && (
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:items-center min-w-0">
                     <input
@@ -733,6 +740,11 @@ export const createMatrimonyUploadHandlers = ({
 }) => {
   const uploadFile = async (file, asDocument = false) => {
     if (!file) return null;
+    // All matrimony images capped at 50 KB (PDFs for horoscope exempt)
+    if (String(file.type || '').startsWith('image/') && isPortalImageTooLarge(file)) {
+      onUploadError?.(portalImageSizeError());
+      return null;
+    }
     const fd = new FormData();
     fd.append('file', file);
     setUploading(true);
@@ -740,8 +752,8 @@ export const createMatrimonyUploadHandlers = ({
       const uploadFn = asDocument ? uploadDocument : uploadPhoto;
       const { data } = await uploadFn(fd);
       return data.data?.url || null;
-    } catch {
-      onUploadError?.();
+    } catch (err) {
+      onUploadError?.(err?.response?.data?.message || portalImageSizeError());
       return null;
     } finally {
       setUploading(false);

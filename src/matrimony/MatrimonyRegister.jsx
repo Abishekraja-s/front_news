@@ -12,6 +12,10 @@ import {
   Field,
   inputCls,
 } from './matrimonyFormShared';
+import {
+  isPortalImageTooLarge,
+  portalImageSizeError,
+} from '../utils/imageUploadLimits';
 
 const emptyAccount = () => ({ name: '', email: '', password: '', phone: '', city: '' });
 
@@ -42,11 +46,16 @@ const MatrimonyRegister = () => {
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
   const queueFile = (file, target) => {
-    if (!file) return;
+    if (!file) return false;
+    if (String(file.type || '').startsWith('image/') && isPortalImageTooLarge(file)) {
+      toast.error(portalImageSizeError());
+      return false;
+    }
     setPendingUploads((p) => [...p, { file, target }]);
     const preview = URL.createObjectURL(file);
     if (target === 'profilePhoto') set('profilePhoto', preview);
     else if (target === 'horoscope') set('horoscopeUrl', preview);
+    return true;
   };
 
   const handlePhoto = (e) => {
@@ -57,8 +66,7 @@ const MatrimonyRegister = () => {
 
   const handleHoroscope = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      queueFile(file, 'horoscope');
+    if (file && queueFile(file, 'horoscope')) {
       set('horoscopeFileName', file.name);
       set('horoscopeMime', file.type);
     }
@@ -68,6 +76,11 @@ const MatrimonyRegister = () => {
   const handleGalleryPhoto = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (isPortalImageTooLarge(file)) {
+        toast.error(portalImageSizeError());
+        e.target.value = '';
+        return;
+      }
       const index = (form.photos || []).length;
       setPendingUploads((p) => [...p, { file, target: 'gallery', index }]);
       setForm((f) => ({ ...f, photos: [...(f.photos || []), URL.createObjectURL(file)] }));

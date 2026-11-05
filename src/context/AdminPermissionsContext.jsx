@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { userService } from '../services/articleService';
-import { ADMIN_PAGES } from '../config/adminPages';
+import { ADMIN_PAGES, pathToPageKey } from '../config/adminPages';
 
 const AdminPermissionsContext = createContext(null);
 

@@ -4,7 +4,7 @@ import TopBar from './TopBar';
 import Navigation from './Navigation';
 import MobileMenu from './MobileMenu';
 import BrandLogo from './BrandLogo';
-import { getBrandAssetUrl, HEADER_BRAND_LOGO_CLASS } from '../utils/images';
+import { getBrandAssetUrl, getMediaUrl, HEADER_BRAND_LOGO_CLASS } from '../utils/images';
 
 const SearchForm = ({ value, onChange, onSubmit, onClose, id, autoFocus = false, className = '' }) => (
   <form onSubmit={onSubmit} className={`flex items-stretch w-full min-w-0 ${className}`}>
@@ -119,12 +119,15 @@ const Header = ({ settings }) => {
   const headerLogoUrl = getBrandAssetUrl(settings?.headerLogo);
   const hasCustomHeaderLogo = Boolean(headerLogoUrl);
   const siteLabel = settings?.siteName || 'The Great India News';
+  const apk = settings?.androidAppApk;
+  const apkUrl = apk?.url ? getMediaUrl(apk.url) : '';
+  const apkFileName = apk?.fileName || 'the-great-india-news-webapp.apk';
 
   return (
     <>
     <header
       ref={headerRef}
-      className="site-header sticky top-0 z-50 w-full bg-white border-b border-stone-200 shadow-sm lg:self-start max-lg:fixed max-lg:inset-x-0 max-lg:top-0"
+      className="site-header sticky top-0 z-50 w-full bg-white dark:bg-slate-950 border-b border-stone-200 dark:border-slate-800 shadow-sm lg:self-start max-lg:fixed max-lg:inset-x-0 max-lg:top-0"
     >
       <TopBar settings={settings} />
 
@@ -144,10 +147,10 @@ const Header = ({ settings }) => {
                 <span className="text-white font-extrabold text-lg tracking-tight">G</span>
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 leading-tight font-headline line-clamp-2 sm:line-clamp-1">
+                <h1 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight font-headline line-clamp-2 sm:line-clamp-1">
                   {settings?.siteNameTamil || 'தி கிரேட் இந்தியா நியூஸ்'}
                 </h1>
-                <p className="text-[10px] md:text-xs text-slate-600/80 hidden sm:block truncate tracking-wide uppercase font-medium">
+                <p className="text-[10px] md:text-xs text-slate-600/80 dark:text-slate-400 hidden sm:block truncate tracking-wide uppercase font-medium">
                   {siteLabel}
                 </p>
               </div>
@@ -165,21 +168,52 @@ const Header = ({ settings }) => {
               />
             </div>
 
+            {apkUrl && (
+              <a
+                href={apkUrl}
+                download={apkFileName}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="apk-download-blink hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs xl:text-sm font-bold rounded-xl text-white bg-slate-900 whitespace-nowrap"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+                </svg>
+                Download APP
+              </a>
+            )}
+
             <Link
               to="/seller/login"
-              className="hidden sm:inline-flex items-center px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-teal-200 text-teal-800 bg-teal-50 hover:bg-teal-100 transition-colors whitespace-nowrap"
+              className="hidden sm:inline-flex items-center px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors whitespace-nowrap"
             >
               Marketplace Login
             </Link>
+
+            {apkUrl && (
+              <a
+                href={apkUrl}
+                download={apkFileName}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="apk-download-blink lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl text-white bg-slate-900"
+                aria-label="Download APP"
+                title="Download APP"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+                </svg>
+              </a>
+            )}
 
             {!searchOpen && (
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className="lg:hidden p-2.5 hover:bg-stone-100 rounded-xl transition-colors"
+                className="lg:hidden p-2.5 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
                 aria-label="Open search"
               >
-                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
@@ -191,11 +225,11 @@ const Header = ({ settings }) => {
                 setSearchOpen(false);
                 setMenuOpen(true);
               }}
-              className="lg:hidden p-2.5 hover:bg-stone-100 rounded-xl transition-colors"
+              className="lg:hidden p-2.5 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
               aria-label="Open menu"
               aria-expanded={menuOpen}
             >
-              <svg className="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -216,11 +250,11 @@ const Header = ({ settings }) => {
         )}
       </div>
 
-      <div className="border-t border-stone-200/60">
+      <div className="border-t border-stone-200/60 dark:border-slate-800">
         <Navigation />
       </div>
 
-      <MobileMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} settings={settings} />
     </header>
     {/* Mobile spacer for fixed header — desktop sticky needs no spacer */}
     <div

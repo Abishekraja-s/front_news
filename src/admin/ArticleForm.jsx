@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import ReactQuill from 'react-quill';
+import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import toast from 'react-hot-toast';
 import {
@@ -15,6 +15,16 @@ import ImageUploadField from '../components/ImageUploadField';
 import GeminiGeneratePanel from './GeminiGeneratePanel';
 
 const STATUS_OPTIONS = ['DRAFT', 'PENDING', 'PUBLISHED', 'SCHEDULED'];
+
+const UNDO_ICON_SVG =
+  '<svg viewBox="0 0 18 18"><polyline class="ql-stroke" points="3.5 7.5 1.5 9.5 3.5 11.5"/><path class="ql-stroke" fill="none" d="M5.5,9.5 C5.5,9.5 9.5,4.5 14.5,6.5 C16,7.2 16.5,9 16.5,10.5"/></svg>';
+const REDO_ICON_SVG =
+  '<svg viewBox="0 0 18 18"><polyline class="ql-stroke" points="14.5 7.5 16.5 9.5 14.5 11.5"/><path class="ql-stroke" fill="none" d="M12.5,9.5 C12.5,9.5 8.5,4.5 3.5,6.5 C2,7.2 1.5,9 1.5,10.5"/></svg>';
+
+// Quill only paints toolbar icons that exist in ui/icons
+const QuillIcons = Quill.import('ui/icons');
+QuillIcons.undo = UNDO_ICON_SVG;
+QuillIcons.redo = REDO_ICON_SVG;
 
 const slugFromPath = (path = '') => {
   const cleaned = String(path).replace(/^https?:\/\/[^/]+/i, '').trim();
@@ -188,22 +198,94 @@ const ArticleForm = () => {
     }
   }, [id, isEdit]);
 
+  const quillRef = useRef(null);
+
+  const syncHistoryButtons = useCallback(() => {
+    const editor = quillRef.current?.getEditor?.();
+    if (!editor?.history) return;
+    const toolbarEl = editor.getModule('toolbar')?.container;
+    if (!toolbarEl) return;
+
+    const undoBtn = toolbarEl.querySelector('button.ql-undo');
+    const redoBtn = toolbarEl.querySelector('button.ql-redo');
+    const undoStack = editor.history.stack?.undo || [];
+    const redoStack = editor.history.stack?.redo || [];
+
+    if (undoBtn) {
+      if (!undoBtn.querySelector('svg')) undoBtn.innerHTML = UNDO_ICON_SVG;
+      undoBtn.disabled = undoStack.length === 0;
+      undoBtn.setAttribute('aria-label', 'Undo');
+      undoBtn.setAttribute('title', 'Undo');
+    }
+    if (redoBtn) {
+      if (!redoBtn.querySelector('svg')) redoBtn.innerHTML = REDO_ICON_SVG;
+      redoBtn.disabled = redoStack.length === 0;
+      redoBtn.setAttribute('aria-label', 'Redo');
+      redoBtn.setAttribute('title', 'Redo');
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let detach = () => {};
+    let frames = 0;
+
+    const attach = () => {
+      const editor = quillRef.current?.getEditor?.();
+      if (!editor) {
+        if (frames++ < 120) requestAnimationFrame(attach);
+        return;
+      }
+      if (cancelled) return;
+      syncHistoryButtons();
+      const onChange = () => syncHistoryButtons();
+      editor.on('text-change', onChange);
+      editor.on('editor-change', onChange);
+      detach = () => {
+        editor.off('text-change', onChange);
+        editor.off('editor-change', onChange);
+      };
+    };
+
+    attach();
+    return () => {
+      cancelled = true;
+      detach();
+    };
+  }, [syncHistoryButtons]);
+
   const quillModules = useMemo(
     () => ({
-      toolbar: [
-        [{ header: [1, 2, 3, 4, 5, 6, false] }],
-        [{ font: [] }],
-        [{ size: ['small', false, 'large', 'huge'] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ script: 'sub' }, { script: 'super' }],
-        [{ color: [] }, { background: [] }],
-        [{ align: [] }],
-        [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-        [{ direction: 'rtl' }],
-        ['blockquote', 'code-block'],
-        ['link', 'image', 'video'],
-        ['clean'],
-      ],
+      history: {
+        delay: 500,
+        maxStack: 200,
+        userOnly: true,
+      },
+      toolbar: {
+        container: [
+          ['undo', 'redo'],
+          [{ header: [1, 2, 3, 4, 5, 6, false] }],
+          [{ font: [] }],
+          [{ size: ['small', false, 'large', 'huge'] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ script: 'sub' }, { script: 'super' }],
+          [{ color: [] }, { background: [] }],
+          [{ align: [] }],
+          [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+          [{ direction: 'rtl' }],
+          ['blockquote', 'code-block'],
+          ['link', 'image', 'video'],
+          ['clean'],
+        ],
+        handlers: {
+          undo() {
+            this.quill.history.undo();
+          },
+          redo() {
+            this.quill.history.redo();
+          },
+        },
+      },
     }),
     []
   );
@@ -329,9 +411,13 @@ const ArticleForm = () => {
               <label className={labelClass}>Content *</label>
               <div className="article-editor">
                 <ReactQuill
+                  ref={quillRef}
                   theme="snow"
                   value={form.content}
-                  onChange={(val) => setForm((p) => ({ ...p, content: val }))}
+                  onChange={(val) => {
+                    setForm((p) => ({ ...p, content: val }));
+                    requestAnimationFrame(syncHistoryButtons);
+                  }}
                   modules={quillModules}
                   formats={quillFormats}
                 />

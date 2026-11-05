@@ -2,22 +2,32 @@ import { Link } from 'react-router-dom';
 import NewsCard from './NewsCard';
 import NewsImage from './NewsImage';
 import CategoryBanner from './CategoryBanner';
+import { getArticlePath } from '../utils/articlePaths';
 
 /** Distinct homepage layout per category slug */
 const LAYOUT_BY_SLUG = {
-  'tamil-nadu': 'spotlight',
+  district: 'grid',
+  politics: 'editorial',
   chennai: 'magazine',
+  'tamil-nadu': 'spotlight',
   india: 'grid',
   world: 'numbered',
-  politics: 'editorial',
-  business: 'ticker',
-  sports: 'arena',
-  cinema: 'posters',
-  technology: 'split',
-  education: 'timeline',
-  jobs: 'board',
+  crime: 'board',
+  pocso: 'timeline',
   spiritual: 'serene',
   special: 'mosaic',
+  education: 'timeline',
+  sports: 'arena',
+  jobs: 'board',
+  agriculture: 'spotlight',
+  'sri-lanka': 'magazine',
+  business: 'ticker',
+  health: 'split',
+  'short-news': 'numbered',
+  weather: 'grid',
+  'other-news': 'spotlight',
+  cinema: 'posters',
+  technology: 'split',
 };
 
 const SectionHeader = ({ title, slug }) => (
@@ -39,7 +49,7 @@ const CatLabel = ({ article }) =>
   ) : null;
 
 const ThumbTitle = ({ article, imgClass = 'w-28 h-20', titleClass = 'text-sm font-semibold' }) => (
-  <Link to={`/news/${article.slug}`} className="flex gap-3 group min-w-0">
+  <Link to={getArticlePath(article)} className="flex gap-3 group min-w-0">
     <div className={`shrink-0 overflow-hidden rounded-xl ring-1 ring-black/5 ${imgClass}`}>
       <NewsImage
         src={article.featuredImage}
@@ -81,7 +91,7 @@ const LayoutMagazine = ({ articles }) => (
     {articles.slice(0, 4).map((a, i) => (
       <Link
         key={a._id}
-        to={`/news/${a.slug}`}
+        to={getArticlePath(a)}
         className={`flex flex-col sm:flex-row gap-0 overflow-hidden rounded-2xl border border-stone-200 bg-white group ${
           i % 2 === 1 ? 'sm:flex-row-reverse' : ''
         }`}
@@ -120,7 +130,7 @@ const LayoutGrid = ({ articles }) => (
 const LayoutNumbered = ({ articles }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
     {articles.slice(0, 6).map((a, i) => (
-      <Link key={a._id} to={`/news/${a.slug}`} className="flex gap-4 group items-start">
+      <Link key={a._id} to={getArticlePath(a)} className="flex gap-4 group items-start">
         <span className="text-4xl font-black text-brand-200 leading-none tabular-nums shrink-0 w-12 group-hover:text-brand-400 transition-colors">
           {String(i + 1).padStart(2, '0')}
         </span>
@@ -145,35 +155,60 @@ const LayoutNumbered = ({ articles }) => (
   </div>
 );
 
-/** Bold left rail + lead image */
+/** Featured image + text below, with compact thumb rows */
 const LayoutEditorial = ({ articles }) => {
   const [main, ...rest] = articles;
+  if (!main) return null;
+
   return (
-    <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-950 text-white">
-      <div className="grid grid-cols-1 lg:grid-cols-5">
-        <Link to={`/news/${main.slug}`} className="lg:col-span-3 relative min-h-[240px] group">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <Link
+        to={getArticlePath(main)}
+        className="lg:col-span-7 group flex flex-col overflow-hidden rounded-2xl bg-white border border-slate-200 hover:border-teal-300 transition-colors"
+      >
+        <div className="aspect-[16/10] overflow-hidden bg-slate-100 shrink-0">
           <NewsImage
             src={main.featuredImage}
             seed={main.slug}
             alt={main.imageAlt || main.title}
-            className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity"
+            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          <div className="relative p-5 sm:p-7 flex flex-col justify-end min-h-[240px]">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-teal-300 font-semibold mb-2">Lead</span>
-            <h3 className="text-xl sm:text-2xl font-bold leading-snug font-headline">{main.title}</h3>
-          </div>
-        </Link>
-        <div className="lg:col-span-2 border-t lg:border-t-0 lg:border-l border-white/10 divide-y divide-white/10">
-          {rest.slice(0, 4).map((a) => (
-            <Link key={a._id} to={`/news/${a.slug}`} className="block px-5 py-4 hover:bg-white/5 transition-colors group">
-              <h3 className="text-sm font-semibold text-white/95 group-hover:text-teal-300 line-clamp-2 leading-snug">
+        </div>
+        <div className="p-4 sm:p-5 flex-1">
+          <CatLabel article={main} />
+          <h3 className="mt-1 text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-teal-800 leading-snug font-headline">
+            {main.title}
+          </h3>
+          {main.excerpt && (
+            <p className="mt-2 text-sm text-slate-500 line-clamp-2 leading-relaxed">{main.excerpt}</p>
+          )}
+        </div>
+      </Link>
+
+      <div className="lg:col-span-5 flex flex-col gap-3">
+        {rest.slice(0, 4).map((a) => (
+          <Link
+            key={a._id}
+            to={getArticlePath(a)}
+            className="group flex gap-3 items-stretch rounded-xl bg-white border border-slate-200 hover:border-teal-300 p-2.5 transition-colors min-h-0"
+          >
+            <div className="w-[88px] sm:w-24 aspect-[4/3] rounded-lg overflow-hidden shrink-0 bg-slate-100">
+              <NewsImage
+                src={a.featuredImage}
+                seed={a.slug}
+                alt={a.imageAlt || a.title}
+                className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+                loading="lazy"
+              />
+            </div>
+            <div className="min-w-0 flex-1 self-center pr-1">
+              <h3 className="text-sm font-semibold text-slate-900 group-hover:text-teal-800 line-clamp-3 leading-snug">
                 {a.title}
               </h3>
-            </Link>
-          ))}
-        </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
@@ -185,7 +220,7 @@ const LayoutTicker = ({ articles }) => (
     <ul className="divide-y divide-emerald-100/80">
       {articles.slice(0, 6).map((a, i) => (
         <li key={a._id}>
-          <Link to={`/news/${a.slug}`} className="flex items-center gap-3 sm:gap-4 px-4 py-3.5 hover:bg-emerald-50/70 transition-colors group">
+          <Link to={getArticlePath(a)} className="flex items-center gap-3 sm:gap-4 px-4 py-3.5 hover:bg-emerald-50/70 transition-colors group">
             <span className="text-[11px] font-bold text-emerald-700/70 w-6 tabular-nums">{i + 1}</span>
             <div className="w-14 h-10 rounded-md overflow-hidden shrink-0">
               <NewsImage
@@ -207,35 +242,43 @@ const LayoutTicker = ({ articles }) => (
   </div>
 );
 
-/** Hero strip + 3 equal action cards */
+/** Featured image above text + 3 equal action cards */
 const LayoutArena = ({ articles }) => {
   const [main, ...rest] = articles;
+  if (!main) return null;
+
   return (
     <div className="space-y-4">
-      <Link to={`/news/${main.slug}`} className="relative block rounded-2xl overflow-hidden min-h-[220px] sm:min-h-[280px] group">
-        <NewsImage
-          src={main.featuredImage}
-          seed={main.slug}
-          alt={main.imageAlt || main.title}
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-orange-950/85 via-orange-900/40 to-transparent" />
-        <div className="relative p-5 sm:p-8 max-w-xl">
-          <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-orange-500 text-white px-2 py-0.5 rounded mb-3">
+      <Link
+        to={getArticlePath(main)}
+        className="group flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-orange-100 bg-white hover:border-orange-300 transition-colors"
+      >
+        <div className="sm:w-1/2 aspect-[16/10] sm:aspect-auto sm:min-h-[220px] overflow-hidden bg-slate-100 shrink-0">
+          <NewsImage
+            src={main.featuredImage}
+            seed={main.slug}
+            alt={main.imageAlt || main.title}
+            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+            loading="lazy"
+          />
+        </div>
+        <div className="flex-1 p-4 sm:p-6 flex flex-col justify-center bg-orange-50/40">
+          <span className="inline-block w-fit text-[10px] font-bold uppercase tracking-wider bg-orange-500 text-white px-2 py-0.5 rounded mb-3">
             Sports
           </span>
-          <h3 className="text-xl sm:text-3xl font-black text-white leading-tight font-headline drop-shadow">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-orange-700 leading-tight font-headline">
             {main.title}
           </h3>
-          {main.excerpt && <p className="text-sm text-white/80 mt-2 line-clamp-2">{main.excerpt}</p>}
+          {main.excerpt && (
+            <p className="text-sm text-slate-600 mt-2 line-clamp-3 leading-relaxed">{main.excerpt}</p>
+          )}
         </div>
       </Link>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {rest.slice(0, 3).map((a) => (
           <Link
             key={a._id}
-            to={`/news/${a.slug}`}
+            to={getArticlePath(a)}
             className="rounded-xl border border-orange-100 bg-orange-50/40 p-3 flex gap-3 group hover:border-orange-300 transition-colors"
           >
             <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0">
@@ -261,7 +304,7 @@ const LayoutArena = ({ articles }) => {
 const LayoutPosters = ({ articles }) => (
   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
     {articles.slice(0, 5).map((a) => (
-      <Link key={a._id} to={`/news/${a.slug}`} className="group block">
+      <Link key={a._id} to={getArticlePath(a)} className="group block">
         <div className="aspect-[3/4] rounded-xl overflow-hidden ring-1 ring-black/5 bg-slate-100 shadow-sm">
           <NewsImage
             src={a.featuredImage}
@@ -279,14 +322,16 @@ const LayoutPosters = ({ articles }) => (
   </div>
 );
 
-/** Big image right, story stack left */
+/** Story stack left + image/title card right (no overlay) */
 const LayoutSplit = ({ articles }) => {
   const [main, ...rest] = articles;
+  if (!main) return null;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
       <div className="order-2 lg:order-1 space-y-0 divide-y divide-cyan-100 rounded-2xl border border-cyan-100 bg-cyan-50/30 px-4">
         {rest.slice(0, 4).map((a) => (
-          <Link key={a._id} to={`/news/${a.slug}`} className="block py-3.5 group">
+          <Link key={a._id} to={getArticlePath(a)} className="block py-3.5 group">
             <CatLabel article={a} />
             <h3 className="text-sm font-semibold text-slate-900 group-hover:text-cyan-800 line-clamp-2 mt-0.5 leading-snug">
               {a.title}
@@ -294,18 +339,24 @@ const LayoutSplit = ({ articles }) => {
           </Link>
         ))}
       </div>
-      <Link to={`/news/${main.slug}`} className="order-1 lg:order-2 relative rounded-2xl overflow-hidden min-h-[260px] group">
-        <NewsImage
-          src={main.featuredImage}
-          seed={main.slug}
-          alt={main.imageAlt || main.title}
-          className="absolute inset-0 w-full h-full object-cover"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
-        <div className="absolute bottom-0 p-5">
-          <span className="text-[10px] uppercase tracking-wider text-cyan-300 font-bold">Tech</span>
-          <h3 className="text-lg sm:text-xl font-bold text-white mt-1 leading-snug">{main.title}</h3>
+      <Link
+        to={getArticlePath(main)}
+        className="order-1 lg:order-2 group flex flex-col overflow-hidden rounded-2xl border border-cyan-100 bg-white hover:border-cyan-300 transition-colors"
+      >
+        <div className="aspect-[16/10] overflow-hidden bg-slate-100 shrink-0">
+          <NewsImage
+            src={main.featuredImage}
+            seed={main.slug}
+            alt={main.imageAlt || main.title}
+            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+            loading="lazy"
+          />
+        </div>
+        <div className="p-4 sm:p-5">
+          <span className="text-[10px] uppercase tracking-wider text-cyan-700 font-bold">Tech</span>
+          <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-cyan-800 mt-1 leading-snug">
+            {main.title}
+          </h3>
         </div>
       </Link>
     </div>
@@ -330,7 +381,7 @@ const LayoutBoard = ({ articles }) => (
     {articles.slice(0, 6).map((a) => (
       <Link
         key={a._id}
-        to={`/news/${a.slug}`}
+        to={getArticlePath(a)}
         className="flex gap-3 rounded-xl border border-slate-200 bg-white p-3.5 hover:border-brand-400 hover:shadow-sm transition-all group"
       >
         <div className="w-1 self-stretch rounded-full bg-brand-500 shrink-0" />
@@ -361,7 +412,7 @@ const LayoutSerene = ({ articles }) => {
   const [main, ...rest] = articles;
   return (
     <div className="rounded-3xl bg-gradient-to-b from-teal-50/70 via-white to-amber-50/50 border border-stone-100 p-4 sm:p-6">
-      <Link to={`/news/${main.slug}`} className="block text-center max-w-2xl mx-auto group mb-6">
+      <Link to={getArticlePath(main)} className="block text-center max-w-2xl mx-auto group mb-6">
         <div className="aspect-[21/9] rounded-2xl overflow-hidden mb-4 ring-1 ring-black/5">
           <NewsImage
             src={main.featuredImage}
@@ -385,39 +436,42 @@ const LayoutSerene = ({ articles }) => {
   );
 };
 
-/** Asymmetric mosaic */
+/** Mosaic grid — image on top, title below (no overlay) */
 const LayoutMosaic = ({ articles }) => {
   const [a, b, c, d, e] = articles;
   if (!a) return null;
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 auto-rows-[140px] sm:auto-rows-[160px]">
-      <Link to={`/news/${a.slug}`} className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden group">
+
+  const Tile = ({ item, wide = false }) => (
+    <Link
+      to={getArticlePath(item)}
+      className={`group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-teal-300 transition-colors ${
+        wide ? 'col-span-2 row-span-2' : ''
+      }`}
+    >
+      <div className={`overflow-hidden bg-slate-100 shrink-0 ${wide ? 'aspect-[16/11] flex-1' : 'aspect-[16/10]'}`}>
         <NewsImage
-          src={a.featuredImage}
-          seed={a.slug}
-          alt={a.imageAlt || a.title}
-          className="absolute inset-0 w-full h-full object-cover"
+          src={item.featuredImage}
+          seed={item.slug}
+          alt={item.imageAlt || item.title}
+          className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
-        <h3 className="absolute bottom-0 p-4 text-base sm:text-xl font-bold text-white leading-snug line-clamp-3">
-          {a.title}
-        </h3>
-      </Link>
+      </div>
+      <h3
+        className={`p-2.5 sm:p-3 font-semibold text-slate-900 group-hover:text-teal-800 leading-snug ${
+          wide ? 'text-base sm:text-xl line-clamp-3' : 'text-xs sm:text-sm line-clamp-2'
+        }`}
+      >
+        {item.title}
+      </h3>
+    </Link>
+  );
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <Tile item={a} wide />
       {[b, c, d, e].filter(Boolean).map((item) => (
-        <Link key={item._id} to={`/news/${item.slug}`} className="relative rounded-2xl overflow-hidden group">
-          <NewsImage
-            src={item.featuredImage}
-            seed={item.slug}
-            alt={item.imageAlt || item.title}
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-          <h3 className="absolute bottom-0 p-2.5 text-xs sm:text-sm font-semibold text-white line-clamp-2 leading-snug">
-            {item.title}
-          </h3>
-        </Link>
+        <Tile key={item._id} item={item} />
       ))}
     </div>
   );

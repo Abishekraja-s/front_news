@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { NAV_ITEMS } from '../utils/helpers';
+import useHeaderNavItems from '../hooks/useHeaderNavItems';
 
 const Navigation = () => {
   const location = useLocation();
   const scrollerRef = useRef(null);
   const activeRef = useRef(null);
+  const navItems = useHeaderNavItems();
 
   // Keep the active category visible when the route changes (mobile scroll strip).
   useEffect(() => {
@@ -23,7 +24,7 @@ const Navigation = () => {
     if (overflowLeft || overflowRight) {
       active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
-  }, [location.pathname]);
+  }, [location.pathname, navItems]);
 
   return (
     <nav className="bg-transparent" aria-label="Categories">
@@ -37,7 +38,7 @@ const Navigation = () => {
             [-webkit-overflow-scrolling:touch]"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link

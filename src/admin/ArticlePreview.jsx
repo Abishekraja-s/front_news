@@ -9,6 +9,7 @@ import NewsImage from '../components/NewsImage';
 import ArticleAudioReader from '../components/ArticleAudioReader';
 import { StatusBadge } from './AdminPageHeader';
 import Loading from '../components/Loading';
+import { getArticlePath } from '../utils/articlePaths';
 
 /**
  * Admin preview — loads article by ID (works for DRAFT / PENDING / PUBLISHED).
@@ -46,7 +47,7 @@ const ArticlePreview = () => {
   }
 
   const youtubeEmbed = getYoutubeEmbedUrl(article.youtubeVideoLink);
-  const publicUrl = article.slug ? `/news/${article.slug}` : null;
+  const publicUrl = article.slug ? getArticlePath(article) : null;
   const isLiveOnSite = article.status === 'PUBLISHED';
 
   return (

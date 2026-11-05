@@ -4,6 +4,7 @@ import { articleService } from '../services/articleService';
 import NewsImage from './NewsImage';
 import { getYoutubeVideoId } from '../utils/youtube';
 import { SkeletonCard } from './Loading';
+import { getArticlePath } from '../utils/articlePaths';
 
 const MustWatchSection = () => {
   const [articles, setArticles] = useState([]);
@@ -47,7 +48,7 @@ const MustWatchSection = () => {
             return (
               <Link
                 key={article._id}
-                to={`/news/${article.slug}`}
+                to={getArticlePath(article)}
                 className="card-news group block overflow-hidden"
               >
                 <div className="relative aspect-video overflow-hidden">

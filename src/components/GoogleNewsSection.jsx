@@ -11,7 +11,7 @@ const GoogleNewsSection = () => {
 
   useEffect(() => {
     googleNewsService
-      .getPublic(12)
+      .getPublic(6)
       .then(({ data }) => {
         setItems(data.data || []);
         setTitle(data.title || 'Google News');

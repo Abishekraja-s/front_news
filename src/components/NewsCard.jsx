@@ -1,18 +1,20 @@
 import { Link } from 'react-router-dom';
 import NewsImage from './NewsImage';
+import { getArticlePath } from '../utils/articlePaths';
 
 const NewsCard = ({ article, variant = 'default' }) => {
   if (!article) return null;
+  const href = getArticlePath(article);
 
   if (variant === 'horizontal') {
     return (
-      <Link to={`/news/${article.slug}`} className="flex gap-3 group">
-        <div className="flex-shrink-0 w-24 h-16 md:w-32 md:h-20 overflow-hidden rounded-xl ring-1 ring-black/5">
+      <Link to={href} className="flex gap-3 group">
+        <div className="flex-shrink-0 w-24 h-16 md:w-32 md:h-20 overflow-hidden rounded-xl ring-1 ring-black/5 bg-stone-100">
           <NewsImage
             src={article.featuredImage}
             seed={article.slug}
             alt={article.imageAlt || article.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-center"
             loading="lazy"
             decoding="async"
           />
@@ -33,7 +35,7 @@ const NewsCard = ({ article, variant = 'default' }) => {
 
   if (variant === 'compact') {
     return (
-      <Link to={`/news/${article.slug}`} className="block group py-2 border-b border-gray-100 last:border-0">
+      <Link to={href} className="block group py-2 border-b border-gray-100 last:border-0">
         <h3 className="text-sm font-medium text-gray-900 group-hover:text-brand-600 line-clamp-2">
           {article.title}
         </h3>
@@ -42,14 +44,15 @@ const NewsCard = ({ article, variant = 'default' }) => {
   }
 
   return (
-    <Link to={`/news/${article.slug}`} className="card-news group block">
-      <div className="aspect-video overflow-hidden">
+    <Link to={href} className="card-news group block">
+      <div className="aspect-video overflow-hidden bg-stone-100">
         <NewsImage
           src={article.featuredImage}
           seed={article.slug}
           alt={article.imageAlt || article.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-center"
           loading="lazy"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
         />
       </div>
       <div className="p-4">

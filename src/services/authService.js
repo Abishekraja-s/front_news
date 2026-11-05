@@ -60,9 +60,18 @@ export const authService = {
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
   changePassword: (data) => api.put('/auth/change-password', data),
-  forgotPassword: (email) =>
-    api.post('/auth/forgot-password', { email: String(email || '').trim().toLowerCase() }),
-  resetPassword: (token, password) => api.post('/auth/reset-password', { token, password }),
+  forgotPassword: (email, audience = 'seller') =>
+    api.post('/auth/forgot-password', {
+      email: String(email || '').trim().toLowerCase(),
+      audience,
+      clientOrigin: typeof window !== 'undefined' ? window.location.origin : undefined,
+    }),
+  resetPassword: (token, password, audience = 'seller') =>
+    api.post('/auth/reset-password', {
+      token: String(token || '').trim(),
+      password,
+      audience,
+    }),
   getStoredUser: () => {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;

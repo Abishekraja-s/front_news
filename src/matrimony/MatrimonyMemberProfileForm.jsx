@@ -73,7 +73,7 @@ const MatrimonyMemberProfileForm = () => {
     uploadDocument: matrimonyService.uploadMemberDocument,
     setForm,
     setUploading,
-    onUploadError: () => toast.error('Upload failed'),
+    onUploadError: (msg) => toast.error(msg || 'Upload failed'),
   });
 
   const handleSubmit = async (e) => {

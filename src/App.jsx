@@ -47,6 +47,8 @@ import {
 
 import AdminLayout from './admin/AdminLayout';
 import AdminLogin from './admin/AdminLogin';
+import AdminForgotPassword from './admin/AdminForgotPassword';
+import AdminResetPassword from './admin/AdminResetPassword';
 import { AdminThemeProvider } from './context/AdminThemeContext';
 import Dashboard from './admin/Dashboard';
 import Articles from './admin/Articles';
@@ -74,6 +76,7 @@ import SportsLiveAdmin from './admin/SportsLiveAdmin';
 import GovernmentNotificationsAdmin from './admin/GovernmentNotificationsAdmin';
 import AdSenseAdmin from './admin/AdSenseAdmin';
 import GoogleAnalyticsAdmin from './admin/GoogleAnalyticsAdmin';
+import DatabaseBackupAdmin from './admin/DatabaseBackupAdmin';
 import MatrimonyDashboard from './admin/matrimony/MatrimonyDashboard';
 import MatrimonyProfileForm from './admin/matrimony/MatrimonyProfileForm';
 import MatrimonyProfileList from './admin/matrimony/MatrimonyProfileList';
@@ -101,6 +104,8 @@ import SellerProductForm from './seller/SellerProductForm';
 import SellerEnquiries from './seller/SellerEnquiries';
 
 import MatrimonyLogin from './matrimony/MatrimonyLogin';
+import MatrimonyForgotPassword from './matrimony/MatrimonyForgotPassword';
+import MatrimonyResetPassword from './matrimony/MatrimonyResetPassword';
 import MatrimonyRegister from './matrimony/MatrimonyRegister';
 import MatrimonyLayout from './matrimony/MatrimonyLayout';
 import MatrimonyMemberDashboard from './matrimony/MatrimonyDashboard';
@@ -108,8 +113,10 @@ import MatrimonyMemberProfileForm from './matrimony/MatrimonyMemberProfileForm';
 import MatrimonyEnquiries from './matrimony/MatrimonyEnquiries';
 
 const CATEGORY_ROUTES = [
-  'tamil-nadu', 'chennai', 'india', 'world', 'politics', 'business',
-  'sports', 'cinema', 'technology', 'education', 'jobs', 'spiritual', 'special',
+  'district', 'politics', 'chennai', 'tamil-nadu', 'india', 'world',
+  'crime', 'pocso', 'spiritual', 'special', 'education', 'sports', 'jobs',
+  'agriculture', 'sri-lanka', 'business', 'health', 'short-news', 'weather',
+  'other-news', 'cinema', 'technology',
 ];
 
 function App() {
@@ -159,7 +166,11 @@ function App() {
         {CATEGORY_ROUTES.map((slug) => (
           <Route key={slug} path={slug} element={<Category />} />
         ))}
+        {CATEGORY_ROUTES.map((slug) => (
+          <Route key={`${slug}-article`} path={`${slug}/:articleSlug`} element={<Article />} />
+        ))}
         <Route path="tamil-nadu/:district" element={<DistrictPage />} />
+        {/* Legacy /news and /post — CMS articles redirect to /{category}/{slug} */}
         <Route path="news/:slug" element={<Article />} />
         <Route path="post/:slug" element={<Article />} />
         <Route path="author/:slug" element={<Author />} />
@@ -174,6 +185,9 @@ function App() {
         <Route path="grievance" element={<Grievance />} />
         <Route path="disclaimer" element={<Disclaimer />} />
         <Route path="gdpr-privacy-policy" element={<GdprPrivacyPolicy />} />
+        {/* Any MongoDB category not in CATEGORY_ROUTES */}
+        <Route path=":categorySlug/:articleSlug" element={<Article />} />
+        <Route path=":categorySlug" element={<Category />} />
       </Route>
 
       <Route path="seller/login" element={<SellerLogin />} />
@@ -189,6 +203,8 @@ function App() {
       </Route>
 
       <Route path="matrimony/login" element={<MatrimonyLogin />} />
+      <Route path="matrimony/forgot-password" element={<MatrimonyForgotPassword />} />
+      <Route path="matrimony/reset-password" element={<MatrimonyResetPassword />} />
       <Route path="matrimony/register" element={<MatrimonyRegister />} />
       <Route path="matrimony/member" element={<MatrimonyLayout />}>
         <Route index element={<MatrimonyMemberDashboard />} />
@@ -197,6 +213,8 @@ function App() {
       </Route>
 
       <Route path="admin/login" element={<AdminThemeProvider><AdminLogin /></AdminThemeProvider>} />
+      <Route path="admin/forgot-password" element={<AdminThemeProvider><AdminForgotPassword /></AdminThemeProvider>} />
+      <Route path="admin/reset-password" element={<AdminThemeProvider><AdminResetPassword /></AdminThemeProvider>} />
       <Route path="admin" element={<AdminLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="articles" element={<Articles />} />
@@ -243,6 +261,7 @@ function App() {
         <Route path="aeo-geo" element={<AeoGeo />} />
         <Route path="users" element={<Users />} />
         <Route path="role-permissions" element={<RolePermissions />} />
+        <Route path="database-backup" element={<DatabaseBackupAdmin />} />
         <Route path="settings" element={<Settings />} />
         <Route path="page-menu" element={<PageMenuLayout />}>
           <Route index element={<AboutPageEditor />} />

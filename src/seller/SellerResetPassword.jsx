@@ -43,7 +43,7 @@ const SellerResetPassword = () => {
     }
     setLoading(true);
     try {
-      const { data } = await authService.resetPassword(token, password);
+      const { data } = await authService.resetPassword(token, password, 'seller');
       toast.success(data.message || 'Password updated');
       navigate('/seller/login', { replace: true });
     } catch (err) {

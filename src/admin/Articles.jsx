@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { formatDateTime } from '../utils/helpers';
 import AdminPageHeader, { StatusBadge } from './AdminPageHeader';
 import DataTable from './DataTable';
+import { getArticlePath } from '../utils/articlePaths';
 
 const STATUS_TABS = ['', 'PUBLISHED', 'DRAFT', 'PENDING', 'SCHEDULED', 'TRASH'];
 
@@ -124,7 +125,7 @@ const Articles = () => {
             </Link>
             {row.slug && row.status === 'PUBLISHED' && (
               <a
-                href={`/news/${row.slug}`}
+                href={getArticlePath(row)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="data-table-action data-table-action-secondary"

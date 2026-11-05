@@ -2,10 +2,16 @@ import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { mediaService } from '../services/articleService';
 import { getImageUrl } from '../utils/images';
+import {
+  PORTAL_IMAGE_MAX_BYTES,
+  PORTAL_IMAGE_MAX_LABEL,
+  portalImageSizeError,
+} from '../utils/imageUploadLimits';
 
 /**
  * Image URL field with file upload + optional preview.
- * Uploads via POST /media/upload and writes the returned URL into `value`.
+ * Default: POST /media/upload
+ * Pass uploadFn for portal endpoints (matrimony / marketplace 50 KB).
  */
 const ImageUploadField = ({
   value = '',
@@ -17,9 +23,13 @@ const ImageUploadField = ({
   previewClassName = 'max-h-36 w-full object-contain rounded-lg bg-slate-50 border border-slate-200',
   required = false,
   label,
+  uploadFn,
+  maxBytes,
+  hint,
 }) => {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
+  const sizeLimit = maxBytes ?? null;
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -29,11 +39,21 @@ const ImageUploadField = ({
       e.target.value = '';
       return;
     }
+    if (sizeLimit != null && file.size > sizeLimit) {
+      toast.error(
+        sizeLimit === PORTAL_IMAGE_MAX_BYTES
+          ? portalImageSizeError()
+          : `Image must be ${Math.round(sizeLimit / 1024)} KB or less`
+      );
+      e.target.value = '';
+      return;
+    }
     const fd = new FormData();
     fd.append('file', file);
     setUploading(true);
     try {
-      const { data } = await mediaService.upload(fd);
+      const uploader = uploadFn || mediaService.upload;
+      const { data } = await uploader(fd);
       const url = data.data?.url || '';
       if (!url) throw new Error('No URL returned');
       onChange(url);
@@ -91,7 +111,12 @@ const ImageUploadField = ({
           </button>
         )}
       </div>
-      <p className="text-xs text-slate-500">Upload a file from your computer, or paste an image URL.</p>
+      <p className="text-xs text-slate-500">
+        {hint ||
+          (sizeLimit != null
+            ? `Max image size: ${sizeLimit === PORTAL_IMAGE_MAX_BYTES ? PORTAL_IMAGE_MAX_LABEL : `${Math.round(sizeLimit / 1024)} KB`}. Upload a file or paste a URL.`
+            : 'Upload a file from your computer, or paste an image URL.')}
+      </p>
     </div>
   );
 };

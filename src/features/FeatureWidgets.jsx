@@ -6,6 +6,7 @@ import { marketplaceService, matrimonyService, governmentNotificationService, fe
 import { useAuth } from '../context/AuthContext';
 import { matrimonyLoginRedirect } from '../matrimony/matrimonyAuthRedirect';
 import RasiImage from '../components/RasiImage';
+import { getArticlePath } from '../utils/articlePaths';
 
 const CardShell = ({ title, titleTamil, viewAllTo, children, className = '', headerRight }) => (
   <section className={`hub-card ${className}`}>
@@ -585,7 +586,7 @@ export const TopNewsWidget = ({ feature, articles = [] }) => {
         <p className="text-sm text-slate-600">No headlines yet.</p>
       ) : (
         <div className="grid md:grid-cols-5 gap-4 md:gap-5">
-          <Link to={`/news/${hero.slug}`} className="md:col-span-3 group block">
+          <Link to={getArticlePath(hero)} className="md:col-span-3 group block">
             <div className="relative rounded-2xl overflow-hidden aspect-[16/10] bg-stone-100">
               <NewsImage
                 src={hero.featuredImage || hero.image}
@@ -604,7 +605,7 @@ export const TopNewsWidget = ({ feature, articles = [] }) => {
           </Link>
           <div className="md:col-span-2 space-y-3.5">
             {rest.map((a) => (
-              <Link key={a._id || a.slug} to={`/news/${a.slug}`} className="flex gap-3 group">
+              <Link key={a._id || a.slug} to={getArticlePath(a)} className="flex gap-3 group">
                 <NewsImage
                   src={a.featuredImage || a.image}
                   seed={a._id || a.slug}

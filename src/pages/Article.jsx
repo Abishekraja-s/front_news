@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link, Navigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { articleService, googleNewsService } from '../services/articleService';
 import { sanitizeHtml, generateArticleJsonLd } from '../utils/sanitize';
 import GoogleNewsArticleView from '../components/GoogleNewsArticleView';
 import { formatDateTime } from '../utils/helpers';
 import { buildArticleSocialMeta } from '../utils/seo';
+import { getArticlePath } from '../utils/articlePaths';
 import { getYoutubeEmbedUrl } from '../utils/youtube';
 import NewsImage from '../components/NewsImage';
 import ShareButtons from '../components/ShareButtons';
@@ -17,7 +18,16 @@ import Loading from '../components/Loading';
 import ArticleAudioReader from '../components/ArticleAudioReader';
 
 const Article = () => {
-  const { slug } = useParams();
+  const { categorySlug: paramCategory, articleSlug, slug: legacySlug } = useParams();
+  const location = useLocation();
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  // Routes like /politics/:articleSlug have no :categorySlug param — take it from the path
+  const categorySlug =
+    paramCategory ||
+    (articleSlug && pathParts[0] && pathParts[0] !== 'news' && pathParts[0] !== 'post'
+      ? pathParts[0]
+      : undefined);
+  const slug = articleSlug || legacySlug;
   const [article, setArticle] = useState(null);
   const [googleNews, setGoogleNews] = useState(null);
   const [related, setRelated] = useState([]);
@@ -25,6 +35,13 @@ const Article = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!slug) {
+      setLoading(false);
+      setError('Article not found');
+      return;
+    }
+
+    let cancelled = false;
     setLoading(true);
     setError(null);
     setArticle(null);
@@ -34,22 +51,54 @@ const Article = () => {
     articleService
       .getBySlug(slug)
       .then((articleRes) => {
+        if (cancelled) return;
         setArticle(articleRes.data.data);
-        return articleService.getRelated(slug);
+        setLoading(false);
+        // Related is secondary — don't block article view if it fails/hangs
+        articleService
+          .getRelated(slug)
+          .then((relatedRes) => {
+            if (!cancelled) setRelated(relatedRes.data.data || []);
+          })
+          .catch(() => {
+            if (!cancelled) setRelated([]);
+          });
       })
-      .then((relatedRes) => setRelated(relatedRes.data.data || []))
       .catch(() => {
+        if (cancelled) return;
+        // Google News only on legacy /news/:slug (no category segment)
+        if (categorySlug) {
+          setError('Article not found');
+          setLoading(false);
+          return;
+        }
         googleNewsService
           .getBySlug(slug)
           .then(({ data }) => {
+            if (cancelled) return;
             setGoogleNews(data.data);
-            return googleNewsService.getRelated(slug);
+            setLoading(false);
+            googleNewsService
+              .getRelated(slug)
+              .then((relatedRes) => {
+                if (!cancelled) setRelated(relatedRes.data?.data || []);
+              })
+              .catch(() => {
+                if (!cancelled) setRelated([]);
+              });
           })
-          .then(({ data }) => setRelated(data.data || []))
-          .catch(() => setError('Article not found'));
-      })
-      .finally(() => setLoading(false));
-  }, [slug]);
+          .catch(() => {
+            if (!cancelled) {
+              setError('Article not found');
+              setLoading(false);
+            }
+          });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, categorySlug]);
 
   if (loading) return <Loading />;
   if (error || (!article && !googleNews)) {
@@ -63,6 +112,18 @@ const Article = () => {
 
   if (googleNews) {
     return <GoogleNewsArticleView item={googleNews} related={related} />;
+  }
+
+  // Enforce /{category-slug}/{news-slug} from MongoDB (legacy /news/:slug redirects here)
+  if (article?.category?.slug && article?.slug) {
+    const expectedPath = getArticlePath(article);
+    const onCategoryUrl =
+      Boolean(categorySlug) &&
+      categorySlug === article.category.slug &&
+      slug === article.slug;
+    if (!onCategoryUrl) {
+      return <Navigate to={expectedPath} replace />;
+    }
   }
 
   const jsonLd = generateArticleJsonLd(article);
@@ -242,6 +303,7 @@ const Article = () => {
                 title={social.title}
                 description={social.description}
                 slug={article.slug}
+                categorySlug={article.category?.slug}
                 image={article.ogImage || article.featuredImage}
                 url={social.url}
               />
@@ -257,6 +319,7 @@ const Article = () => {
                   title={social.title}
                   description={social.description}
                   slug={article.slug}
+                  categorySlug={article.category?.slug}
                   image={article.ogImage || article.featuredImage}
                   url={social.url}
                 />

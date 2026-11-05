@@ -11,6 +11,7 @@ import AdSenseSlot from '../components/AdSenseSlot';
 import MobileStickyAdBar from '../components/MobileStickyAdBar';
 import EventGifFloat from '../components/EventGifFloat';
 import NewsReelButton from '../components/NewsReelButton';
+import NotificationPrompt from '../components/NotificationPrompt';
 import AnalyticsTracker from '../components/AnalyticsTracker';
 import { settingService } from '../services/articleService';
 import { resolveTrackingIds } from '../utils/analyticsIds';
@@ -98,7 +99,7 @@ const PublicLayout = () => {
   }, [headerLogoUrl, headerPosterUrl, faviconUrl, settings?.headerLogo, tracking.measurementId, tracking.gtmId]);
 
   return (
-    <div className="min-h-screen flex flex-col pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0 max-lg:bg-slate-950">
+    <div className="site-shell min-h-screen flex flex-col pb-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:pb-0 max-lg:bg-slate-950 dark:bg-slate-950">
       <Helmet>
         {preloadLinks}
         {faviconUrl ? (
@@ -115,7 +116,7 @@ const PublicLayout = () => {
       </Helmet>
       <AnalyticsTracker settings={settings} />
       {/* Page body keeps light bg; outer shell is dark on mobile so footer→nav gap isn't white */}
-      <div className="flex-1 flex flex-col bg-stone-100 min-h-0">
+      <div className="flex-1 flex flex-col bg-stone-100 dark:bg-slate-900 min-h-0 transition-colors duration-200">
         <Header settings={settings} />
         <div className="container-news py-3">
           <Advertisement position="header" className="mb-2" />
@@ -138,6 +139,7 @@ const PublicLayout = () => {
       <MobileBottomNav />
       <EventGifFloat />
       <NewsReelButton />
+      <NotificationPrompt />
     </div>
   );
 };

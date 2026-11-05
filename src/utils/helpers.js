@@ -46,36 +46,59 @@ export const truncate = (text, length = 100) => {
 
 /** Fixed bottom bar on mobile */
 export const MOBILE_BOTTOM_NAV_ITEMS = [
-  { label: 'முகப்பு', path: '/' },
-  { label: 'இன்று', path: '/explore' },
-  { label: 'மார்க்கெட்பிளேஸ்', path: '/marketplace' },
-  { label: 'திருமண சேவை', path: '/matrimony' },
+  { label: 'Home', path: '/' },
+  { label: 'Today', path: '/explore' },
+  { label: 'Market', path: '/marketplace' },
+  { label: 'Matrimony', path: '/matrimony' },
+  { label: 'Quiz', path: '/explore/exams' },
 ];
 
 export const isMobileBottomNavActive = (path, pathname = '') => {
   if (path === '/') return pathname === '/';
+  if (path === '/explore') {
+    if (pathname === '/explore') return true;
+    if (!pathname.startsWith('/explore/')) return false;
+    // Quiz has its own tab — don't mark Today active on exam/quiz routes
+    return !pathname.startsWith('/explore/exams');
+  }
+  if (path === '/explore/exams') {
+    return pathname === '/explore/exams' || pathname.startsWith('/explore/exams/');
+  }
   return pathname === path || pathname.startsWith(`${path}/`);
 };
+
+/** Main site categories — display order */
+export const SITE_CATEGORIES = [
+  { name: 'District', nameTamil: 'மாவட்டம்', slug: 'district', order: 1 },
+  { name: 'Politics', nameTamil: 'அரசியல்', slug: 'politics', order: 2 },
+  { name: 'Chennai', nameTamil: 'சென்னை', slug: 'chennai', order: 3 },
+  { name: 'Tamil Nadu', nameTamil: 'தமிழ்நாடு', slug: 'tamil-nadu', order: 4 },
+  { name: 'India', nameTamil: 'இந்தியா', slug: 'india', order: 5 },
+  { name: 'World', nameTamil: 'உலகம்', slug: 'world', order: 6 },
+  { name: 'Crime', nameTamil: 'குற்றம்', slug: 'crime', order: 7 },
+  { name: 'POCSO', nameTamil: 'போக்சோ', slug: 'pocso', order: 8 },
+  { name: 'Spiritual', nameTamil: 'ஆன்மீகம்', slug: 'spiritual', order: 9 },
+  { name: 'Special', nameTamil: 'சிறப்பு செய்திகள்', slug: 'special', order: 10 },
+  { name: 'Education', nameTamil: 'கல்வி', slug: 'education', order: 11 },
+  { name: 'Sports', nameTamil: 'விளையாட்டு', slug: 'sports', order: 12 },
+  { name: 'Jobs', nameTamil: 'வேலை வாய்ப்பு', slug: 'jobs', order: 13 },
+  { name: 'Agriculture', nameTamil: 'விவசாயம்', slug: 'agriculture', order: 14 },
+  { name: 'Sri Lanka', nameTamil: 'இலங்கை', slug: 'sri-lanka', order: 15 },
+  { name: 'Business', nameTamil: 'வணிகம்', slug: 'business', order: 16 },
+  { name: 'Health', nameTamil: 'மருத்துவம்', slug: 'health', order: 17 },
+  { name: 'Short News', nameTamil: 'ஷார்ட் நியூஸ்', slug: 'short-news', order: 18 },
+  { name: 'Weather', nameTamil: 'வானிலை', slug: 'weather', order: 19 },
+  { name: 'Other News', nameTamil: 'மற்ற செய்திகள்', slug: 'other-news', order: 20 },
+];
+
+export const CATEGORY_TITLES = Object.fromEntries(
+  SITE_CATEGORIES.map((c) => [c.slug, c.nameTamil])
+);
+
+export const CATEGORY_SLUGS = SITE_CATEGORIES.map((c) => c.slug);
 
 export const NAV_ITEMS = [
   { label: 'முகப்பு', path: '/' },
   { label: 'இன்று', path: '/explore' },
-  { label: 'தமிழ்நாடு', path: '/tamil-nadu' },
-  { label: 'சென்னை', path: '/chennai' },
-  { label: 'இந்தியா', path: '/india' },
-  { label: 'உலகம்', path: '/world' },
-  { label: 'அரசியல்', path: '/politics' },
-  { label: 'வணிகம்', path: '/business' },
-  { label: 'விளையாட்டு', path: '/sports' },
-  { label: 'சினிமா', path: '/cinema' },
-  { label: 'தொழில்நுட்பம்', path: '/technology' },
-  { label: 'கல்வி', path: '/education' },
-  { label: 'வேலைவாய்ப்பு', path: '/jobs' },
-  { label: 'ஆன்மிகம்', path: '/spiritual' },
-  { label: 'சிறப்பு', path: '/special' },
-];
-
-export const CATEGORY_SLUGS = [
-  'tamil-nadu', 'chennai', 'india', 'world', 'politics', 'business',
-  'sports', 'cinema', 'technology', 'education', 'jobs', 'spiritual', 'special',
+  ...SITE_CATEGORIES.map((c) => ({ label: c.nameTamil, path: `/${c.slug}` })),
 ];

@@ -48,7 +48,7 @@ const SocialIcon = ({ id, className = iconClass }) => {
 
 /**
  * Renders configured social icons from Admin settings.
- * variant: "footer" (icon buttons) | "inline" (compact text/icon row)
+ * variant: "footer" | "inline" | "menu" (light drawer under search)
  */
 const SocialLinks = ({ settings, variant = 'footer', className = '', title }) => {
   const links = useMemo(() => getConfiguredSocialLinks(settings), [settings]);
@@ -72,6 +72,31 @@ const SocialLinks = ({ settings, variant = 'footer', className = '', title }) =>
           </a>
         ))}
       </nav>
+    );
+  }
+
+  if (variant === 'menu') {
+    return (
+      <div className={className}>
+        {title ? (
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">{title}</p>
+        ) : null}
+        <nav aria-label="Social media" className="flex flex-wrap items-center gap-2">
+          {links.map((link) => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={link.label}
+              aria-label={link.ariaLabel}
+              className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-stone-200 bg-stone-50 text-slate-600 hover:text-teal-700 hover:border-teal-300 hover:bg-teal-50 transition-colors"
+            >
+              <SocialIcon id={link.id} className="w-5 h-5" />
+            </a>
+          ))}
+        </nav>
+      </div>
     );
   }
 

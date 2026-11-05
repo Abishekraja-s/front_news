@@ -7,19 +7,26 @@ import NewsImage from '../components/NewsImage';
 import ImageUploadField from '../components/ImageUploadField';
 
 const CATEGORY_BANNER_LABELS = {
-  'tamil-nadu': 'Tamil Nadu / தமிழ்நாடு',
+  district: 'District / மாவட்டம்',
+  politics: 'Politics / அரசியல்',
   chennai: 'Chennai / சென்னை',
+  'tamil-nadu': 'Tamil Nadu / தமிழ்நாடு',
   india: 'India / இந்தியா',
   world: 'World / உலகம்',
-  politics: 'Politics / அரசியல்',
-  business: 'Business / வணிகம்',
-  sports: 'Sports / விளையாட்டு',
-  cinema: 'Cinema / சினிமா',
-  technology: 'Technology / தொழில்நுட்பம்',
+  crime: 'Crime / குற்றம்',
+  pocso: 'POCSO / போக்சோ',
+  spiritual: 'Spiritual / ஆன்மீகம்',
+  special: 'Special / சிறப்பு செய்திகள்',
   education: 'Education / கல்வி',
-  jobs: 'Jobs / வேலைவாய்ப்பு',
-  spiritual: 'Spiritual / ஆன்மிகம்',
-  special: 'Special / சிறப்பு',
+  sports: 'Sports / விளையாட்டு',
+  jobs: 'Jobs / வேலை வாய்ப்பு',
+  agriculture: 'Agriculture / விவசாயம்',
+  'sri-lanka': 'Sri Lanka / இலங்கை',
+  business: 'Business / வணிகம்',
+  health: 'Health / மருத்துவம்',
+  'short-news': 'Short News / ஷார்ட் நியூஸ்',
+  weather: 'Weather / வானிலை',
+  'other-news': 'Other News / மற்ற செய்திகள்',
 };
 
 const AD_POSITIONS = [

@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import NewsImage from './NewsImage';
+import { getArticlePath } from '../utils/articlePaths';
 
 const FeaturedNews = ({ article }) => {
   if (!article) return null;
 
   return (
     <Link
-      to={`/news/${article.slug}`}
+      to={getArticlePath(article)}
       className="group block overflow-hidden rounded-2xl shadow-md ring-1 ring-black/5 bg-white"
     >
       <div className="aspect-[16/10] md:aspect-[16/9] overflow-hidden bg-stone-100">

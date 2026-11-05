@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import './index.css';
 
 class RootErrorBoundary extends React.Component {
@@ -40,10 +41,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <RootErrorBoundary>
       <HelmetProvider>
         <BrowserRouter>
-          <AuthProvider>
-            <App />
-            <Toaster position="top-right" />
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <App />
+              <Toaster position="top-right" />
+            </AuthProvider>
+          </ThemeProvider>
         </BrowserRouter>
       </HelmetProvider>
     </RootErrorBoundary>

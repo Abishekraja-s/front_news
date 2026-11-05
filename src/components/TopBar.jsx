@@ -1,16 +1,17 @@
 import { Link } from 'react-router-dom';
 import SocialLinks from './SocialLinks';
+import ThemeToggle from './ThemeToggle';
 
 const TopBar = ({ settings }) => (
   <div className="bg-slate-950 text-white/80 text-[11px] tracking-wide hidden md:block">
-    <div className="container-news flex items-center justify-between py-2">
-      <div className="flex items-center gap-3">
+    <div className="container-news flex items-center justify-between py-2 gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         <span className="inline-flex items-center gap-1.5 text-brand-300 font-semibold uppercase tracking-wider">
           <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />
           Live
         </span>
         <span className="text-white/50">|</span>
-        <span>
+        <span className="truncate">
           {new Date().toLocaleDateString('ta-IN', {
             weekday: 'long',
             year: 'numeric',
@@ -19,12 +20,13 @@ const TopBar = ({ settings }) => (
           })}
         </span>
       </div>
-      <div className="flex items-center gap-4 font-medium">
+      <div className="flex items-center gap-3 lg:gap-4 font-medium flex-shrink-0">
+        <ThemeToggle compact />
         <SocialLinks settings={settings} variant="inline" />
         <Link to="/explore" className="hover:text-brand-300 transition-colors">
           Explore
         </Link>
-        <Link to="/seller/login" className="hover:text-brand-300 transition-colors">
+        <Link to="/seller/login" className="hover:text-brand-300 transition-colors hidden lg:inline">
           Marketplace Login
         </Link>
         <Link to="/about" className="hover:text-brand-300 transition-colors">

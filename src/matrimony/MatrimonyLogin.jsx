@@ -79,6 +79,14 @@ const MatrimonyLogin = () => {
           <label className="block text-sm">
             <span className="text-slate-600">Password</span>
             <input required type="password" className="mt-1 w-full border border-stone-200 rounded-xl px-3 py-2.5" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <div className="mt-2 flex justify-end">
+              <Link
+                to="/matrimony/forgot-password"
+                className="text-sm font-semibold text-teal-700 hover:text-teal-800"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </label>
           <button type="submit" disabled={loading} className="btn-primary w-full">{loading ? 'Signing in…' : 'Sign in'}</button>
         </form>

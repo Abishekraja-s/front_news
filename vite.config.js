@@ -11,7 +11,13 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       strictPort: false,
       proxy: {
-        '/api': { target: apiTarget, changeOrigin: true },
+        // Long timeout for database backup dumps (can take several minutes)
+        '/api': {
+          target: apiTarget,
+          changeOrigin: true,
+          timeout: 0,
+          proxyTimeout: 0,
+        },
         '/uploads': { target: apiTarget, changeOrigin: true },
         '/sitemap.xml': { target: apiTarget, changeOrigin: true },
         '/news-sitemap.xml': { target: apiTarget, changeOrigin: true },

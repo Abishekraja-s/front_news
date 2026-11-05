@@ -12,24 +12,8 @@ import InstagramPostsSection from '../components/InstagramPostsSection';
 import GoogleNewsSection from '../components/GoogleNewsSection';
 import GovernmentNotificationsSection from '../components/GovernmentNotificationsSection';
 import { SkeletonCard } from '../components/Loading';
-import { CATEGORY_SLUGS } from '../utils/helpers';
+import { CATEGORY_SLUGS, CATEGORY_TITLES } from '../utils/helpers';
 import { Helmet } from 'react-helmet-async';
-
-const CATEGORY_TITLES = {
-  'tamil-nadu': 'தமிழ்நாடு',
-  chennai: 'சென்னை',
-  india: 'இந்தியா',
-  world: 'உலகம்',
-  politics: 'அரசியல்',
-  business: 'வணிகம்',
-  sports: 'விளையாட்டு',
-  cinema: 'சினிமா',
-  technology: 'தொழில்நுட்பம்',
-  education: 'கல்வி',
-  jobs: 'வேலைவாய்ப்பு',
-  spiritual: 'ஆன்மிகம்',
-  special: 'சிறப்பு',
-};
 
 const Home = () => {
   const [featured, setFeatured] = useState([]);
@@ -43,7 +27,7 @@ const Home = () => {
       try {
         const [featuredRes, latestRes, popularRes] = await Promise.allSettled([
           articleService.getFeatured(),
-          articleService.getLatest(8),
+          articleService.getLatest(9),
           articleService.getPopular(5),
         ]);
 
@@ -77,7 +61,11 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const heroArticle = featured[0];
+  // One hero card = most recently updated news
+  const heroArticle = latest[0] || featured[0] || null;
+  const sidebarLatest = heroArticle
+    ? latest.filter((a) => a._id !== heroArticle._id).slice(0, 6)
+    : latest.slice(0, 6);
 
   return (
     <>
@@ -102,14 +90,10 @@ const Home = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-2">
-              {heroArticle ? (
-                <FeaturedNews article={heroArticle} />
-              ) : latest[0] ? (
-                <FeaturedNews article={latest[0]} />
-              ) : null}
+              {heroArticle ? <FeaturedNews article={heroArticle} /> : null}
             </div>
             <div className="space-y-6">
-              <LatestNews articles={latest.slice(0, 6)} />
+              <LatestNews articles={sidebarLatest} />
               <PopularNews articles={popular} />
             </div>
           </div>

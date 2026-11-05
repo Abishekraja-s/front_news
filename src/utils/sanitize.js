@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify';
+import { getArticlePath } from './articlePaths';
 
 const config = {
   ADD_TAGS: ['iframe'],
@@ -34,7 +35,7 @@ export const generateArticleJsonLd = (article, siteName = 'The Great India News'
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `/news/${article.slug}`,
+      '@id': getArticlePath(article),
     },
     articleSection: article.category?.nameTamil || article.category?.name,
   };

@@ -1,34 +1,29 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { articleService } from '../services/articleService';
-import NewsCard from '../components/NewsCard';
+import CategoryListingLayout from '../components/CategoryListingLayout';
 import { SkeletonCard } from '../components/Loading';
 import Advertisement from '../components/Advertisement';
 import CategoryBanner from '../components/CategoryBanner';
 import AdSenseSlot from '../components/AdSenseSlot';
 import SportsWidgets from '../components/SportsWidgets';
+import CategoryQuickLinks from '../components/CategoryQuickLinks';
+
+import { CATEGORY_TITLES as SHARED_CATEGORY_TITLES } from '../utils/helpers';
 
 const CATEGORY_TITLES = {
-  'tamil-nadu': 'தமிழ்நாடு',
-  chennai: 'சென்னை',
-  india: 'இந்தியா',
-  world: 'உலகம்',
-  politics: 'அரசியல்',
-  business: 'வணிகம்',
-  sports: 'விளையாட்டு',
+  ...SHARED_CATEGORY_TITLES,
   cinema: 'சினிமா',
   technology: 'தொழில்நுட்பம்',
-  education: 'கல்வி',
-  jobs: 'வேலைவாய்ப்பு',
-  spiritual: 'ஆன்மிகம்',
-  special: 'சிறப்பு',
-  district: 'மாவட்ட செய்திகள்',
 };
 
 const Category = () => {
+  const { categorySlug: paramSlug } = useParams();
   const location = useLocation();
-  const categorySlug = location.pathname.replace(/^\//, '');
+  // Named :categorySlug route, or fixed CATEGORY_ROUTES path like /politics
+  const categorySlug =
+    paramSlug || location.pathname.replace(/^\//, '').split('/').filter(Boolean)[0] || '';
   const [articles, setArticles] = useState([]);
   const [category, setCategory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,16 +61,18 @@ const Category = () => {
           <span className="text-gray-900">{title}</span>
         </nav>
 
-        <h1 className="text-2xl md:text-3xl font-bold font-headline text-news-dark mb-6">{title}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold font-headline text-news-dark mb-4">{title}</h1>
 
-        <Advertisement position="top_banner" className="mb-6" />
-        <AdSenseSlot location="top_banner" page="category" category={categorySlug} className="mb-6" />
-        <AdSenseSlot location="sidebar" page="category" category={categorySlug} className="mb-6" />
+        <Advertisement position="top_banner" className="mb-4" />
+        <AdSenseSlot location="top_banner" page="category" category={categorySlug} className="mb-4" />
+        <AdSenseSlot location="sidebar" page="category" category={categorySlug} className="mb-4" />
+
+        <CategoryQuickLinks className="mb-6" />
 
         {categorySlug === 'sports' && <SportsWidgets page="category" className="mb-6" />}
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <SkeletonCard key={i} />
             ))}
@@ -91,11 +88,7 @@ const Category = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {articles.map((article) => (
-                <NewsCard key={article._id} article={article} />
-              ))}
-            </div>
+            <CategoryListingLayout slug={categorySlug} articles={articles} />
 
             {pagination && pagination.pages > 1 && (
               <div className="flex justify-center gap-2 mt-8">

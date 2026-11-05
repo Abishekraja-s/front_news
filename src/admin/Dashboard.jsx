@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { articleService } from '../services/articleService';
 import { useAuth } from '../context/AuthContext';
+import { getArticlePath } from '../utils/articlePaths';
 
 const STAT_CONFIG = [
   { key: 'todayCount', label: "Today's News", icon: '📅', accent: 'border-blue-500', text: 'text-blue-600' },
@@ -116,7 +117,7 @@ const Dashboard = () => {
                   </span>
                   <div className="flex-1 min-w-0">
                     <Link
-                      to={`/news/${article.slug}`}
+                      to={getArticlePath(article)}
                       target="_blank"
                       className="text-sm sm:text-base font-medium text-slate-900 group-hover:text-brand-600 line-clamp-2 leading-snug"
                     >
