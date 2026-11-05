@@ -1,4 +1,5 @@
 import { getImageUrl, getSiteUrl } from './images';
+import { getArticleAbsoluteUrl } from './articlePaths';
 
 export const SITE_NAME = 'The Great India News';
 export const FALLBACK_TITLE = 'The Great India News - தி கிரேட் இந்தியா நியூஸ்';
@@ -60,9 +61,6 @@ export const getAbsoluteOgImage = (image, seed = 'news') => {
   }
 
   if (!url || isLocalHost(url)) return fallback;
-  if (url.includes('picsum.photos') && /\/\d+\/\d+/.test(url)) {
-    url = url.replace(/\/\d+\/\d+/, '/1200/630');
-  }
   return url;
 };
 
@@ -78,7 +76,9 @@ const cleanText = (value, max = 200) =>
 export const buildArticleSocialMeta = (article) => {
   const siteOrigin = getPublicSiteUrl();
   const slug = article?.slug || '';
-  const siteArticleUrl = slug ? `${siteOrigin}/news/${slug}` : siteOrigin;
+  const siteArticleUrl = slug
+    ? getArticleAbsoluteUrl(article, siteOrigin)
+    : siteOrigin;
 
   const rawCanonical = (article?.canonicalUrl || '').trim();
   const canonicalLink =

@@ -35,9 +35,17 @@ const clean = (s, max = 200) => stripHtml(s || '').slice(0, max);
 
 const isLocal = (u = '') => /localhost|127\.0\.0\.1/i.test(u);
 
+const toBase64Url = (s) =>
+  Buffer.from(String(s), 'utf8')
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+
 /**
  * Absolute HTTPS featured image for WhatsApp/Facebook.
- * Use a direct URL — WhatsApp often fails when og:image has ?query= params.
+ * Third-party hosts (incl. picsum) → same-origin /og/img/<token>.jpg (no ?query —
+ * WhatsApp rejects query-string og:image and blocks picsum directly with 405).
  */
 const toAbsoluteImage = (image) => {
   if (!image || !String(image).trim()) return DEFAULT_OG;
@@ -45,9 +53,13 @@ const toAbsoluteImage = (image) => {
   if (/^http:\/\//i.test(img)) img = img.replace(/^http:/i, 'https:');
   if (img.startsWith('/')) img = `${API}${img}`;
   else if (!/^https:\/\//i.test(img)) img = `${API}/${img}`;
-  if (isLocal(img)) return DEFAULT_OG;
-  if (img.startsWith('https://')) return img;
-  return DEFAULT_OG;
+  if (isLocal(img) || !img.startsWith('https://')) return DEFAULT_OG;
+  // Already on our site (incl. previous /og/img/ proxies)
+  if (img.startsWith(SITE)) return img;
+  // Our API uploads — direct HTTPS is fine
+  if (img.includes('onrender.com') && !/picsum\.photos/i.test(img)) return img;
+  // Proxy through Netlify so WhatsApp can download the bytes
+  return `${SITE}/og/img/${toBase64Url(img)}.jpg`;
 };
 
 const renderHtml = ({ title, description, image, pageUrl, shareUrl }, { redirect = false } = {}) => {

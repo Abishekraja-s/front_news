@@ -15,6 +15,13 @@
   status = 200
   force = true
 
+# Same-origin OG image proxy (path token — WhatsApp rejects ?url= query images)
+[[redirects]]
+  from = "/og/img/:token"
+  to = "/.netlify/functions/og-image?b64=:token"
+  status = 200
+  force = true
+
 # Edge: when bots open normal /news/* links, still inject OG + image
 [[edge_functions]]
   function = "article-og"
@@ -25,3 +32,4 @@
   from = "/*"
   to = "/index.html"
   status = 200
+

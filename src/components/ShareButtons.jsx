@@ -63,8 +63,8 @@ const ShareButtons = ({ url, title, slug, categorySlug }) => {
   const previewUrl = useMemo(() => {
     if (!slug) return pageUrl;
     const enc = encodeURIComponent(slug);
-    // Site OG page (Netlify function). v=3 busts failed WhatsApp cache.
-    if (siteBase) return `${siteBase}/og/news/${enc}?v=3`;
+    // Site OG page (Netlify function). v= busts failed WhatsApp image cache.
+    if (siteBase) return `${siteBase}/og/news/${enc}?v=4`;
     return `${apiBase}/share/news/${enc}`;
   }, [slug, siteBase, apiBase, pageUrl]);
 

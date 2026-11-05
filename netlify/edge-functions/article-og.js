@@ -33,16 +33,24 @@ const stripHtml = (s = '') =>
 
 const clean = (s, max = 200) => stripHtml(s || '').slice(0, max);
 
-/** Direct HTTPS image — WhatsApp often drops previews when og:image has ?query= */
+const toBase64Url = (s) => {
+  const bytes = new TextEncoder().encode(String(s));
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+};
+
+/** Third-party → /og/img/<token>.jpg so WhatsApp can fetch (no ?query, no picsum 405) */
 const toAbsoluteImage = (image) => {
   if (!image || !String(image).trim()) return DEFAULT_OG;
   let img = String(image).trim();
   if (/^http:\/\//i.test(img)) img = img.replace(/^http:/i, 'https:');
   if (img.startsWith('/')) img = `${API}${img}`;
   else if (!/^https:\/\//i.test(img)) img = `${API}/${img}`;
-  if (/localhost|127\.0\.0\.1/i.test(img)) return DEFAULT_OG;
-  if (img.startsWith('https://')) return img;
-  return DEFAULT_OG;
+  if (/localhost|127\.0\.0\.1/i.test(img) || !img.startsWith('https://')) return DEFAULT_OG;
+  if (img.startsWith(SITE)) return img;
+  if (img.includes('onrender.com') && !/picsum\.photos/i.test(img)) return img;
+  return `${SITE}/og/img/${toBase64Url(img)}.jpg`;
 };
 
 const buildHtml = ({ title, description, image, pageUrl }) => {
