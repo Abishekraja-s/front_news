@@ -33,6 +33,7 @@ const stripHtml = (s = '') =>
 
 const clean = (s, max = 200) => stripHtml(s || '').slice(0, max);
 
+/** Direct HTTPS image — WhatsApp often drops previews when og:image has ?query= */
 const toAbsoluteImage = (image) => {
   if (!image || !String(image).trim()) return DEFAULT_OG;
   let img = String(image).trim();
@@ -40,10 +41,8 @@ const toAbsoluteImage = (image) => {
   if (img.startsWith('/')) img = `${API}${img}`;
   else if (!/^https:\/\//i.test(img)) img = `${API}/${img}`;
   if (/localhost|127\.0\.0\.1/i.test(img)) return DEFAULT_OG;
-  if (img.startsWith('https://') && !img.startsWith(SITE) && !img.includes('onrender.com')) {
-    return `${SITE}/.netlify/functions/og-image?url=${encodeURIComponent(img)}`;
-  }
-  return img;
+  if (img.startsWith('https://')) return img;
+  return DEFAULT_OG;
 };
 
 const buildHtml = ({ title, description, image, pageUrl }) => {
@@ -65,9 +64,11 @@ const buildHtml = ({ title, description, image, pageUrl }) => {
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="${t}" />
 <meta property="og:url" content="${url}" />
 <meta property="og:type" content="article" />
 <meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />
+<meta property="og:locale" content="ta_IN" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="${t}" />
 <meta name="twitter:description" content="${d}" />
@@ -96,7 +97,9 @@ async function loadArticleMeta(slug) {
               200
             ) || FALLBACK_DESC,
           image: toAbsoluteImage(a.ogImage || a.featuredImage),
-          pageUrl: `${SITE}/news/${a.slug || slug}`,
+          pageUrl: a.category?.slug
+            ? `${SITE}/${a.category.slug}/${a.slug || slug}`
+            : `${SITE}/news/${a.slug || slug}`,
         };
       }
     }

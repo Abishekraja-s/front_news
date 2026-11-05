@@ -35,7 +35,10 @@ const clean = (s, max = 200) => stripHtml(s || '').slice(0, max);
 
 const isLocal = (u = '') => /localhost|127\.0\.0\.1/i.test(u);
 
-/** Absolute HTTPS featured image (or site default). No localhost. */
+/**
+ * Absolute HTTPS featured image for WhatsApp/Facebook.
+ * Use a direct URL — WhatsApp often fails when og:image has ?query= params.
+ */
 const toAbsoluteImage = (image) => {
   if (!image || !String(image).trim()) return DEFAULT_OG;
   let img = String(image).trim();
@@ -43,26 +46,21 @@ const toAbsoluteImage = (image) => {
   if (img.startsWith('/')) img = `${API}${img}`;
   else if (!/^https:\/\//i.test(img)) img = `${API}/${img}`;
   if (isLocal(img)) return DEFAULT_OG;
-  // Prefer proxy for third-party hosts so WhatsApp can download reliably
-  if (
-    img.startsWith('https://') &&
-    !img.startsWith(SITE) &&
-    !img.includes('onrender.com')
-  ) {
-    return `${SITE}/.netlify/functions/og-image?url=${encodeURIComponent(img)}`;
-  }
-  return img;
+  if (img.startsWith('https://')) return img;
+  return DEFAULT_OG;
 };
 
-const renderHtml = ({ title, description, image, pageUrl }, { redirect = false } = {}) => {
+const renderHtml = ({ title, description, image, pageUrl, shareUrl }, { redirect = false } = {}) => {
   const t = escapeHtml(title || FALLBACK_TITLE);
   const d = escapeHtml(description || FALLBACK_DESC);
   const img = escapeHtml(image || DEFAULT_OG);
-  const url = escapeHtml(pageUrl);
+  const article = escapeHtml(pageUrl);
+  // Keep crawlers on this OG document (do not bounce via og:url to the SPA)
+  const ogUrl = escapeHtml(shareUrl || pageUrl);
 
   const redirectBits = redirect
     ? `
-  <meta http-equiv="refresh" content="1;url=${url}" />
+  <meta http-equiv="refresh" content="1;url=${article}" />
   <script>setTimeout(function(){location.replace(${JSON.stringify(pageUrl)});},800);</script>`
     : '';
 
@@ -72,7 +70,7 @@ const renderHtml = ({ title, description, image, pageUrl }, { redirect = false }
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${t}</title>
-  <link rel="canonical" href="${url}" />
+  <link rel="canonical" href="${article}" />
 
   <meta name="description" content="${d}" />
 
@@ -83,9 +81,11 @@ const renderHtml = ({ title, description, image, pageUrl }, { redirect = false }
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:url" content="${url}" />
+  <meta property="og:image:alt" content="${t}" />
+  <meta property="og:url" content="${ogUrl}" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />
+  <meta property="og:locale" content="ta_IN" />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${t}" />
@@ -97,7 +97,7 @@ ${redirectBits}
   <h1>${t}</h1>
   <p>${d}</p>
   <img src="${img}" alt="${t}" width="1200" height="630" />
-  <p><a href="${url}">Continue to article →</a></p>
+  <p><a href="${article}">Continue to article →</a></p>
 </body>
 </html>`;
 };
@@ -119,7 +119,9 @@ async function loadMeta(slug) {
               200
             ) || FALLBACK_DESC,
           image: toAbsoluteImage(a.ogImage || a.featuredImage),
-          pageUrl: `${SITE}/news/${a.slug || slug}`,
+          pageUrl: a.category?.slug
+            ? `${SITE}/${a.category.slug}/${a.slug || slug}`
+            : `${SITE}/news/${a.slug || slug}`,
         };
       }
     }
@@ -172,7 +174,9 @@ export async function handler(event) {
   const isBot = BOT_RE.test(ua);
 
   try {
-    const meta = await loadMeta(decodeURIComponent(slug));
+    const decoded = decodeURIComponent(slug);
+    const shareUrl = `${SITE}/og/news/${encodeURIComponent(decoded)}`;
+    const meta = await loadMeta(decoded);
     if (!meta) {
       return {
         statusCode: 404,
@@ -183,6 +187,7 @@ export async function handler(event) {
             description: FALLBACK_DESC,
             image: DEFAULT_OG,
             pageUrl: SITE,
+            shareUrl,
           },
           { redirect: false }
         ),
@@ -193,10 +198,11 @@ export async function handler(event) {
       statusCode: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
-        'cache-control': 'public, max-age=300',
+        // Short cache so WhatsApp can pick up image/title fixes quickly
+        'cache-control': 'public, max-age=60, must-revalidate',
       },
       // Bots: no redirect so they read og:* fully. Humans: soft redirect to article.
-      body: renderHtml(meta, { redirect: !isBot }),
+      body: renderHtml({ ...meta, shareUrl }, { redirect: !isBot }),
     };
   } catch (err) {
     return {
