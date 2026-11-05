@@ -64,7 +64,7 @@ const ShareButtons = ({ url, title, slug, categorySlug }) => {
     if (!slug) return pageUrl;
     const enc = encodeURIComponent(slug);
     // Site OG page (Netlify function). v= busts failed WhatsApp image cache.
-    if (siteBase) return `${siteBase}/og/news/${enc}?v=4`;
+    if (siteBase) return `${siteBase}/og/news/${enc}?v=5`;
     return `${apiBase}/share/news/${enc}`;
   }, [slug, siteBase, apiBase, pageUrl]);
 
