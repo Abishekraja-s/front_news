@@ -22,8 +22,12 @@ export const getImageUrl = (url, seed = 'news') => {
   return API_BASE ? `${API_BASE}${path}` : path;
 };
 
-export const getArticleImage = (article) =>
-  getImageUrl(article?.featuredImage, article?.slug || 'article');
+/** Site listing image — never use the social default-og brand card as a news thumb */
+export const getArticleImage = (article) => {
+  let url = article?.featuredImage || '';
+  if (/default-og-image\.jpg/i.test(url)) url = '';
+  return getImageUrl(url, article?.slug || 'article');
+};
 
 export const getMediaUrl = (url) => {
   if (!url || url.trim() === '') return '';

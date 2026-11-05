@@ -15,17 +15,19 @@ const NewsImage = ({
   placeholderClassName = '',
   ...props
 }) => {
-  const hasSrc = Boolean(src?.trim());
-  const resolved = hasSrc ? getImageUrl(src, seed) : '';
+  // Brand default-og JPEG is for WhatsApp cards only — not a news thumbnail
+  const usable = src?.trim() && !/default-og-image\.jpg/i.test(src) ? src.trim() : '';
+  const resolved = usable ? getImageUrl(usable, seed) : noPlaceholder ? '' : getImageUrl('', seed);
   const [imgSrc, setImgSrc] = useState(resolved);
-  const [failed, setFailed] = useState(!hasSrc);
+  const [failed, setFailed] = useState(!usable && noPlaceholder);
 
   // Re-bind when image URL is updated after enrich / edit
   useEffect(() => {
-    const next = src?.trim() ? getImageUrl(src, seed) : '';
+    const nextUsable = src?.trim() && !/default-og-image\.jpg/i.test(src) ? src.trim() : '';
+    const next = nextUsable ? getImageUrl(nextUsable, seed) : noPlaceholder ? '' : getImageUrl('', seed);
     setImgSrc(next);
-    setFailed(!next);
-  }, [src, seed]);
+    setFailed(!nextUsable && noPlaceholder);
+  }, [src, seed, noPlaceholder]);
 
   const handleError = () => {
     if (!failed) {
@@ -58,6 +60,8 @@ const NewsImage = ({
       decoding="async"
       referrerPolicy="no-referrer"
       onError={handleError}
+      // Help browsers pick a full-width fetch on mobile listing cards
+      {...(props.sizes ? {} : { sizes: '(max-width: 640px) 100vw, 50vw' })}
       {...props}
     />
   );
