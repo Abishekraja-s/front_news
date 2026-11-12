@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
-import { matrimonyService } from '../services/articleService';
+import { matrimonyService, pageContentService } from '../services/articleService';
 import { useAuth } from '../context/AuthContext';
 import NewsImage from '../components/NewsImage';
 import { getImageUrl } from '../utils/images';
 import { matrimonyLoginRedirect } from '../matrimony/matrimonyAuthRedirect';
+
+const DEFAULT_ENQUIRY_AGREE =
+  'By submitting this enquiry, you consent to your submitted name, contact number and message being shared with the relevant profile owner for the purpose of responding to your matrimonial enquiry, in accordance with our Privacy Policy.';
 
 const LABEL = {
   male: 'Male',
@@ -58,6 +61,8 @@ const MatrimonyDetail = () => {
   const [error, setError] = useState(false);
   const [enquiryForm, setEnquiryForm] = useState({ enquirerName: '', enquirerPhone: '', comment: '' });
   const [sendingEnquiry, setSendingEnquiry] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [agreeText, setAgreeText] = useState(DEFAULT_ENQUIRY_AGREE);
 
   useEffect(() => {
     if (user) {
@@ -68,6 +73,18 @@ const MatrimonyDetail = () => {
       }));
     }
   }, [user]);
+
+  useEffect(() => {
+    pageContentService
+      .getPublicLegal('matrimony-disclaimer')
+      .then(({ data }) => {
+        const text =
+          data.data?.content?.enquiryAgreementText?.trim() ||
+          data.data?.content?.agreementCheckboxText?.trim();
+        if (text) setAgreeText(text);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -86,6 +103,10 @@ const MatrimonyDetail = () => {
 
   const handleEnquiry = async (e) => {
     e.preventDefault();
+    if (!agreed) {
+      toast.error('Please agree to the Matrimony notice to continue');
+      return;
+    }
     setSendingEnquiry(true);
     try {
       await matrimonyService.sendEnquiry(id, enquiryForm);
@@ -95,6 +116,7 @@ const MatrimonyDetail = () => {
         enquirerPhone: user?.phone || '',
         comment: '',
       });
+      setAgreed(false);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not submit enquiry');
     } finally {
@@ -392,7 +414,33 @@ const MatrimonyDetail = () => {
                 onChange={(e) => setEnquiryForm({ ...enquiryForm, comment: e.target.value })}
               />
             </div>
-            <button type="submit" disabled={sendingEnquiry} className="btn-primary w-full text-sm">
+            <label className="flex items-start gap-3 text-sm text-slate-700 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                required
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+              />
+              <span className="leading-relaxed">
+                <span className="text-rose-500 font-semibold mr-0.5">*</span>
+                {agreeText}{' '}
+                <Link
+                  to="/matrimony-disclaimer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-700 font-semibold underline underline-offset-2 hover:text-teal-800"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Read full notice
+                </Link>
+              </span>
+            </label>
+            <button
+              type="submit"
+              disabled={sendingEnquiry || !agreed}
+              className="btn-primary w-full text-sm disabled:opacity-50"
+            >
               {sendingEnquiry ? 'Submitting…' : 'Submit Enquiry'}
             </button>
           </form>

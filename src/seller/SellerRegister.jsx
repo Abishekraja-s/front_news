@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { pageContentService } from '../services/articleService';
 import {
   SellerAuthShell,
   SellerAuthFooter,
@@ -11,14 +12,29 @@ import {
 
 const empty = { name: '', email: '', password: '', phone: '', businessName: '', city: '' };
 
+const DEFAULT_AGREE =
+  'I have read and agree to the Important Notice – Marketplace and Privacy Policy. I understand that I must independently verify the seller and product before making any payment.';
+
 const SellerRegister = () => {
   const { user, sendSellerRegisterOtp, verifySellerRegisterOtp } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState('form'); // form | otp
   const [form, setForm] = useState(empty);
   const [otp, setOtp] = useState('');
+  const [agreed, setAgreed] = useState(false);
+  const [agreeText, setAgreeText] = useState(DEFAULT_AGREE);
   const [loading, setLoading] = useState(false);
   const [resendIn, setResendIn] = useState(0);
+
+  useEffect(() => {
+    pageContentService
+      .getPublicMarketplaceDisclaimer()
+      .then(({ data }) => {
+        const text = data.data?.content?.agreementCheckboxText?.trim();
+        if (text) setAgreeText(text);
+      })
+      .catch(() => {});
+  }, []);
 
   if (user) {
     return <Navigate to={user.role === 'SELLER' ? '/seller' : '/admin'} replace />;
@@ -39,6 +55,10 @@ const SellerRegister = () => {
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
+    if (!agreed) {
+      toast.error('Please agree to the Marketplace Disclaimer to continue');
+      return;
+    }
     setLoading(true);
     try {
       const { data } = await sendSellerRegisterOtp(form);
@@ -137,9 +157,40 @@ const SellerRegister = () => {
           <p className="sm:col-span-2 text-xs text-slate-500">
             We will email a one-time password (OTP) to confirm your email before creating the account.
           </p>
+          <label className="sm:col-span-2 flex items-start gap-3 text-sm text-slate-700 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              required
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+            />
+            <span className="leading-relaxed">
+              {agreeText}{' '}
+              <Link
+                to="/marketplace-disclaimer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-700 font-semibold underline underline-offset-2 hover:text-teal-800"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Read Marketplace Disclaimer
+              </Link>
+              {' · '}
+              <Link
+                to="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-700 font-semibold underline underline-offset-2 hover:text-teal-800"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Privacy Policy
+              </Link>
+            </span>
+          </label>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !agreed}
             className="btn-primary sm:col-span-2 w-full py-3 text-base sm:text-sm disabled:opacity-50"
           >
             {loading ? 'Sending OTP…' : 'Send OTP to email'}

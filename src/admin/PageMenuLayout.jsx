@@ -2,6 +2,30 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 const PAGE_MENU_ITEMS = [
   { slug: 'about', label: 'About Us', path: '/admin/page-menu/about' },
+  { slug: 'contact', label: 'Contact', path: '/admin/page-menu/contact' },
+  { slug: 'editorial-policy', label: 'Editorial Policy', path: '/admin/page-menu/editorial-policy' },
+  { slug: 'correction-policy', label: 'Correction Policy', path: '/admin/page-menu/correction-policy' },
+  { slug: 'disclaimer', label: 'Disclaimer', path: '/admin/page-menu/disclaimer' },
+  {
+    slug: 'gdpr-privacy-policy',
+    label: 'GDPR Privacy Policy',
+    path: '/admin/page-menu/gdpr-privacy-policy',
+  },
+  { slug: 'privacy-policy', label: 'Privacy Policy', path: '/admin/page-menu/privacy-policy' },
+  { slug: 'terms', label: 'Terms of Use', path: '/admin/page-menu/terms' },
+  { slug: 'copyright', label: 'Copyright', path: '/admin/page-menu/copyright' },
+  { slug: 'grievance', label: 'Grievance', path: '/admin/page-menu/grievance' },
+  { slug: 'advertise', label: 'Advertisement Us', path: '/admin/page-menu/advertise' },
+  {
+    slug: 'marketplace-disclaimer',
+    label: 'Marketplace Disclaimer',
+    path: '/admin/page-menu/marketplace-disclaimer',
+  },
+  {
+    slug: 'matrimony-disclaimer',
+    label: 'Matrimony Disclaimer',
+    path: '/admin/page-menu/matrimony-disclaimer',
+  },
 ];
 
 const PageMenuLayout = () => (
@@ -22,7 +46,7 @@ const PageMenuLayout = () => (
           key={item.slug}
           to={item.path}
           className={({ isActive }) =>
-            `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               isActive
                 ? 'bg-brand-600 text-white'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-700'

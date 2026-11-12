@@ -2,14 +2,19 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
-import { marketplaceService } from '../services/articleService';
+import { marketplaceService, pageContentService } from '../services/articleService';
 import NewsImage from '../components/NewsImage';
+
+const DEFAULT_ENQUIRY_AGREE =
+  'By submitting this enquiry, you agree that your submitted contact details and message may be shared with the relevant seller for the purpose of responding to your enquiry, in accordance with our Privacy Policy.';
 
 const MarketplaceDetail = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [agreeText, setAgreeText] = useState(DEFAULT_ENQUIRY_AGREE);
   const [form, setForm] = useState({ buyerName: '', buyerEmail: '', buyerPhone: '', message: '' });
 
   useEffect(() => {
@@ -20,6 +25,18 @@ const MarketplaceDetail = () => {
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    pageContentService
+      .getPublicLegal('marketplace-disclaimer')
+      .then(({ data }) => {
+        const text =
+          data.data?.content?.enquiryAgreementText?.trim() ||
+          data.data?.content?.agreementCheckboxText?.trim();
+        if (text) setAgreeText(text);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleEnquiry = async (e) => {
     e.preventDefault();
@@ -40,6 +57,10 @@ const MarketplaceDetail = () => {
       toast.error('Enter a valid 10-digit phone number');
       return;
     }
+    if (!agreed) {
+      toast.error('Please agree to the Marketplace notice to continue');
+      return;
+    }
 
     setSending(true);
     try {
@@ -51,6 +72,7 @@ const MarketplaceDetail = () => {
       });
       toast.success('Enquiry sent to the seller');
       setForm({ buyerName: '', buyerEmail: '', buyerPhone: '', message: '' });
+      setAgreed(false);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not send enquiry');
     } finally {
@@ -136,7 +158,29 @@ const MarketplaceDetail = () => {
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
             />
-            <button type="submit" disabled={sending} className="btn-primary w-full">
+            <label className="flex items-start gap-3 text-sm text-slate-700 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                required
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+              />
+              <span className="leading-relaxed">
+                <span className="text-red-500 font-semibold mr-0.5">*</span>
+                {agreeText}{' '}
+                <Link
+                  to="/marketplace-disclaimer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-700 font-semibold underline underline-offset-2 hover:text-teal-800"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Read full notice
+                </Link>
+              </span>
+            </label>
+            <button type="submit" disabled={sending || !agreed} className="btn-primary w-full disabled:opacity-50">
               {sending ? 'Sending…' : 'Send enquiry'}
             </button>
           </form>

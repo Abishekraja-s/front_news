@@ -42,7 +42,8 @@ import MatrimonyDetail from './pages/MatrimonyDetail';
 import About from './pages/About';
 import {
   Contact, PrivacyPolicy, Terms,
-  EditorialPolicy, CorrectionPolicy, Copyright, Grievance, Disclaimer, GdprPrivacyPolicy,
+  EditorialPolicy, CorrectionPolicy, Copyright, Grievance, Disclaimer, MarketplaceDisclaimer,
+  MatrimonyDisclaimer, GdprPrivacyPolicy, Advertise,
 } from './pages/StaticPages';
 
 import AdminLayout from './admin/AdminLayout';
@@ -92,6 +93,7 @@ import AstrologySyncNow from './admin/astrology/AstrologySyncNow';
 import AstrologySyncHistory from './admin/astrology/AstrologySyncHistory';
 import PageMenuLayout from './admin/PageMenuLayout';
 import AboutPageEditor from './admin/AboutPageEditor';
+import StaticLegalPageEditor from './admin/StaticLegalPageEditor';
 
 import SellerLayout from './seller/SellerLayout';
 import SellerLogin from './seller/SellerLogin';
@@ -184,7 +186,10 @@ function App() {
         <Route path="copyright" element={<Copyright />} />
         <Route path="grievance" element={<Grievance />} />
         <Route path="disclaimer" element={<Disclaimer />} />
+        <Route path="marketplace-disclaimer" element={<MarketplaceDisclaimer />} />
+        <Route path="matrimony-disclaimer" element={<MatrimonyDisclaimer />} />
         <Route path="gdpr-privacy-policy" element={<GdprPrivacyPolicy />} />
+        <Route path="advertise" element={<Advertise />} />
         {/* Any MongoDB category not in CATEGORY_ROUTES */}
         <Route path=":categorySlug/:articleSlug" element={<Article />} />
         <Route path=":categorySlug" element={<Category />} />
@@ -266,6 +271,7 @@ function App() {
         <Route path="page-menu" element={<PageMenuLayout />}>
           <Route index element={<AboutPageEditor />} />
           <Route path="about" element={<AboutPageEditor />} />
+          <Route path=":slug" element={<StaticLegalPageEditor />} />
         </Route>
       </Route>
     </Routes>

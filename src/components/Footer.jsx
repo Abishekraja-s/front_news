@@ -80,12 +80,19 @@ const Footer = ({ settings }) => {
             <li><Link to="/copyright" className="hover:text-brand-300 transition-colors">Copyright</Link></li>
             <li><Link to="/grievance" className="hover:text-brand-300 transition-colors">Grievance</Link></li>
             <li>
-              <a
-                href="mailto:grievance@thegreatindianews.com"
-                className="hover:text-brand-300 transition-colors"
-              >
+              <Link to="/marketplace-disclaimer" className="hover:text-brand-300 transition-colors">
+                Marketplace Disclaimer
+              </Link>
+            </li>
+            <li>
+              <Link to="/matrimony-disclaimer" className="hover:text-brand-300 transition-colors">
+                Matrimony Disclaimer
+              </Link>
+            </li>
+            <li>
+              <Link to="/advertise" className="hover:text-brand-300 transition-colors">
                 Advertisement Us
-              </a>
+              </Link>
             </li>
           </ul>
           {settings?.contactEmail && (

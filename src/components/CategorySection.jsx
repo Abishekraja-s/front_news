@@ -85,32 +85,35 @@ const LayoutSpotlight = ({ articles }) => {
   );
 };
 
-/** Stacked full-bleed rows — image left / right alternating */
+/** Magazine: 2×2 image-top cards (distinct from old zigzag splits) */
 const LayoutMagazine = ({ articles }) => (
-  <div className="space-y-4">
-    {articles.slice(0, 4).map((a, i) => (
+  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+    {articles.slice(0, 4).map((a) => (
       <Link
         key={a._id}
         to={getArticlePath(a)}
-        className={`flex flex-col sm:flex-row gap-0 overflow-hidden rounded-2xl border border-stone-200 bg-white group ${
-          i % 2 === 1 ? 'sm:flex-row-reverse' : ''
-        }`}
+        className="group flex h-full flex-col overflow-hidden rounded-xl bg-white border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-shadow duration-300"
       >
-        <div className="sm:w-2/5 aspect-[16/10] sm:aspect-auto sm:min-h-[160px] overflow-hidden shrink-0">
+        <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
           <NewsImage
             src={a.featuredImage}
             seed={a.slug}
             alt={a.imageAlt || a.title}
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+            className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-500"
             loading="lazy"
           />
+          <span className="absolute left-0 top-0 bottom-0 w-1 bg-teal-600" aria-hidden />
         </div>
-        <div className="flex-1 p-4 sm:p-5 flex flex-col justify-center">
+        <div className="flex flex-1 flex-col p-3 sm:p-4">
           <CatLabel article={a} />
-          <h3 className="text-lg font-bold text-slate-900 group-hover:text-brand-700 leading-snug mt-1 font-headline">
+          <h3 className="mt-1 text-sm sm:text-[15px] font-bold text-slate-900 group-hover:text-teal-800 leading-snug line-clamp-3 font-headline">
             {a.title}
           </h3>
-          {a.excerpt && <p className="text-sm text-slate-500 mt-2 line-clamp-2">{a.excerpt}</p>}
+          {a.excerpt ? (
+            <p className="mt-2 text-xs sm:text-sm text-slate-500 leading-relaxed line-clamp-2">
+              {a.excerpt}
+            </p>
+          ) : null}
         </div>
       </Link>
     ))}
@@ -155,17 +158,19 @@ const LayoutNumbered = ({ articles }) => (
   </div>
 );
 
-/** Featured image + text below, with compact thumb rows */
+/** Editorial (Politics): text-first briefing lead + vertical agenda list */
 const LayoutEditorial = ({ articles }) => {
   const [main, ...rest] = articles;
   if (!main) return null;
+  const side = rest.slice(0, 3);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
       <Link
         to={getArticlePath(main)}
-        className="lg:col-span-7 group flex flex-col overflow-hidden rounded-2xl bg-white border border-slate-200 hover:border-teal-300 transition-colors"
+        className="lg:col-span-7 group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-slate-200/90 shadow-[0_1px_3px_rgba(15,23,42,0.05)] hover:border-teal-300 hover:shadow-md transition-all"
       >
+        <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-teal-600 z-10" aria-hidden />
         <div className="aspect-[16/10] overflow-hidden bg-slate-100 shrink-0">
           <NewsImage
             src={main.featuredImage}
@@ -175,41 +180,52 @@ const LayoutEditorial = ({ articles }) => {
             loading="lazy"
           />
         </div>
-        <div className="p-4 sm:p-5 flex-1">
-          <CatLabel article={main} />
-          <h3 className="mt-1 text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-teal-800 leading-snug font-headline">
+        <div className="pl-4 sm:pl-5 pr-4 sm:pr-5 pt-4 sm:pt-5 pb-5 sm:pb-6 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-teal-700 bg-teal-50 px-2 py-0.5 rounded">
+              Briefing
+            </span>
+            <CatLabel article={main} />
+          </div>
+          <h3 className="mt-3 text-xl sm:text-2xl lg:text-[1.75rem] font-bold leading-snug font-headline text-slate-900 group-hover:text-teal-800 transition-colors">
             {main.title}
           </h3>
-          {main.excerpt && (
-            <p className="mt-2 text-sm text-slate-500 line-clamp-2 leading-relaxed">{main.excerpt}</p>
-          )}
+          {main.excerpt ? (
+            <p className="mt-3 text-sm text-slate-500 line-clamp-3 leading-relaxed">{main.excerpt}</p>
+          ) : null}
         </div>
       </Link>
 
-      <div className="lg:col-span-5 flex flex-col gap-3">
-        {rest.slice(0, 4).map((a) => (
-          <Link
-            key={a._id}
-            to={getArticlePath(a)}
-            className="group flex gap-3 items-stretch rounded-xl bg-white border border-slate-200 hover:border-teal-300 p-2.5 transition-colors min-h-0"
-          >
-            <div className="w-[88px] sm:w-24 aspect-[4/3] rounded-lg overflow-hidden shrink-0 bg-slate-100">
-              <NewsImage
-                src={a.featuredImage}
-                seed={a.slug}
-                alt={a.imageAlt || a.title}
-                className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
-                loading="lazy"
-              />
-            </div>
-            <div className="min-w-0 flex-1 self-center pr-1">
-              <h3 className="text-sm font-semibold text-slate-900 group-hover:text-teal-800 line-clamp-3 leading-snug">
-                {a.title}
-              </h3>
-            </div>
-          </Link>
-        ))}
-      </div>
+      {side.length > 0 ? (
+        <div className="lg:col-span-5 flex flex-col gap-3">
+          {side.map((a, i) => (
+            <Link
+              key={a._id}
+              to={getArticlePath(a)}
+              className="group flex gap-3 flex-1 min-h-0 overflow-hidden rounded-xl bg-slate-50 border border-slate-200/70 hover:bg-white hover:border-teal-300 hover:shadow-sm transition-all p-3"
+            >
+              <span className="text-2xl font-black text-teal-200/90 leading-none tabular-nums shrink-0 w-8 pt-1 group-hover:text-teal-400 transition-colors">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <div className="w-20 sm:w-24 aspect-[4/3] rounded-lg overflow-hidden shrink-0 bg-slate-200 self-center">
+                <NewsImage
+                  src={a.featuredImage}
+                  seed={a.slug}
+                  alt={a.imageAlt || a.title}
+                  className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+                  loading="lazy"
+                />
+              </div>
+              <div className="min-w-0 flex-1 self-center">
+                <CatLabel article={a} />
+                <h3 className="mt-0.5 text-sm sm:text-[15px] font-bold text-slate-900 group-hover:text-teal-800 line-clamp-3 leading-snug font-headline">
+                  {a.title}
+                </h3>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -407,30 +423,64 @@ const LayoutBoard = ({ articles }) => (
   </div>
 );
 
-/** Soft centered lead + side cards */
+/** Serene: soft frame, lead card (image then text — no overlay) + side list */
 const LayoutSerene = ({ articles }) => {
   const [main, ...rest] = articles;
+  if (!main) return null;
+  const side = rest.slice(0, 3);
+
   return (
-    <div className="rounded-3xl bg-gradient-to-b from-teal-50/70 via-white to-amber-50/50 border border-stone-100 p-4 sm:p-6">
-      <Link to={getArticlePath(main)} className="block text-center max-w-2xl mx-auto group mb-6">
-        <div className="aspect-[21/9] rounded-2xl overflow-hidden mb-4 ring-1 ring-black/5">
-          <NewsImage
-            src={main.featuredImage}
-            seed={main.slug}
-            alt={main.imageAlt || main.title}
-            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700"
-            loading="lazy"
-          />
+    <div className="rounded-2xl border border-amber-100/80 bg-gradient-to-br from-amber-50/40 via-white to-teal-50/30 p-3 sm:p-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4">
+        <Link
+          to={getArticlePath(main)}
+          className="lg:col-span-5 group flex flex-col overflow-hidden rounded-2xl bg-white border border-stone-200/80 shadow-sm"
+        >
+          <div className="aspect-[16/11] overflow-hidden bg-stone-100 shrink-0">
+            <NewsImage
+              src={main.featuredImage}
+              seed={main.slug}
+              alt={main.imageAlt || main.title}
+              className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
+              loading="lazy"
+            />
+          </div>
+          <div className="p-4 sm:p-5 flex-1">
+            <CatLabel article={main} />
+            <h3 className="mt-1 text-lg sm:text-xl font-bold leading-snug font-headline text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-3">
+              {main.title}
+            </h3>
+            {main.excerpt ? (
+              <p className="mt-2 text-sm text-slate-500 line-clamp-2 leading-relaxed">{main.excerpt}</p>
+            ) : null}
+          </div>
+        </Link>
+
+        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
+          {side.map((a) => (
+            <Link
+              key={a._id}
+              to={getArticlePath(a)}
+              className="group flex gap-3 overflow-hidden rounded-xl bg-white/90 border border-stone-200/70 hover:border-teal-300 hover:shadow-sm transition-all p-2.5"
+            >
+              <div className="w-24 sm:w-28 aspect-[4/3] rounded-lg overflow-hidden shrink-0 bg-stone-100">
+                <NewsImage
+                  src={a.featuredImage}
+                  seed={a.slug}
+                  alt={a.imageAlt || a.title}
+                  className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+                  loading="lazy"
+                />
+              </div>
+              <div className="min-w-0 flex-1 self-center pr-1">
+                <CatLabel article={a} />
+                <h3 className="mt-0.5 text-sm sm:text-[15px] font-bold text-slate-900 group-hover:text-teal-800 line-clamp-3 leading-snug font-headline">
+                  {a.title}
+                </h3>
+              </div>
+            </Link>
+          ))}
         </div>
-        <h3 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-teal-800 leading-snug font-headline">
-          {main.title}
-        </h3>
-        {main.excerpt && <p className="text-sm text-slate-500 mt-2 line-clamp-2">{main.excerpt}</p>}
-      </Link>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {rest.slice(0, 3).map((a) => (
-          <NewsCard key={a._id} article={a} variant="horizontal" />
-        ))}
       </div>
     </div>
   );

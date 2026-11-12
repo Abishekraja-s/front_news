@@ -433,7 +433,13 @@ export const aeoService = {
 
 export const pageContentService = {
   getPublicAbout: () => api.get('/pages/public/about'),
+  getPublicLegal: (slug) => api.get(`/pages/public/${slug}`),
+  getPublicMarketplaceDisclaimer: () => api.get('/pages/public/marketplace-disclaimer'),
   getAll: () => api.get('/pages'),
   getAboutAdmin: () => api.get('/pages/about'),
   saveAbout: (data) => api.put('/pages/about', data),
+  getLegalAdmin: (slug) => api.get(`/pages/${slug}`),
+  saveLegal: (slug, data) => api.put(`/pages/legal/${slug}`, data),
+  getMarketplaceDisclaimerAdmin: () => api.get('/pages/marketplace-disclaimer'),
+  saveMarketplaceDisclaimer: (data) => api.put('/pages/marketplace-disclaimer', data),
 };

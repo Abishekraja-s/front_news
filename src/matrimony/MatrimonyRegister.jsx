@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { matrimonyService } from '../services/articleService';
+import { matrimonyService, pageContentService } from '../services/articleService';
 import {
   emptyMatrimonyForm,
   MatrimonyProfileFields,
@@ -19,6 +19,9 @@ import {
 
 const emptyAccount = () => ({ name: '', email: '', password: '', phone: '', city: '' });
 
+const DEFAULT_AGREE =
+  'I have read and agree to the Important Notice – Matrimony and Privacy Policy. I understand that I must independently verify any profile and information before meeting or making any payment.';
+
 const MatrimonyRegister = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +34,8 @@ const MatrimonyRegister = () => {
   const [otp, setOtp] = useState('');
   const [resendIn, setResendIn] = useState(0);
   const [done, setDone] = useState(null);
+  const [agreed, setAgreed] = useState(false);
+  const [agreeText, setAgreeText] = useState(DEFAULT_AGREE);
 
   if (user && !done) {
     return <Navigate to={user.role === 'MATRIMONY' ? '/matrimony/member' : '/admin'} replace />;
@@ -40,6 +45,13 @@ const MatrimonyRegister = () => {
     matrimonyService
       .getPublicCategories()
       .then(({ data }) => setCategories(data.data || []))
+      .catch(() => {});
+    pageContentService
+      .getPublicLegal('matrimony-disclaimer')
+      .then(({ data }) => {
+        const text = data.data?.content?.agreementCheckboxText?.trim();
+        if (text) setAgreeText(text);
+      })
       .catch(() => {});
   }, []);
 
@@ -188,6 +200,10 @@ const MatrimonyRegister = () => {
     const profileErr = validateMatrimonyProfileForm(form);
     if (profileErr) {
       toast.error(profileErr);
+      return;
+    }
+    if (!agreed) {
+      toast.error('Please agree to the Matrimony Disclaimer to continue');
       return;
     }
 
@@ -420,12 +436,49 @@ const MatrimonyRegister = () => {
             requireAllFields
           />
 
+          <label className="flex items-start gap-3 text-sm text-slate-700 cursor-pointer select-none bg-white border border-slate-200 rounded-xl p-4">
+            <input
+              type="checkbox"
+              required
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+            />
+            <span className="leading-relaxed">
+              <span className="text-red-500 font-semibold mr-0.5">*</span>
+              {agreeText}{' '}
+              <Link
+                to="/matrimony-disclaimer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-700 font-semibold underline underline-offset-2 hover:text-teal-800"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Read Matrimony Disclaimer
+              </Link>
+              {' · '}
+              <Link
+                to="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-700 font-semibold underline underline-offset-2 hover:text-teal-800"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Privacy Policy
+              </Link>
+            </span>
+          </label>
+
           <div className="fixed sm:sticky bottom-0 inset-x-0 sm:inset-x-auto bg-stone-100/95 backdrop-blur border-t border-slate-200 py-3 px-3 sm:px-0 z-20">
             <div className="max-w-5xl mx-auto flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
               <Link to="/matrimony/login" className="btn-secondary text-sm py-3 sm:py-2.5 px-4 w-full sm:w-auto text-center">
                 Already registered?
               </Link>
-              <button type="submit" disabled={loading} className="btn-primary text-sm py-3 sm:py-2.5 px-5 w-full sm:w-auto disabled:opacity-50">
+              <button
+                type="submit"
+                disabled={loading || !agreed}
+                className="btn-primary text-sm py-3 sm:py-2.5 px-5 w-full sm:w-auto disabled:opacity-50"
+              >
                 {loading ? 'Sending OTP…' : 'Register & Submit Profile'}
               </button>
             </div>
