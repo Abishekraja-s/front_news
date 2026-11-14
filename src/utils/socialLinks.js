@@ -94,3 +94,57 @@ export function getConfiguredSocialLinks(settings) {
 
   return links;
 }
+
+/** Per-article social post / profile URLs (admin Add Article). */
+export const ARTICLE_SOCIAL_DEFS = [
+  {
+    id: 'twitter',
+    key: 'socialX',
+    label: 'X',
+    ariaLabel: 'Open on X',
+    placeholder: 'https://x.com/...',
+  },
+  {
+    id: 'instagram',
+    key: 'socialInstagram',
+    label: 'Instagram',
+    ariaLabel: 'Open on Instagram',
+    placeholder: 'https://www.instagram.com/...',
+  },
+  {
+    id: 'facebook',
+    key: 'socialFacebook',
+    label: 'Facebook',
+    ariaLabel: 'Open on Facebook',
+    placeholder: 'https://www.facebook.com/...',
+  },
+  {
+    id: 'tiktok',
+    key: 'socialTiktok',
+    label: 'TikTok',
+    ariaLabel: 'Open on TikTok',
+    placeholder: 'https://www.tiktok.com/...',
+  },
+];
+
+/**
+ * Build clickable social links from an article document.
+ * Empty / invalid URLs are omitted.
+ */
+export function getArticleSocialLinks(article) {
+  if (!article || typeof article !== 'object') return [];
+
+  const links = [];
+  for (const def of ARTICLE_SOCIAL_DEFS) {
+    const url = normalizeExternalUrl(article[def.key]);
+    if (!url) continue;
+    links.push({
+      id: def.id,
+      key: def.key,
+      label: def.label,
+      ariaLabel: def.ariaLabel,
+      url,
+    });
+  }
+  return links;
+}

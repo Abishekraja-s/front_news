@@ -7,6 +7,7 @@ import { formatDateTime } from '../utils/helpers';
 import { getYoutubeEmbedUrl } from '../utils/youtube';
 import NewsImage from '../components/NewsImage';
 import ArticleAudioReader from '../components/ArticleAudioReader';
+import ArticleSocialLinks from '../components/ArticleSocialLinks';
 import { StatusBadge } from './AdminPageHeader';
 import Loading from '../components/Loading';
 import { getArticlePath } from '../utils/articlePaths';
@@ -148,6 +149,8 @@ const ArticlePreview = () => {
             </div>
           </div>
         )}
+
+        <ArticleSocialLinks article={article} />
 
         <div
           className="article-content"

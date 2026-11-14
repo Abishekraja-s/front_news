@@ -11,6 +11,7 @@ import {
 } from '../services/articleService';
 import { getMediaUrl } from '../utils/images';
 import { getYoutubeEmbedUrl } from '../utils/youtube';
+import { ARTICLE_SOCIAL_DEFS } from '../utils/socialLinks';
 import ImageUploadField from '../components/ImageUploadField';
 import GeminiGeneratePanel from './GeminiGeneratePanel';
 
@@ -136,6 +137,10 @@ const ArticleForm = () => {
     isMustWatch: false,
     audioReader: '',
     youtubeVideoLink: '',
+    socialX: '',
+    socialInstagram: '',
+    socialFacebook: '',
+    socialTiktok: '',
   });
 
   useEffect(() => {
@@ -193,6 +198,10 @@ const ArticleForm = () => {
           isMustWatch: a.isMustWatch || false,
           audioReader: a.audioReader || '',
           youtubeVideoLink: a.youtubeVideoLink || '',
+          socialX: a.socialX || '',
+          socialInstagram: a.socialInstagram || '',
+          socialFacebook: a.socialFacebook || '',
+          socialTiktok: a.socialTiktok || '',
         });
       });
     }
@@ -572,6 +581,27 @@ const ArticleForm = () => {
               {form.youtubeVideoLink.trim() && !getYoutubeEmbedUrl(form.youtubeVideoLink) && (
                 <p className="text-xs text-rose-600">Invalid YouTube URL — video will not show on the article.</p>
               )}
+            </div>
+
+            <div className="admin-card space-y-3">
+              <h3 className="font-semibold text-slate-900">Social links</h3>
+              <p className="text-xs text-slate-500">
+                Optional post or profile URLs shown on the article page.
+              </p>
+              {ARTICLE_SOCIAL_DEFS.map((def) => (
+                <div key={def.key}>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{def.label}</label>
+                  <input
+                    name={def.key}
+                    value={form[def.key]}
+                    onChange={handleChange}
+                    className="admin-input"
+                    placeholder={def.placeholder}
+                    inputMode="url"
+                    autoComplete="off"
+                  />
+                </div>
+              ))}
             </div>
 
             <div className="admin-card space-y-3">
