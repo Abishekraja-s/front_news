@@ -3,6 +3,8 @@
  * Keys must match Admin → Settings → Social Media fields.
  */
 
+import { getYoutubeEmbedUrl } from './youtube.js';
+
 export const SOCIAL_LINK_DEFS = [
   {
     id: 'facebook',
@@ -129,12 +131,26 @@ export const ARTICLE_SOCIAL_DEFS = [
 
 /**
  * Build clickable social links from an article document.
+ * Order: YouTube (from youtubeVideoLink) → X → Instagram → Facebook → TikTok.
  * Empty / invalid URLs are omitted.
  */
 export function getArticleSocialLinks(article) {
   if (!article || typeof article !== 'object') return [];
 
   const links = [];
+
+  const youtubeUrl = normalizeExternalUrl(article.youtubeVideoLink || article.socialYoutube);
+  if (youtubeUrl) {
+    links.push({
+      id: 'youtube',
+      key: 'youtubeVideoLink',
+      label: 'YouTube',
+      ariaLabel: 'Open on YouTube',
+      url: youtubeUrl,
+      ...getSocialPreviewMeta(youtubeUrl, 'youtube'),
+    });
+  }
+
   for (const def of ARTICLE_SOCIAL_DEFS) {
     const url = normalizeExternalUrl(article[def.key]);
     if (!url) continue;
@@ -144,7 +160,57 @@ export function getArticleSocialLinks(article) {
       label: def.label,
       ariaLabel: def.ariaLabel,
       url,
+      ...getSocialPreviewMeta(url, def.id),
     });
   }
   return links;
+}
+
+/** Platform brand accents for preview cards */
+export const SOCIAL_PREVIEW_THEME = {
+  youtube: { accent: '#FF0000', soft: '#fef2f2', label: 'YouTube' },
+  twitter: { accent: '#0f1419', soft: '#f1f5f9', label: 'X' },
+  instagram: { accent: '#E1306C', soft: '#fdf2f8', label: 'Instagram' },
+  facebook: { accent: '#1877F2', soft: '#eff6ff', label: 'Facebook' },
+  tiktok: { accent: '#010101', soft: '#f8fafc', label: 'TikTok' },
+};
+
+/**
+ * Derive display + optional embed URL from a social link.
+ */
+export function getSocialPreviewMeta(rawUrl, platformId = '') {
+  const url = normalizeExternalUrl(rawUrl);
+  if (!url) return { host: '', pathLabel: '', embedUrl: '' };
+
+  let host = '';
+  let pathLabel = '';
+  let embedUrl = '';
+  try {
+    const parsed = new URL(url);
+    host = parsed.hostname.replace(/^www\./, '');
+    pathLabel = `${parsed.pathname}${parsed.search}`.replace(/\/$/, '') || '/';
+    if (pathLabel.length > 48) pathLabel = `${pathLabel.slice(0, 45)}…`;
+
+    const id = String(platformId || '').toLowerCase();
+    if (id === 'youtube' || /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(host)) {
+      embedUrl = getYoutubeEmbedUrl(url) || '';
+    } else if (id === 'instagram' || /instagram\.com/i.test(host)) {
+      const m = parsed.pathname.match(/\/(p|reel|tv)\/([^/]+)/i);
+      if (m) embedUrl = `https://www.instagram.com/${m[1]}/${m[2]}/embed`;
+    } else if (id === 'facebook' || /facebook\.com|fb\.watch/i.test(host)) {
+      if (/\/(posts|videos|watch|share|reel)\//i.test(parsed.pathname) || parsed.searchParams.has('v')) {
+        embedUrl = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500`;
+      }
+    } else if (id === 'tiktok' || /tiktok\.com/i.test(host)) {
+      const m = parsed.pathname.match(/\/video\/(\d+)/i);
+      if (m) embedUrl = `https://www.tiktok.com/embed/v2/${m[1]}`;
+    } else if (id === 'twitter' || /(?:twitter|x)\.com/i.test(host)) {
+      const m = parsed.pathname.match(/\/status\/(\d+)/i);
+      if (m) embedUrl = `https://platform.twitter.com/embed/Tweet.html?id=${m[1]}`;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return { host, pathLabel, embedUrl };
 }

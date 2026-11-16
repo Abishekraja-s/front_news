@@ -42,7 +42,10 @@ export const getYoutubeVideoId = (url) => {
 
 export const getYoutubeEmbedUrl = (url) => {
   const id = getYoutubeVideoId(url);
-  return id ? `https://www.youtube.com/embed/${id}?rel=0` : null;
+  // youtube-nocookie + modestbranding avoids Error 153 on many hosts
+  return id
+    ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`
+    : null;
 };
 
 export const getYoutubeThumbUrl = (url) => {

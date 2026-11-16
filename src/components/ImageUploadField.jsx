@@ -81,35 +81,37 @@ const ImageUploadField = ({
           />
         </div>
       )}
-      <div className="flex flex-wrap gap-2 items-stretch">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center min-w-0">
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           required={required}
-          className={`${inputClassName} flex-1 min-w-[180px]`}
+          className={`${inputClassName} flex-1 min-w-0 w-full sm:min-w-[180px]`}
         />
-        <label className="btn-secondary text-sm py-2 px-3 cursor-pointer inline-flex items-center justify-center whitespace-nowrap disabled:opacity-50">
-          {uploading ? 'Uploading…' : 'Upload image'}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml,.jpg,.jpeg,.png,.gif,.webp,.avif,.svg"
-            className="hidden"
-            disabled={uploading}
-            onChange={handleUpload}
-          />
-        </label>
-        {value?.trim() && (
-          <button
-            type="button"
-            onClick={() => onChange('')}
-            className="text-xs text-rose-600 hover:underline px-2"
-          >
-            Clear
-          </button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          <label className="btn-secondary text-sm py-2 px-3 cursor-pointer inline-flex items-center justify-center whitespace-nowrap disabled:opacity-50 flex-1 sm:flex-none">
+            {uploading ? 'Uploading…' : 'Upload image'}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/svg+xml,.jpg,.jpeg,.png,.gif,.webp,.avif,.svg"
+              className="hidden"
+              disabled={uploading}
+              onChange={handleUpload}
+            />
+          </label>
+          {value?.trim() && (
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              className="text-xs text-rose-600 hover:underline px-2 shrink-0"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
       <p className="text-xs text-slate-500">
         {hint ||

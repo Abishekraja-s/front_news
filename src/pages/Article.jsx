@@ -7,7 +7,6 @@ import GoogleNewsArticleView from '../components/GoogleNewsArticleView';
 import { formatDateTime } from '../utils/helpers';
 import { buildArticleSocialMeta } from '../utils/seo';
 import { getArticlePath } from '../utils/articlePaths';
-import { getYoutubeEmbedUrl } from '../utils/youtube';
 import NewsImage from '../components/NewsImage';
 import ShareButtons from '../components/ShareButtons';
 import MustPicksLists from '../components/MustPicksLists';
@@ -128,7 +127,6 @@ const Article = () => {
   }
 
   const jsonLd = generateArticleJsonLd(article);
-  const youtubeEmbed = getYoutubeEmbedUrl(article.youtubeVideoLink);
   const social = buildArticleSocialMeta(article);
 
   return (
@@ -253,21 +251,6 @@ const Article = () => {
           excerpt={article.excerpt}
           content={article.content}
         />
-
-        {youtubeEmbed && (
-          <div className="mb-6">
-            <p className="text-sm font-semibold text-slate-800 mb-2">YouTube Video</p>
-            <div className="aspect-video rounded-xl overflow-hidden bg-black shadow-sm">
-              <iframe
-                title={`${article.title} — YouTube video`}
-                src={youtubeEmbed}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        )}
 
         <ArticleSocialLinks article={article} />
 

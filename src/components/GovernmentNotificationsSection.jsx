@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { governmentNotificationService } from '../services/articleService';
+import CategoryScrollSection from './CategoryScrollSection';
 
 const CATEGORY_LABELS = {
   announcement: 'Announcement',
@@ -68,32 +69,39 @@ const GovernmentNotificationsSection = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading || !payload?.enabled) return null;
+  const enabled = payload?.enabled;
+  const { latest = [], alerts = [], titles = {}, widgets = {} } = payload?.data || {};
+  const showAlerts = !loading && enabled && widgets.alerts && alerts.length > 0;
+  const showLatest = !loading && enabled && widgets.latest && latest.length > 0;
 
-  const { latest = [], alerts = [], titles = {}, widgets = {} } = payload.data || {};
-  if (!widgets.latest && !widgets.alerts) return null;
-  if (!latest.length && !alerts.length) return null;
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: titles.latest || 'Government Notifications',
-    itemListElement: (latest.length ? latest : alerts).slice(0, 8).map((item, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      name: item.title,
-      url: item.officialUrl || undefined,
-      datePublished: item.publishedAt,
-    })),
-  };
+  const jsonLd =
+    showLatest || showAlerts
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: titles.latest || 'Government Notifications',
+          itemListElement: (latest.length ? latest : alerts).slice(0, 8).map((item, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            name: item.title,
+            url: item.officialUrl || undefined,
+            datePublished: item.publishedAt,
+          })),
+        }
+      : null;
 
   return (
-    <section className="mb-10">
-      <Helmet>
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-      </Helmet>
+    <section className="mb-10 min-w-0">
+      {/* Top: red category pills + horizontal article scroll (website bg) */}
+      <CategoryScrollSection />
 
-      {widgets.alerts && alerts.length > 0 && (
+      {jsonLd && (
+        <Helmet>
+          <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        </Helmet>
+      )}
+
+      {showAlerts && (
         <div className="mb-8">
           <div className="flex items-center justify-between gap-3 mb-1">
             <h2 className="text-xl sm:text-2xl font-bold font-headline text-slate-900">
@@ -117,7 +125,7 @@ const GovernmentNotificationsSection = () => {
         </div>
       )}
 
-      {widgets.latest && latest.length > 0 && (
+      {showLatest && (
         <div>
           <div className="flex items-center justify-between gap-3 mb-1">
             <h2 className="text-xl sm:text-2xl font-bold font-headline text-slate-900">

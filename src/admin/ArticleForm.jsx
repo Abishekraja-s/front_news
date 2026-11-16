@@ -13,6 +13,7 @@ import { getMediaUrl } from '../utils/images';
 import { getYoutubeEmbedUrl } from '../utils/youtube';
 import { ARTICLE_SOCIAL_DEFS } from '../utils/socialLinks';
 import ImageUploadField from '../components/ImageUploadField';
+import ArticleSocialLinks from '../components/ArticleSocialLinks';
 import GeminiGeneratePanel from './GeminiGeneratePanel';
 
 const STATUS_OPTIONS = ['DRAFT', 'PENDING', 'PUBLISHED', 'SCHEDULED'];
@@ -583,13 +584,13 @@ const ArticleForm = () => {
               )}
             </div>
 
-            <div className="admin-card space-y-3">
+            <div className="admin-card space-y-3 min-w-0">
               <h3 className="font-semibold text-slate-900">Social links</h3>
               <p className="text-xs text-slate-500">
-                Optional post or profile URLs shown on the article page.
+                Optional post or profile URLs — preview cards appear on the article page.
               </p>
               {ARTICLE_SOCIAL_DEFS.map((def) => (
-                <div key={def.key}>
+                <div key={def.key} className="min-w-0">
                   <label className="block text-xs font-medium text-slate-600 mb-1">{def.label}</label>
                   <input
                     name={def.key}
@@ -602,6 +603,15 @@ const ArticleForm = () => {
                   />
                 </div>
               ))}
+              <div className="pt-1 min-w-0 overflow-hidden">
+                <ArticleSocialLinks
+                  article={{
+                    ...form,
+                    slug: form.slug || 'preview',
+                  }}
+                  className="!mb-0"
+                />
+              </div>
             </div>
 
             <div className="admin-card space-y-3">

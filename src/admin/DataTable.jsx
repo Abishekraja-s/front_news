@@ -131,8 +131,8 @@ const DataTable = ({
           {emptyAction}
         </div>
       ) : (
-        <div className="admin-card p-0 overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="admin-card p-0 overflow-hidden min-w-0">
+          <div className="overflow-x-auto -mx-0 max-w-full">
             <table className="data-table">
               <thead>
                 <tr>

@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { articleService } from '../services/articleService';
 import { sanitizeHtml } from '../utils/sanitize';
 import { formatDateTime } from '../utils/helpers';
-import { getYoutubeEmbedUrl } from '../utils/youtube';
 import NewsImage from '../components/NewsImage';
 import ArticleAudioReader from '../components/ArticleAudioReader';
 import ArticleSocialLinks from '../components/ArticleSocialLinks';
@@ -47,7 +46,6 @@ const ArticlePreview = () => {
     );
   }
 
-  const youtubeEmbed = getYoutubeEmbedUrl(article.youtubeVideoLink);
   const publicUrl = article.slug ? getArticlePath(article) : null;
   const isLiveOnSite = article.status === 'PUBLISHED';
 
@@ -134,21 +132,6 @@ const ArticlePreview = () => {
           excerpt={article.excerpt}
           content={article.content}
         />
-
-        {youtubeEmbed && (
-          <div className="mb-6">
-            <p className="text-sm font-semibold text-slate-800 mb-2">YouTube Video</p>
-            <div className="aspect-video rounded-xl overflow-hidden bg-black">
-              <iframe
-                title={article.title}
-                src={youtubeEmbed}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        )}
 
         <ArticleSocialLinks article={article} />
 
