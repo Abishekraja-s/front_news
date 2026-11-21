@@ -1,10 +1,17 @@
 import api, { getApiUrl } from './api';
 
 export const articleService = {
-  getLatest: (limit = 10) => api.get(`/articles/latest?limit=${limit}`),
+  getLatest: (limit = 10, opts = {}) => {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (opts.by) params.set('by', opts.by);
+    if (opts.days != null) params.set('days', String(opts.days));
+    return api.get(`/articles/latest?${params.toString()}`);
+  },
   getFeatured: () => api.get('/articles/featured'),
   getMustWatch: (limit = 8) => api.get(`/articles/must-watch?limit=${limit}`),
-  getPopular: (limit = 10) => api.get(`/articles/popular?limit=${limit}`),
+  /** Popular within recent window only (default last 7 days) */
+  getPopular: (limit = 10, days = 7) =>
+    api.get(`/articles/popular?limit=${limit}&days=${days}`),
   getByCategory: (slug, page = 1, limit = 10) =>
     api.get(`/articles/category/${slug}?page=${page}&limit=${limit}`),
   getByDistrict: (district, page = 1, limit = 10) =>
@@ -62,6 +69,31 @@ export const eventGifService = {
   create: (data) => api.post('/event-gifs', data),
   update: (id, data) => api.put(`/event-gifs/${id}`, data),
   delete: (id) => api.delete(`/event-gifs/${id}`),
+};
+
+export const albumService = {
+  getPublic: (params = {}) => api.get('/albums', { params }),
+  getPublicCategories: () => api.get('/albums/categories'),
+  getBySlug: (slug) => api.get(`/albums/slug/${slug}`),
+  getAdmin: (params = {}) => api.get('/albums/admin', { params }),
+  getAdminById: (id) => api.get(`/albums/admin/${id}`),
+  createFromTodayNews: (data = {}) => api.post('/albums/admin/from-today-news', data),
+  create: (data) => api.post('/albums/admin', data),
+  update: (id, data) => api.put(`/albums/admin/${id}`, data),
+  togglePublish: (id) => api.patch(`/albums/admin/${id}/publish`),
+  delete: (id) => api.delete(`/albums/admin/${id}`),
+  uploadImages: (id, formData) =>
+    api.post(`/albums/admin/${id}/images`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  reorderImages: (id, order) => api.put(`/albums/admin/${id}/images/reorder`, { order }),
+  setCover: (id, data) => api.put(`/albums/admin/${id}/cover`, data),
+  updateImage: (imageId, data) => api.put(`/albums/admin/images/${imageId}`, data),
+  deleteImage: (imageId) => api.delete(`/albums/admin/images/${imageId}`),
+  getCategories: () => api.get('/albums/admin/categories'),
+  createCategory: (data) => api.post('/albums/admin/categories', data),
+  updateCategory: (id, data) => api.put(`/albums/admin/categories/${id}`, data),
+  deleteCategory: (id) => api.delete(`/albums/admin/categories/${id}`),
 };
 
 export const mediaService = {

@@ -345,64 +345,28 @@ const Settings = () => {
 
         <div className="admin-card">
           <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-1 pb-2 border-b border-slate-100 dark:border-slate-700">
-            Email (SMTP)
+            Email (OTP & password reset)
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 mb-4">
-            Used for seller/matrimony OTP and password-reset emails. Gmail: host <code className="text-xs">smtp.gmail.com</code>, port <strong>587</strong>, Secure <strong>OFF</strong>, and a Google App Password (not your normal password). Port 465 needs Secure ON.
+            Live API on Render often <strong>blocks SMTP ports 587/465</strong> (timeout). Use{' '}
+            <strong>Resend</strong> or <strong>Brevo</strong> HTTPS API for Netlify production. SMTP still works on local/dev.
           </p>
           <div className="space-y-4">
-            <label className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={Boolean(settings.smtpEnabled)}
-                onChange={(e) => handleChange('smtpEnabled', e.target.checked)}
-                className="rounded border-slate-300"
-              />
-              Enable SMTP email sending
-            </label>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Mail provider</label>
+              <select
+                value={settings.mailProvider || 'auto'}
+                onChange={(e) => handleChange('mailProvider', e.target.value)}
+                className="admin-input"
+              >
+                <option value="auto">Auto (Resend → Brevo → SMTP)</option>
+                <option value="resend">Resend API (recommended on Render)</option>
+                <option value="brevo">Brevo API</option>
+                <option value="smtp">SMTP only</option>
+              </select>
+            </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">SMTP Host</label>
-                <input
-                  value={settings.smtpHost || ''}
-                  onChange={(e) => handleChange('smtpHost', e.target.value)}
-                  className="admin-input"
-                  placeholder="smtp.gmail.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">SMTP Port</label>
-                <input
-                  type="number"
-                  value={settings.smtpPort ?? 587}
-                  onChange={(e) => handleChange('smtpPort', e.target.value)}
-                  className="admin-input"
-                  placeholder="587"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">SMTP Username</label>
-                <input
-                  value={settings.smtpUser || ''}
-                  onChange={(e) => handleChange('smtpUser', e.target.value)}
-                  className="admin-input"
-                  placeholder="your@email.com"
-                  autoComplete="off"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  SMTP Password {settings.smtpPasswordSet ? '(saved — leave blank to keep)' : ''}
-                </label>
-                <input
-                  type="password"
-                  value={settings.smtpPassword || ''}
-                  onChange={(e) => handleChange('smtpPassword', e.target.value)}
-                  className="admin-input"
-                  placeholder={settings.smtpPasswordSet ? '••••••••' : 'App password / SMTP password'}
-                  autoComplete="new-password"
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">From name</label>
                 <input
@@ -421,20 +385,107 @@ const Settings = () => {
                   className="admin-input"
                   placeholder="noreply@yourdomain.com"
                 />
+                <p className="text-xs text-slate-500 mt-1">Must be a verified sender in Resend/Brevo (or match SMTP).</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  Resend API key {settings.resendApiKeySet ? '(saved — leave blank to keep)' : ''}
+                </label>
+                <input
+                  type="password"
+                  value={settings.resendApiKey || ''}
+                  onChange={(e) => handleChange('resendApiKey', e.target.value)}
+                  className="admin-input"
+                  placeholder={settings.resendApiKeySet ? '••••••••' : 're_xxxxxxxx'}
+                  autoComplete="new-password"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  Brevo API key {settings.brevoApiKeySet ? '(saved — leave blank to keep)' : ''}
+                </label>
+                <input
+                  type="password"
+                  value={settings.brevoApiKey || ''}
+                  onChange={(e) => handleChange('brevoApiKey', e.target.value)}
+                  className="admin-input"
+                  placeholder={settings.brevoApiKeySet ? '••••••••' : 'xkeysib-…'}
+                  autoComplete="new-password"
+                />
               </div>
             </div>
-            <label className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={Boolean(settings.smtpSecure)}
-                onChange={(e) => handleChange('smtpSecure', e.target.checked)}
-                className="rounded border-slate-300"
-              />
-              Use SSL (port 465 only — leave unchecked for 587 / STARTTLS)
-            </label>
-            <p className="text-xs text-slate-500 dark:text-slate-400 -mt-2">
-              Leaving SSL on with port 587 causes “wrong version number” errors. The server auto-corrects 587→STARTTLS and prefers IPv4.
-            </p>
+
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-3">SMTP (optional / local)</p>
+              <label className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.smtpEnabled)}
+                  onChange={(e) => handleChange('smtpEnabled', e.target.checked)}
+                  className="rounded border-slate-300"
+                />
+                Enable SMTP fallback
+              </label>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">SMTP Host</label>
+                  <input
+                    value={settings.smtpHost || ''}
+                    onChange={(e) => handleChange('smtpHost', e.target.value)}
+                    className="admin-input"
+                    placeholder="smtp.gmail.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">SMTP Port</label>
+                  <input
+                    type="number"
+                    value={settings.smtpPort ?? 587}
+                    onChange={(e) => handleChange('smtpPort', e.target.value)}
+                    className="admin-input"
+                    placeholder="587"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">SMTP Username</label>
+                  <input
+                    value={settings.smtpUser || ''}
+                    onChange={(e) => handleChange('smtpUser', e.target.value)}
+                    className="admin-input"
+                    placeholder="your@email.com"
+                    autoComplete="off"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    SMTP Password {settings.smtpPasswordSet ? '(saved — leave blank to keep)' : ''}
+                  </label>
+                  <input
+                    type="password"
+                    value={settings.smtpPassword || ''}
+                    onChange={(e) => handleChange('smtpPassword', e.target.value)}
+                    className="admin-input"
+                    placeholder={settings.smtpPasswordSet ? '••••••••' : '16-char Google App Password'}
+                    autoComplete="new-password"
+                  />
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                    Gmail: must be a <strong>16-character App Password</strong> (Google Account → Security → App passwords). Normal Gmail password will always fail with “SMTP login failed”.
+                  </p>
+                </div>
+              </div>
+              <label className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300 mt-4">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.smtpSecure)}
+                  onChange={(e) => handleChange('smtpSecure', e.target.checked)}
+                  className="rounded border-slate-300"
+                />
+                Use SSL (port 465 only — leave unchecked for 587 / STARTTLS)
+              </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                Or set <code className="text-xs">RESEND_API_KEY</code> / <code className="text-xs">BREVO_API_KEY</code> on the Render backend env.
+              </p>
+            </div>
           </div>
         </div>
 

@@ -1,10 +1,18 @@
-export const DEFAULT_NEWS_IMAGE = 'https://picsum.photos/seed/great-india-news-default/800/450';
+/** Instant local placeholder — never hit slow external hosts (picsum) on homepage */
+export const DEFAULT_NEWS_IMAGE =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">' +
+      '<rect fill="#e7e5e4" width="800" height="450"/>' +
+      '<rect fill="#d6d3d1" x="320" y="175" width="160" height="100" rx="12"/>' +
+      '</svg>'
+  );
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 export const getImageUrl = (url, seed = 'news') => {
   if (!url || url.trim() === '') {
-    return `https://picsum.photos/seed/${seed}/800/450`;
+    return DEFAULT_NEWS_IMAGE;
   }
   if (url.startsWith('blob:') || url.startsWith('data:')) {
     return url;

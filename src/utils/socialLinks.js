@@ -195,10 +195,20 @@ export function getSocialPreviewMeta(rawUrl, platformId = '') {
     if (id === 'youtube' || /youtube\.com|youtu\.be|youtube-nocookie\.com/i.test(host)) {
       embedUrl = getYoutubeEmbedUrl(url) || '';
     } else if (id === 'instagram' || /instagram\.com/i.test(host)) {
-      const m = parsed.pathname.match(/\/(p|reel|tv)\/([^/]+)/i);
-      if (m) embedUrl = `https://www.instagram.com/${m[1]}/${m[2]}/embed`;
-    } else if (id === 'facebook' || /facebook\.com|fb\.watch/i.test(host)) {
-      if (/\/(posts|videos|watch|share|reel)\//i.test(parsed.pathname) || parsed.searchParams.has('v')) {
+      const m = parsed.pathname.match(/\/(p|reel|tv)\/([^/?#]+)/i);
+      if (m) {
+        embedUrl = `https://www.instagram.com/${m[1]}/${m[2]}/embed/captioned/`;
+      }
+    } else if (id === 'facebook' || /facebook\.com|fb\.watch|fb\.com/i.test(host)) {
+      // Any Facebook/FB post URL can be passed to the plugin when it looks like a post
+      const path = parsed.pathname || '';
+      const isPost =
+        /\/(posts|videos|watch|share|reel|photo|permalink\.php|story\.php)/i.test(path) ||
+        parsed.searchParams.has('v') ||
+        parsed.searchParams.has('story_fbid') ||
+        parsed.searchParams.has('fbid') ||
+        /facebook\.com\/.+\/(posts|videos)\//i.test(url);
+      if (isPost || id === 'facebook') {
         embedUrl = `https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500`;
       }
     } else if (id === 'tiktok' || /tiktok\.com/i.test(host)) {
@@ -206,7 +216,10 @@ export function getSocialPreviewMeta(rawUrl, platformId = '') {
       if (m) embedUrl = `https://www.tiktok.com/embed/v2/${m[1]}`;
     } else if (id === 'twitter' || /(?:twitter|x)\.com/i.test(host)) {
       const m = parsed.pathname.match(/\/status\/(\d+)/i);
-      if (m) embedUrl = `https://platform.twitter.com/embed/Tweet.html?id=${m[1]}`;
+      if (m) {
+        // Full tweet chrome; container height controls whether inner scroll appears
+        embedUrl = `https://platform.twitter.com/embed/Tweet.html?id=${m[1]}&theme=light&dnt=true`;
+      }
     }
   } catch {
     /* ignore */

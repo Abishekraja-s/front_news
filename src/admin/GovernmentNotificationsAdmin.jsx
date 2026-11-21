@@ -76,6 +76,7 @@ const GovernmentNotificationsAdmin = () => {
     showLatestWidget: true,
     showAlertsWidget: true,
     showOnHomepage: true,
+    preferredLanguage: 'both',
     latestWidgetTitle: 'Latest Government Notifications',
     latestWidgetTitleTa: 'அரசு அறிவிப்புகள்',
     alertsWidgetTitle: 'Important Government Alerts',
@@ -98,6 +99,7 @@ const GovernmentNotificationsAdmin = () => {
       showLatestWidget: data.data.showLatestWidget !== false,
       showAlertsWidget: data.data.showAlertsWidget !== false,
       showOnHomepage: data.data.showOnHomepage !== false,
+      preferredLanguage: data.data.preferredLanguage || 'both',
       latestWidgetTitle: data.data.latestWidgetTitle || 'Latest Government Notifications',
       latestWidgetTitleTa: data.data.latestWidgetTitleTa || 'அரசு அறிவிப்புகள்',
       alertsWidgetTitle: data.data.alertsWidgetTitle || 'Important Government Alerts',
@@ -175,6 +177,7 @@ const GovernmentNotificationsAdmin = () => {
         showLatestWidget: settings.showLatestWidget,
         showAlertsWidget: settings.showAlertsWidget,
         showOnHomepage: settings.showOnHomepage,
+        preferredLanguage: settings.preferredLanguage || 'both',
         latestWidgetTitle: settings.latestWidgetTitle,
         latestWidgetTitleTa: settings.latestWidgetTitleTa,
         alertsWidgetTitle: settings.alertsWidgetTitle,
@@ -776,6 +779,21 @@ const GovernmentNotificationsAdmin = () => {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Global keywords</label>
             <textarea className="admin-input" rows={2} value={settings.keywords} onChange={(e) => setSettings({ ...settings, keywords: e.target.value })} placeholder="scheme&#10;tender&#10;job" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Content language</label>
+            <select
+              className="admin-input"
+              value={settings.preferredLanguage || 'both'}
+              onChange={(e) => setSettings({ ...settings, preferredLanguage: e.target.value })}
+            >
+              <option value="both">Both (English + Tamil)</option>
+              <option value="ta">Tamil only</option>
+              <option value="en">English only</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Controls import + homepage/list filters. Use <strong>Both</strong> to show Tamil titles (titleTamil) with English fallback.
+            </p>
           </div>
           <div className="space-y-2">
             <label className="flex items-center gap-2.5 text-sm"><input type="checkbox" checked={settings.autoFetchEnabled} onChange={(e) => setSettings({ ...settings, autoFetchEnabled: e.target.checked })} className="rounded border-slate-300" /> Automatic fetching</label>

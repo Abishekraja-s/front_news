@@ -18,6 +18,8 @@ const FeaturedNews = ({ article }) => {
           className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
           loading="eager"
           decoding="async"
+          fetchPriority="high"
+          sizes="(max-width: 1024px) 100vw, 66vw"
         />
       </div>
       <div className="p-4 md:p-5">

@@ -6,7 +6,9 @@ import NewsCard from '../components/NewsCard';
 import Loading, { SkeletonCard } from '../components/Loading';
 
 const DistrictPage = () => {
-  const { district } = useParams();
+  // Route may expose :district or :articleSlug (via TamilNaduSlugRouter)
+  const { district, articleSlug } = useParams();
+  const districtSlug = district || articleSlug;
   const [articles, setArticles] = useState([]);
   const [districtInfo, setDistrictInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,9 +16,10 @@ const DistrictPage = () => {
   const [pagination, setPagination] = useState(null);
 
   useEffect(() => {
+    if (!districtSlug) return;
     setLoading(true);
     articleService
-      .getByDistrict(district, page, 12)
+      .getByDistrict(districtSlug, page, 12)
       .then(({ data }) => {
         setArticles(data.data || []);
         setDistrictInfo(data.district);
@@ -24,9 +27,9 @@ const DistrictPage = () => {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [district, page]);
+  }, [districtSlug, page]);
 
-  const title = districtInfo?.nameTamil || district;
+  const title = districtInfo?.nameTamil || districtSlug;
 
   return (
     <>

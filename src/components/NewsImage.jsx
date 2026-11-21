@@ -11,6 +11,8 @@ const NewsImage = ({
   seed = 'news',
   className = '',
   loading = 'lazy',
+  decoding = 'async',
+  fetchPriority,
   noPlaceholder = false,
   placeholderClassName = '',
   ...props
@@ -57,11 +59,12 @@ const NewsImage = ({
       alt={alt}
       className={className}
       loading={loading}
-      decoding="async"
+      decoding={decoding}
       referrerPolicy="no-referrer"
       onError={handleError}
+      {...(fetchPriority ? { fetchPriority } : {})}
       // Help browsers pick a full-width fetch on mobile listing cards
-      {...(props.sizes ? {} : { sizes: '(max-width: 640px) 100vw, 50vw' })}
+      {...(props.sizes ? {} : { sizes: '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw' })}
       {...props}
     />
   );

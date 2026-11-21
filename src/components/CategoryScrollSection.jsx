@@ -4,22 +4,31 @@ import { articleService } from '../services/articleService';
 import { getArticlePath } from '../utils/articlePaths';
 import { SITE_CATEGORIES } from '../utils/helpers';
 import NewsImage from './NewsImage';
+import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 
 const ACTIVE_RED = '#E61E26';
 
+/** First 10 site categories — pill bar + horizontal cards (existing design). */
+export const FIRST_TEN_CATEGORIES = SITE_CATEGORIES.slice(0, 10);
+/** Next 10 site categories — deck / swipe card design. */
+export const NEXT_TEN_CATEGORIES = SITE_CATEGORIES.slice(10);
+
 /**
  * Top category pills (red active) + horizontal scrolling article cards.
- * Mobile: no clipped titles / no edge overflow outside this section.
+ * Cards: next/prev click, drag, auto-scroll (page up/down scroll stays free).
  */
-const CategoryScrollSection = ({ className = '' }) => {
-  const categories = SITE_CATEGORIES;
+const CategoryScrollSection = ({ className = '', categories = FIRST_TEN_CATEGORIES }) => {
   const [activeSlug, setActiveSlug] = useState(categories[0]?.slug || 'district');
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
   const catRef = useRef(null);
-  const scrollerRef = useRef(null);
+
+  const articleScroll = useHorizontalScroll({
+    deps: [loading, articles.length, activeSlug],
+    autoplayMs: 4000,
+  });
 
   const updateArrows = useCallback(() => {
     const el = catRef.current;
@@ -41,6 +50,12 @@ const CategoryScrollSection = ({ className = '' }) => {
   };
 
   useEffect(() => {
+    if (!categories.some((c) => c.slug === activeSlug)) {
+      setActiveSlug(categories[0]?.slug || 'district');
+    }
+  }, [categories, activeSlug]);
+
+  useEffect(() => {
     let cancelled = false;
     setLoading(true);
     articleService
@@ -60,8 +75,8 @@ const CategoryScrollSection = ({ className = '' }) => {
   }, [activeSlug]);
 
   useEffect(() => {
-    if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
-  }, [activeSlug]);
+    if (articleScroll.ref.current) articleScroll.ref.current.scrollLeft = 0;
+  }, [activeSlug, articleScroll.ref]);
 
   useEffect(() => {
     const el = catRef.current;
@@ -82,7 +97,6 @@ const CategoryScrollSection = ({ className = '' }) => {
 
   return (
     <div className={`mb-8 w-full max-w-full min-w-0 ${className}`.trim()}>
-      {/* Category bar — arrows inside, pills scroll in the middle */}
       <div className="mb-3 w-full min-w-0">
         <div className="flex items-center gap-1 sm:gap-1.5 w-full min-w-0">
           <button
@@ -139,56 +153,111 @@ const CategoryScrollSection = ({ className = '' }) => {
         </div>
       </div>
 
-      {/* Article cards — titles fully visible (Tamil glyphs must not be mid-clipped) */}
-      <div
-        ref={scrollerRef}
-        className="flex items-start gap-3 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory scrollbar-hide touch-pan-x w-full min-w-0"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
-        {loading &&
-          [1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="shrink-0 w-[calc(100%-1.25rem)] max-w-[18rem] sm:w-56 md:w-64 snap-start self-start rounded-xl bg-white border border-stone-200/80"
-            >
-              <div className="skeleton aspect-[16/10] w-full rounded-t-xl" />
-              <div className="p-3 space-y-2">
-                <div className="skeleton h-4 w-full rounded" />
-                <div className="skeleton h-4 w-2/3 rounded" />
-              </div>
-            </div>
-          ))}
+      {/* Article row with next/prev */}
+      <div className="relative">
+        <button
+          type="button"
+          aria-label="Previous articles"
+          disabled={!articleScroll.canLeft}
+          onClick={() => articleScroll.scrollByDir(-1)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-800 shadow-md border border-slate-200 disabled:opacity-0 disabled:pointer-events-none hover:scale-105 transition"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          aria-label="Next articles"
+          disabled={!articleScroll.canRight}
+          onClick={() => articleScroll.scrollByDir(1)}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full text-white shadow-md disabled:opacity-0 disabled:pointer-events-none hover:scale-105 transition"
+          style={{ backgroundColor: ACTIVE_RED }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
 
-        {!loading && articles.length === 0 && (
-          <p className="text-sm text-slate-500 py-6">இந்த பிரிவில் செய்திகள் இல்லை.</p>
-        )}
+        <div
+          ref={articleScroll.ref}
+          className="flex items-start gap-3 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory scrollbar-hide touch-pan-x w-full min-w-0 select-none sm:px-6"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
+        >
+          {loading &&
+            [1, 2, 3].map((i) => (
+              <div
+                key={i}
+                data-hscroll-item
+                className="shrink-0 w-[calc(100%-1.25rem)] max-w-[18rem] sm:w-56 md:w-64 snap-start self-start rounded-xl bg-white border border-stone-200/80"
+              >
+                <div className="skeleton aspect-[16/10] w-full rounded-t-xl" />
+                <div className="p-3 space-y-2">
+                  <div className="skeleton h-4 w-full rounded" />
+                  <div className="skeleton h-4 w-2/3 rounded" />
+                </div>
+              </div>
+            ))}
 
-        {!loading &&
-          articles.map((article) => (
-            <Link
-              key={article._id}
-              to={getArticlePath(article)}
-              className="group shrink-0 w-[calc(100%-1.25rem)] max-w-[18rem] sm:w-56 md:w-64 snap-start self-start flex flex-col rounded-xl bg-white border border-stone-200/80 hover:border-stone-300 hover:shadow-sm transition-all overflow-visible"
-            >
-              <div className="aspect-[16/10] overflow-hidden rounded-t-xl bg-slate-100 shrink-0">
-                <NewsImage
-                  src={article.featuredImage}
-                  seed={article.slug}
-                  alt={article.imageAlt || article.title}
-                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                  loading="lazy"
-                />
-              </div>
-              {/* No line-clamp: Tamil + -webkit-line-clamp clips mid-glyph */}
-              <div className="px-3 pt-2.5 pb-3.5 overflow-visible">
-                <h3 className="text-sm font-semibold text-slate-900 font-tamil break-words group-hover:text-red-700 transition-colors"
-                  style={{ lineHeight: 1.85 }}
-                >
-                  {article.title}
-                </h3>
-              </div>
-            </Link>
-          ))}
+          {!loading && articles.length === 0 && (
+            <p className="text-sm text-slate-500 py-6">இந்த பிரிவில் செய்திகள் இல்லை.</p>
+          )}
+
+          {!loading &&
+            articles.map((article) => (
+              <Link
+                key={article._id}
+                data-hscroll-item
+                to={getArticlePath(article)}
+                className="group shrink-0 w-[calc(100%-1.25rem)] max-w-[18rem] sm:w-56 md:w-64 snap-start self-start flex flex-col rounded-xl bg-white border border-stone-200/80 hover:border-stone-300 hover:shadow-sm transition-all overflow-visible"
+              >
+                <div className="aspect-[16/10] overflow-hidden rounded-t-xl bg-slate-100 shrink-0">
+                  <NewsImage
+                    src={article.featuredImage}
+                    seed={article.slug}
+                    alt={article.imageAlt || article.title}
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="px-3 pt-2.5 pb-3.5 overflow-visible">
+                  <h3
+                    className="text-sm font-semibold text-slate-900 font-tamil break-words group-hover:text-red-700 transition-colors"
+                    style={{ lineHeight: 1.85 }}
+                  >
+                    {article.title}
+                  </h3>
+                </div>
+              </Link>
+            ))}
+        </div>
+
+        {/* Mobile next/prev under the row */}
+        <div className="mt-2 flex sm:hidden items-center justify-center gap-2">
+          <button
+            type="button"
+            aria-label="Previous"
+            disabled={!articleScroll.canLeft}
+            onClick={() => articleScroll.scrollByDir(-1)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 disabled:opacity-30"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            aria-label="Next"
+            disabled={!articleScroll.canRight}
+            onClick={() => articleScroll.scrollByDir(1)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white disabled:opacity-30"
+            style={{ backgroundColor: ACTIVE_RED }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );

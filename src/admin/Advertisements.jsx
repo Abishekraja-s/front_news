@@ -155,11 +155,11 @@ const Advertisements = () => {
       return;
     }
     if (!form.startDate) {
-      toast.error('From date is required');
+      toast.error('Start date is required');
       return;
     }
     if (form.endDate && form.endDate < form.startDate) {
-      toast.error('To date must be on or after From date');
+      toast.error('End date must be on or after Start date');
       return;
     }
 
@@ -270,7 +270,7 @@ const Advertisements = () => {
       },
       {
         key: 'startDate',
-        header: 'From',
+        header: 'Start',
         sortable: true,
         sortValue: (row) => (row.startDate ? new Date(row.startDate).getTime() : 0),
         render: (row) => (
@@ -279,7 +279,7 @@ const Advertisements = () => {
       },
       {
         key: 'endDate',
-        header: 'To',
+        header: 'End',
         sortable: true,
         sortValue: (row) => (row.endDate ? new Date(row.endDate).getTime() : Number.MAX_SAFE_INTEGER),
         render: (row) => (
@@ -333,7 +333,7 @@ const Advertisements = () => {
     <div className="min-w-0 w-full max-w-full">
       <AdminPageHeader
         title="Advertisements"
-        subtitle="Manage ad placements — only Active ads within From/To dates appear on the website"
+        subtitle="Manage ad placements — only Active ads within Start/End dates appear on the website"
         actionLabel={showForm ? undefined : '+ Add Ad'}
         onAction={openCreate}
       >
@@ -413,7 +413,7 @@ const Advertisements = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
               <div className="min-w-0">
-                <label className="block text-xs font-medium text-slate-600 mb-1">From date</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Start date</label>
                 <input
                   type="date"
                   value={form.startDate}
@@ -423,7 +423,7 @@ const Advertisements = () => {
                 />
               </div>
               <div className="min-w-0">
-                <label className="block text-xs font-medium text-slate-600 mb-1">To date</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">End date</label>
                 <input
                   type="date"
                   value={form.endDate}

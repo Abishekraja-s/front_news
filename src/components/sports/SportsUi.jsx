@@ -67,14 +67,20 @@ export const Collapsible = ({ title, defaultOpen = true, children, badge }) => {
   );
 };
 
-export const TeamLogo = ({ src, name, size = 'md' }) => {
-  const dim = size === 'lg' ? 'h-14 w-14 sm:h-16 sm:w-16' : 'h-10 w-10';
+export const TeamLogo = ({ src, name, size = 'md', dark = false }) => {
+  const dim =
+    size === 'lg'
+      ? 'h-14 w-14 sm:h-16 sm:w-16'
+      : size === 'sm'
+        ? 'h-8 w-8'
+        : 'h-10 w-10';
+  const textSize = size === 'sm' ? 'text-[10px]' : 'text-xs';
   if (src) {
     return (
       <img
         src={src}
         alt={name || ''}
-        className={`${dim} rounded-full object-contain bg-white border border-stone-100`}
+        className={`${dim} rounded-full object-contain bg-white border border-stone-100 shrink-0`}
         loading="lazy"
       />
     );
@@ -87,7 +93,11 @@ export const TeamLogo = ({ src, name, size = 'md' }) => {
     .toUpperCase();
   return (
     <div
-      className={`${dim} rounded-full bg-teal-50 text-teal-800 border border-teal-100 flex items-center justify-center text-xs font-bold`}
+      className={`${dim} rounded-full shrink-0 flex items-center justify-center ${textSize} font-bold ${
+        dark
+          ? 'bg-white/10 text-teal-200 border border-white/15'
+          : 'bg-teal-50 text-teal-800 border border-teal-100'
+      }`}
       aria-hidden
     >
       {initials || '?'}

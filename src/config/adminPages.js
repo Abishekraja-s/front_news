@@ -6,6 +6,7 @@ export const ADMIN_PAGES = [
   { key: 'categories', label: 'Categories', path: '/admin/categories', icon: '📁' },
   { key: 'authors', label: 'Authors', path: '/admin/authors', icon: '👤' },
   { key: 'media', label: 'Media', path: '/admin/media', icon: '🖼️' },
+  { key: 'albums', label: 'Album', path: '/admin/albums', icon: '🗂️' },
   { key: 'breaking-news', label: 'Breaking News', path: '/admin/breaking-news', icon: '🔴' },
   { key: 'advertisements', label: 'Advertisements', path: '/admin/advertisements', icon: '📢' },
   { key: 'event-gif', label: 'Event GIF', path: '/admin/event-gif', icon: '🎉' },
@@ -17,7 +18,8 @@ export const ADMIN_PAGES = [
   { key: 'matrimony', label: 'Matrimony', path: '/admin/matrimony', icon: '💍' },
   { key: 'astrology', label: 'Astrology', path: '/admin/astrology', icon: '🔮' },
   { key: 'youtube-slider', label: 'YouTube Slider', path: '/admin/youtube-slider', icon: '▶️' },
-  { key: 'instagram-posts', label: 'Instagram Posts', path: '/admin/instagram-posts', icon: '📸' },
+  // Instagram Posts menu hidden — route/page still available at /admin/instagram-posts
+  // { key: 'instagram-posts', label: 'Instagram Posts', path: '/admin/instagram-posts', icon: '📸' },
   { key: 'google-news', label: 'Google News', path: '/admin/google-news', icon: '🌐' },
   { key: 'rss-feed', label: 'RSS Feed', path: '/admin/rss-feed', icon: '📡' },
   { key: 'travel-notifications', label: 'Travel Notifications', path: '/admin/travel-notifications', icon: '🚆' },

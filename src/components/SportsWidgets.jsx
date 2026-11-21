@@ -75,7 +75,11 @@ const SportsWidgets = ({ page = 'homepage', sport = '', className = '' }) => {
     const mins = Number(payload?.refreshIntervalMinutes);
     if (!Number.isFinite(mins) || mins < 1) return undefined;
     const ms = Math.min(Math.max(mins, 1), 60) * 60 * 1000;
-    const id = setInterval(load, ms);
+    const tick = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      load();
+    };
+    const id = setInterval(tick, ms);
     return () => clearInterval(id);
   }, [payload?.refreshIntervalMinutes, load]);
 
@@ -138,9 +142,9 @@ const SportsWidgets = ({ page = 'homepage', sport = '', className = '' }) => {
                   <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
                   {title}
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2 scroll-smooth">
                   {live.slice(0, max).map((m) => (
-                    <MatchCard key={m._id || m.fingerprint} match={m} />
+                    <MatchCard key={m._id || m.fingerprint} match={m} compact />
                   ))}
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Collapsible, DataTable, EmptyState, StatPair, TeamLogo } from './SportsUi';
 
@@ -48,6 +48,25 @@ export const OverviewPanel = ({ match, detail }) => {
               <dd className="font-medium text-slate-800 mt-0.5">{match.statusDetail}</dd>
             </div>
           )}
+          {(detail?.toss || detail?.cricket?.toss) && (
+            <div>
+              <dt className="text-[11px] uppercase text-slate-400">Toss</dt>
+              <dd className="font-medium text-slate-800 mt-0.5">
+                {(() => {
+                  const toss = detail?.toss || detail?.cricket?.toss;
+                  return typeof toss === 'string'
+                    ? toss
+                    : [toss.winner || toss.team, toss.decision || toss.elected]
+                        .filter(Boolean)
+                        .join(' — ');
+                })()}
+              </dd>
+            </div>
+          )}
+          <div>
+            <dt className="text-[11px] uppercase text-slate-400">Timezone</dt>
+            <dd className="font-medium text-slate-800 mt-0.5">Times shown in your local timezone</dd>
+          </div>
         </dl>
       </section>
 
@@ -280,8 +299,21 @@ export const BallByBallPanel = ({ ballByBall }) => {
 export const CricketScorePanel = ({ detail, match }) => {
   const scorecard = detail?.scorecard || detail?.cricket?.scorecard;
   const pairStats = detail?.pairStats || detail?.cricket?.pairStats || [];
+  const innings = scorecard?.innings || [];
+  const [activeInn, setActiveInn] = useState(0);
+  const [innBootstrapped, setInnBootstrapped] = useState(false);
 
-  if (!scorecard?.innings?.length && !pairStats.length) {
+  useEffect(() => {
+    if (!innings.length) return;
+    if (!innBootstrapped) {
+      setActiveInn(innings.length - 1);
+      setInnBootstrapped(true);
+      return;
+    }
+    setActiveInn((prev) => (prev >= innings.length ? innings.length - 1 : prev));
+  }, [innings.length, innBootstrapped]);
+
+  if (!innings.length && !pairStats.length) {
     return (
       <div className="space-y-4">
         <EmptyState
@@ -322,91 +354,159 @@ export const CricketScorePanel = ({ detail, match }) => {
     );
   }
 
+  const inn = innings[Math.min(activeInn, Math.max(innings.length - 1, 0))] || innings[0];
+  const yetToBat = Array.isArray(inn?.yetToBat) ? inn.yetToBat : [];
+  const fallOfWickets = Array.isArray(inn?.fallOfWickets) ? inn.fallOfWickets : [];
+
   return (
     <div className="space-y-4">
-      {(scorecard?.innings || []).map((inn) => (
-        <Collapsible
-          key={inn.number || inn.team}
-          title={`Innings ${inn.number || ''} ${inn.team ? `· ${inn.team}` : ''}`.trim()}
-          badge={
-            hideEmpty(inn.runs)
-              ? `${inn.runs}${hideEmpty(inn.wickets) ? `/${inn.wickets}` : ''}${
-                  hideEmpty(inn.overs) ? ` (${inn.overs} ov)` : ''
-                }`
-              : undefined
-          }
-          defaultOpen
-        >
-          <div className="flex flex-wrap gap-3 text-xs text-slate-600 mb-3">
-            {hideEmpty(inn.runRate) && <span>RR: {inn.runRate}</span>}
-            {hideEmpty(inn.target) && <span>Target: {inn.target}</span>}
-            {hideEmpty(inn.requiredRunRate) && <span>RRR: {inn.requiredRunRate}</span>}
-            {hideEmpty(inn.partnership) && (
-              <span>
-                Partnership:{' '}
-                {typeof inn.partnership === 'object'
-                  ? JSON.stringify(inn.partnership)
-                  : inn.partnership}
+      {innings.length > 1 && (
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+          {innings.map((item, idx) => {
+            const label = [
+              item.team || `Innings ${item.number || idx + 1}`,
+              hideEmpty(item.runs)
+                ? `${item.runs}${hideEmpty(item.wickets) ? `/${item.wickets}` : ''}`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' · ');
+            return (
+              <button
+                key={item.number || item.team || idx}
+                type="button"
+                onClick={() => setActiveInn(idx)}
+                className={`shrink-0 px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                  activeInn === idx
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-white border border-stone-200 text-slate-600 hover:border-teal-300'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {inn && (
+        <div className="rounded-2xl border border-stone-200 bg-white overflow-hidden">
+          <div className="px-4 py-3 border-b border-stone-100 bg-stone-50/80 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-bold text-slate-900">
+              {inn.team || `Innings ${inn.number || ''}`}
+            </h3>
+            {hideEmpty(inn.runs) && (
+              <span className="font-mono text-sm font-bold text-teal-800">
+                {inn.runs}
+                {hideEmpty(inn.wickets) ? `/${inn.wickets}` : ''}
+                {hideEmpty(inn.overs) ? ` (${inn.overs} ov)` : ''}
               </span>
             )}
           </div>
-          <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Batting</h4>
-          <DataTable
-            columns={[
-              {
-                key: 'player',
-                label: 'Player',
-                render: (r) =>
-                  r.key ? (
-                    <Link
-                      className="text-teal-700 hover:underline font-medium"
-                      to={`/live-sports/match/${match._id}/player/${encodeURIComponent(r.key)}`}
-                    >
-                      {r.player}
-                    </Link>
-                  ) : (
-                    r.player
-                  ),
-              },
-              { key: 'runs', label: 'R' },
-              { key: 'balls', label: 'B' },
-              { key: 'fours', label: '4s' },
-              { key: 'sixes', label: '6s' },
-              { key: 'strikeRate', label: 'SR' },
-              { key: 'status', label: 'Status', className: 'text-slate-500 max-w-[10rem]' },
-            ]}
-            rows={inn.batting || []}
-            emptyTitle="No batting rows"
-          />
-          <h4 className="text-xs font-bold uppercase text-slate-500 mb-2 mt-4">Bowling</h4>
-          <DataTable
-            columns={[
-              {
-                key: 'bowler',
-                label: 'Bowler',
-                render: (r) =>
-                  r.key ? (
-                    <Link
-                      className="text-teal-700 hover:underline font-medium"
-                      to={`/live-sports/match/${match._id}/player/${encodeURIComponent(r.key)}`}
-                    >
-                      {r.bowler}
-                    </Link>
-                  ) : (
-                    r.bowler
-                  ),
-              },
-              { key: 'overs', label: 'O' },
-              { key: 'maidens', label: 'M' },
-              { key: 'runs', label: 'R' },
-              { key: 'wickets', label: 'W' },
-              { key: 'economy', label: 'ECO' },
-            ]}
-            rows={inn.bowling || []}
-            emptyTitle="No bowling rows"
-          />
-        </Collapsible>
-      ))}
+          <div className="p-3 sm:p-4 space-y-4">
+            <div className="flex flex-wrap gap-3 text-xs text-slate-600">
+              {hideEmpty(inn.runRate) && <span>RR: {inn.runRate}</span>}
+              {hideEmpty(inn.target) && <span>Target: {inn.target}</span>}
+              {hideEmpty(inn.requiredRunRate) && <span>RRR: {inn.requiredRunRate}</span>}
+              {hideEmpty(inn.partnership) && (
+                <span>
+                  Partnership:{' '}
+                  {typeof inn.partnership === 'object'
+                    ? JSON.stringify(inn.partnership)
+                    : inn.partnership}
+                </span>
+              )}
+              {hideEmpty(inn.extras) && (
+                <span>
+                  Extras:{' '}
+                  {typeof inn.extras === 'object' ? JSON.stringify(inn.extras) : inn.extras}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Batting</h4>
+              <DataTable
+                columns={[
+                  {
+                    key: 'player',
+                    label: 'Batter',
+                    render: (r) =>
+                      r.key ? (
+                        <Link
+                          className="text-teal-700 hover:underline font-medium"
+                          to={`/live-sports/match/${match._id}/player/${encodeURIComponent(r.key)}`}
+                        >
+                          {r.player}
+                        </Link>
+                      ) : (
+                        r.player
+                      ),
+                  },
+                  { key: 'runs', label: 'R' },
+                  { key: 'balls', label: 'B' },
+                  { key: 'fours', label: '4s' },
+                  { key: 'sixes', label: '6s' },
+                  { key: 'strikeRate', label: 'SR' },
+                  { key: 'status', label: 'Status', className: 'text-slate-500 max-w-[10rem]' },
+                ]}
+                rows={inn.batting || []}
+                emptyTitle="No batting rows"
+              />
+            </div>
+
+            {!!yetToBat.length && (
+              <p className="text-xs text-slate-600">
+                <span className="font-semibold text-slate-700">Yet to bat: </span>
+                {yetToBat.join(', ')}
+              </p>
+            )}
+
+            <div>
+              <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Bowling</h4>
+              <DataTable
+                columns={[
+                  {
+                    key: 'bowler',
+                    label: 'Bowler',
+                    render: (r) =>
+                      r.key ? (
+                        <Link
+                          className="text-teal-700 hover:underline font-medium"
+                          to={`/live-sports/match/${match._id}/player/${encodeURIComponent(r.key)}`}
+                        >
+                          {r.bowler}
+                        </Link>
+                      ) : (
+                        r.bowler
+                      ),
+                  },
+                  { key: 'overs', label: 'O' },
+                  { key: 'maidens', label: 'M' },
+                  { key: 'runs', label: 'R' },
+                  { key: 'wickets', label: 'W' },
+                  { key: 'economy', label: 'Econ' },
+                ]}
+                rows={inn.bowling || []}
+                emptyTitle="No bowling rows"
+              />
+            </div>
+
+            {!!fallOfWickets.length && (
+              <div>
+                <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Fall of wickets</h4>
+                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                  {fallOfWickets
+                    .map((f) => f.text || f.score || `${f.wicket}${f.batsman ? ` (${f.batsman})` : ''}`)
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {!!pairStats.length && (
         <section className="rounded-2xl border border-stone-200 bg-white p-4">
           <h3 className="text-sm font-bold mb-2">Match stats</h3>

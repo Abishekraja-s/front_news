@@ -51,6 +51,7 @@ const Footer = ({ settings }) => {
           <h4 className="text-white font-semibold mb-4 text-sm tracking-wide uppercase">Quick Links</h4>
           <ul className="space-y-2.5 text-sm">
             <li><Link to="/explore" className="hover:text-brand-300 transition-colors">Explore All</Link></li>
+            <li><Link to="/albums" className="hover:text-brand-300 transition-colors">Albums</Link></li>
             <li><Link to="/astrology" className="hover:text-brand-300 transition-colors">Astrology</Link></li>
             <li><Link to="/about" className="hover:text-brand-300 transition-colors">About Us</Link></li>
             <li><Link to="/contact" className="hover:text-brand-300 transition-colors">Contact</Link></li>

@@ -10,8 +10,7 @@ import Advertisement from '../components/Advertisement';
 import AdSenseSlot from '../components/AdSenseSlot';
 import MobileStickyAdBar from '../components/MobileStickyAdBar';
 import EventGifFloat from '../components/EventGifFloat';
-import NewsReelButton from '../components/NewsReelButton';
-import NotificationPrompt from '../components/NotificationPrompt';
+import FloatingSideActions from '../components/FloatingSideActions';
 import AnalyticsTracker from '../components/AnalyticsTracker';
 import { settingService } from '../services/articleService';
 import { resolveTrackingIds } from '../utils/analyticsIds';
@@ -138,8 +137,7 @@ const PublicLayout = () => {
       <MobileStickyAdBar />
       <MobileBottomNav />
       <EventGifFloat />
-      <NewsReelButton />
-      <NotificationPrompt />
+      <FloatingSideActions />
     </div>
   );
 };

@@ -25,12 +25,12 @@ const SearchForm = ({ value, onChange, onSubmit, onClose, id, autoFocus = false,
         placeholder="Search news…"
         autoFocus={autoFocus}
         className="w-full min-w-0 pl-10 pr-3 py-2.5 bg-stone-100 border border-stone-200 rounded-l-2xl text-sm
-          focus:outline-none focus:ring-2 focus:ring-brand-400/50 focus:border-brand-400 placeholder:text-slate-400"
+          focus:outline-none focus:ring-2 focus:ring-sky-400/50 focus:border-[#2563eb] placeholder:text-slate-400"
       />
     </div>
     <button
       type="submit"
-      className="flex-shrink-0 px-4 sm:px-5 py-2.5 bg-slate-950 text-white rounded-r-2xl text-sm font-semibold hover:bg-slate-900 transition-colors"
+      className="flex-shrink-0 px-4 sm:px-5 py-2.5 bg-[#0b1f4a] text-white rounded-r-2xl text-sm font-semibold hover:bg-[#1d4ed8] transition-colors"
     >
       Go
     </button>

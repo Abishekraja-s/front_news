@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { sportsService } from '../services/articleService';
-import { SPORT_LABELS, statusLabel } from '../components/sports/MatchCard';
-import { MatchSkeleton, TeamLogo } from '../components/sports/SportsUi';
+import { SPORT_LABELS } from '../components/sports/MatchCard';
+import { MatchSkeleton } from '../components/sports/SportsUi';
+import GoogleScoreHeader from '../components/sports/GoogleScoreHeader';
 import {
   OverviewPanel,
   PlayersPanel,
@@ -13,14 +14,27 @@ import {
   BallByBallPanel,
 } from '../components/sports/SportPanels';
 
+const formatClock = (d) =>
+  d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
 const MatchDetails = () => {
   const { id } = useParams();
   const [match, setMatch] = useState(null);
   const [detail, setDetail] = useState(null);
-  const [refreshSeconds, setRefreshSeconds] = useState(15);
+  const [refreshSeconds, setRefreshSeconds] = useState(30);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [tab, setTab] = useState('overview');
+  const [updatedAt, setUpdatedAt] = useState(null);
+  const [visible, setVisible] = useState(
+    typeof document === 'undefined' ? true : document.visibilityState !== 'hidden'
+  );
+
+  useEffect(() => {
+    const onVis = () => setVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
 
   const load = useCallback(
     async ({ silent = false } = {}) => {
@@ -33,7 +47,8 @@ const MatchDetails = () => {
         const { data } = await sportsService.getPublicMatch(id);
         setMatch(data.data?.match || null);
         setDetail(data.data?.detail || null);
-        setRefreshSeconds(data.data?.refreshIntervalSeconds || 15);
+        setRefreshSeconds(data.data?.refreshIntervalSeconds || 30);
+        setUpdatedAt(new Date());
         if (!silent) setError('');
       } catch (err) {
         if (!silent) {
@@ -53,10 +68,12 @@ const MatchDetails = () => {
   }, [load]);
 
   useEffect(() => {
+    if (!visible) return undefined;
     if (!match?.isLive && match?.status !== 'live' && match?.status !== 'halftime') return undefined;
-    const timer = setInterval(() => load({ silent: true }), Math.max(refreshSeconds, 10) * 1000);
+    const ms = Math.min(Math.max(refreshSeconds, 30), 60) * 1000;
+    const timer = setInterval(() => load({ silent: true }), ms);
     return () => clearInterval(timer);
-  }, [match?.isLive, match?.status, refreshSeconds, load]);
+  }, [match?.isLive, match?.status, refreshSeconds, load, visible]);
 
   const tabs = useMemo(() => {
     const sport = match?.sport;
@@ -66,15 +83,11 @@ const MatchDetails = () => {
       { id: 'score', label: sport === 'cricket' ? 'Scorecard' : 'Score / Stats' },
       { id: 'players', label: 'Players' },
       { id: 'standings', label: 'Points / Standings' },
-      {
-        id: 'timeline',
-        label: sport === 'cricket' ? 'Timeline / Events' : 'Timeline / Events',
-      },
+      { id: 'timeline', label: 'Timeline / Events' },
     ];
     if (sport === 'cricket') {
       base.splice(2, 0, { id: 'ball', label: 'Ball by Ball' });
     }
-    // Always show tabs; empty states inside panels when unavailable
     return base.map((t) => ({
       ...t,
       hint:
@@ -91,9 +104,6 @@ const MatchDetails = () => {
   useEffect(() => {
     if (!tabs.find((t) => t.id === tab)) setTab('overview');
   }, [tabs, tab]);
-
-  const isLive = match?.status === 'live' || match?.status === 'halftime';
-  const status = statusLabel(match?.status);
 
   return (
     <div className="min-h-[50vh]">
@@ -132,9 +142,17 @@ const MatchDetails = () => {
               {match ? `${match.homeTeam} vs ${match.awayTeam}` : 'Match'}
             </span>
           </nav>
-          <Link to="/live-sports" className="text-xs font-semibold text-brand-700 hover:underline">
-            ← Back to Live Sports
-          </Link>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Link to="/live-sports" className="text-xs font-semibold text-brand-700 hover:underline">
+              ← Back to Live Sports
+            </Link>
+            {updatedAt && (
+              <p className="text-[11px] text-slate-500 font-mono">
+                Updated {formatClock(updatedAt)}
+                {!visible ? ' · paused' : ''}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -153,66 +171,12 @@ const MatchDetails = () => {
           <p className="text-slate-500 text-sm">Match not found.</p>
         ) : (
           <>
-            {/* Sticky match header */}
             <div className="sticky top-0 z-20 -mx-1 px-1 pb-3 pt-1 bg-stone-50/95 backdrop-blur">
-              <header className="rounded-2xl border border-stone-200 bg-white shadow-sm p-4 sm:p-5">
-                <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-teal-700">
-                      {SPORT_LABELS[match.sport] || match.sport}
-                      {match.competition ? ` · ${match.competition}` : ''}
-                    </p>
-                    {match.startTime && (
-                      <p className="text-xs text-slate-500 mt-1">
-                        {new Date(match.startTime).toLocaleString()}
-                        {detail?.venue ? ` · ${detail.venue}` : match.venue ? ` · ${match.venue}` : ''}
-                      </p>
-                    )}
-                  </div>
-                  <span
-                    className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full ${
-                      isLive
-                        ? 'bg-rose-50 text-rose-700'
-                        : status === 'Completed'
-                          ? 'bg-slate-100 text-slate-600'
-                          : 'bg-amber-50 text-amber-700'
-                    }`}
-                  >
-                    {isLive ? '● Live' : status}
-                    {match.statusDetail ? ` · ${match.statusDetail}` : ''}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 items-center">
-                  <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 min-w-0 justify-self-end text-center sm:text-right">
-                    <div className="sm:order-2">
-                      <TeamLogo src={match.homeLogo || detail?.homeLogo} name={match.homeTeam} size="lg" />
-                    </div>
-                    <p className="text-sm sm:text-base font-bold text-slate-900 break-words sm:order-1">
-                      {match.homeTeam}
-                    </p>
-                  </div>
-                  <div className="text-center px-2 sm:px-4">
-                    <p className="font-mono text-xl sm:text-3xl font-bold text-slate-900 leading-tight">
-                      <span className="break-all">{match.homeScoreText || match.homeScore}</span>
-                      <span className="text-slate-300 mx-1 sm:mx-2">–</span>
-                      <span className="break-all">{match.awayScoreText || match.awayScore}</span>
-                    </p>
-                    <p className="text-[10px] text-slate-400 mt-1 uppercase">vs</p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-center gap-2 min-w-0 justify-self-start text-center sm:text-left">
-                    <TeamLogo src={match.awayLogo || detail?.awayLogo} name={match.awayTeam} size="lg" />
-                    <p className="text-sm sm:text-base font-bold text-slate-900 break-words">
-                      {match.awayTeam}
-                    </p>
-                  </div>
-                </div>
-                {detail?.summary && (
-                  <p className="text-xs sm:text-sm text-slate-600 mt-4 text-center border-t border-stone-100 pt-3">
-                    {detail.summary}
-                  </p>
-                )}
-              </header>
+              <GoogleScoreHeader
+                match={match}
+                detail={detail}
+                updatedAt={updatedAt ? formatClock(updatedAt) : null}
+              />
 
               <div className="mt-3 flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
                 {tabs.map((t) => (
@@ -235,7 +199,9 @@ const MatchDetails = () => {
             <div className="mt-4 transition-opacity duration-200">
               {tab === 'overview' && <OverviewPanel match={match} detail={detail} />}
               {tab === 'score' && <ScoreStatsPanel match={match} detail={detail} />}
-              {tab === 'ball' && <BallByBallPanel ballByBall={detail?.ballByBall || detail?.cricket?.ballByBall} />}
+              {tab === 'ball' && (
+                <BallByBallPanel ballByBall={detail?.ballByBall || detail?.cricket?.ballByBall} />
+              )}
               {tab === 'players' && <PlayersPanel matchId={match._id} players={detail?.players} />}
               {tab === 'standings' && (
                 <StandingsPanel standings={detail?.standings} sport={match.sport} />

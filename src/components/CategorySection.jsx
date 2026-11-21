@@ -1,556 +1,434 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import NewsCard from './NewsCard';
 import NewsImage from './NewsImage';
 import CategoryBanner from './CategoryBanner';
 import { getArticlePath } from '../utils/articlePaths';
+import { timeAgo } from '../utils/helpers';
 
-/** Distinct homepage layout per category slug */
+/** Unique layout per category — premium mockup style */
 const LAYOUT_BY_SLUG = {
-  district: 'grid',
-  politics: 'editorial',
-  chennai: 'magazine',
-  'tamil-nadu': 'spotlight',
-  india: 'grid',
-  world: 'numbered',
-  crime: 'board',
-  pocso: 'timeline',
-  spiritual: 'serene',
-  special: 'mosaic',
-  education: 'timeline',
-  sports: 'arena',
-  jobs: 'board',
-  agriculture: 'spotlight',
-  'sri-lanka': 'magazine',
-  business: 'ticker',
-  health: 'split',
-  'short-news': 'numbered',
-  weather: 'grid',
-  'other-news': 'spotlight',
-  cinema: 'posters',
-  technology: 'split',
+  district: 'carousel',
+  politics: 'featured',
+  chennai: 'carousel',
+  'tamil-nadu': 'featured',
+  india: 'featured',
+  world: 'carousel',
+  crime: 'stack',
+  pocso: 'stack',
+  spiritual: 'carousel',
+  special: 'carousel',
+  education: 'stack',
+  sports: 'featured',
+  jobs: 'stack',
+  agriculture: 'carousel',
+  'sri-lanka': 'carousel',
+  business: 'stack',
+  health: 'carousel',
+  'short-news': 'stack',
+  weather: 'carousel',
+  'other-news': 'featured',
+  cinema: 'carousel',
+  technology: 'featured',
 };
 
-const SectionHeader = ({ title, slug }) => (
-  <div className="flex items-center justify-between mb-4 gap-3">
-    <h2 className="section-title">{title}</h2>
-    {slug && (
-      <Link to={`/${slug}`} className="text-sm text-brand-600 hover:underline font-medium shrink-0">
-        அனைத்தும் →
-      </Link>
-    )}
-  </div>
-);
-
-const CatLabel = ({ article }) =>
-  article?.category ? (
-    <span className="text-xs text-brand-600 font-medium">
-      {article.category.nameTamil || article.category.name}
-    </span>
-  ) : null;
-
-const ThumbTitle = ({ article, imgClass = 'w-28 h-20', titleClass = 'text-sm font-semibold' }) => (
-  <Link to={getArticlePath(article)} className="flex gap-3 group min-w-0">
-    <div className={`shrink-0 overflow-hidden rounded-xl ring-1 ring-black/5 ${imgClass}`}>
-      <NewsImage
-        src={article.featuredImage}
-        seed={article.slug}
-        alt={article.imageAlt || article.title}
-        className="w-full h-full object-cover"
-        loading="lazy"
-      />
-    </div>
-    <div className="min-w-0 self-center">
-      <CatLabel article={article} />
-      <h3 className={`${titleClass} text-slate-900 group-hover:text-brand-700 line-clamp-2 leading-snug mt-0.5`}>
-        {article.title}
-      </h3>
-    </div>
-  </Link>
-);
-
-/** Featured left + sidebar list */
-const LayoutSpotlight = ({ articles }) => {
-  const [main, ...rest] = articles;
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-      <div className="lg:col-span-2">
-        <NewsCard article={main} />
-      </div>
-      <div className="space-y-4">
-        {rest.slice(0, 4).map((a) => (
-          <NewsCard key={a._id} article={a} variant="horizontal" />
-        ))}
-      </div>
-    </div>
-  );
+const HEADER_ICONS = {
+  district: 'pin',
+  politics: 'building',
+  chennai: 'building',
+  'tamil-nadu': 'home',
+  india: 'flag',
+  world: 'globe',
+  crime: 'shield',
+  sports: 'ball',
+  jobs: 'briefcase',
+  cinema: 'film',
+  technology: 'chip',
+  health: 'heart',
+  education: 'book',
+  business: 'chart',
+  special: 'star',
+  spiritual: 'spark',
+  agriculture: 'leaf',
+  default: 'news',
 };
 
-/** Magazine: 2×2 image-top cards (distinct from old zigzag splits) */
-const LayoutMagazine = ({ articles }) => (
-  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
-    {articles.slice(0, 4).map((a) => (
-      <Link
-        key={a._id}
-        to={getArticlePath(a)}
-        className="group flex h-full flex-col overflow-hidden rounded-xl bg-white border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-shadow duration-300"
-      >
-        <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
-          <NewsImage
-            src={a.featuredImage}
-            seed={a.slug}
-            alt={a.imageAlt || a.title}
-            className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-500"
-            loading="lazy"
-          />
-          <span className="absolute left-0 top-0 bottom-0 w-1 bg-teal-600" aria-hidden />
-        </div>
-        <div className="flex flex-1 flex-col p-3 sm:p-4">
-          <CatLabel article={a} />
-          <h3 className="mt-1 text-sm sm:text-[15px] font-bold text-slate-900 group-hover:text-teal-800 leading-snug line-clamp-3 font-headline">
-            {a.title}
-          </h3>
-          {a.excerpt ? (
-            <p className="mt-2 text-xs sm:text-sm text-slate-500 leading-relaxed line-clamp-2">
-              {a.excerpt}
-            </p>
-          ) : null}
-        </div>
-      </Link>
-    ))}
-  </div>
+const shortDate = (date) => {
+  if (!date) return '';
+  try {
+    return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  } catch {
+    return '';
+  }
+};
+
+const HeaderIcon = ({ name }) => {
+  const common = { className: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24', 'aria-hidden': true };
+  const paths = {
+    pin: (
+      <>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </>
+    ),
+    building: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />,
+    home: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />,
+    flag: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-8m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z" />,
+    globe: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />,
+    shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
+    ball: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
+    briefcase: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />,
+    film: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />,
+    chip: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />,
+    heart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />,
+    book: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />,
+    chart: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />,
+    star: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />,
+    spark: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />,
+    leaf: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />,
+    news: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2" />,
+  };
+  return <svg {...common}>{paths[name] || paths.news}</svg>;
+};
+
+const ArrowCircle = ({ light = false, className = '' }) => (
+  <span
+    className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-transform group-hover:translate-x-0.5 group-hover:scale-105 ${
+      light
+        ? 'bg-white text-brand-800 shadow-md'
+        : 'bg-brand-800 text-white shadow-md shadow-brand-900/20'
+    } ${className}`}
+    aria-hidden
+  >
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+    </svg>
+  </span>
 );
 
-/** Equal 2×2 / 4-col image cards */
-const LayoutGrid = ({ articles }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-    {articles.slice(0, 4).map((a) => (
-      <NewsCard key={a._id} article={a} />
-    ))}
-  </div>
-);
-
-/** Large numbers beside stories */
-const LayoutNumbered = ({ articles }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-    {articles.slice(0, 6).map((a, i) => (
-      <Link key={a._id} to={getArticlePath(a)} className="flex gap-4 group items-start">
-        <span className="text-4xl font-black text-brand-200 leading-none tabular-nums shrink-0 w-12 group-hover:text-brand-400 transition-colors">
-          {String(i + 1).padStart(2, '0')}
-        </span>
-        <div className="min-w-0 flex-1 pt-1">
-          <div className="flex gap-3">
-            <div className="w-20 h-14 rounded-lg overflow-hidden shrink-0 ring-1 ring-black/5">
-              <NewsImage
-                src={a.featuredImage}
-                seed={a.slug}
-                alt={a.imageAlt || a.title}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </div>
-            <h3 className="text-sm md:text-base font-semibold text-slate-900 group-hover:text-brand-700 line-clamp-3 leading-snug">
-              {a.title}
-            </h3>
-          </div>
-        </div>
-      </Link>
-    ))}
-  </div>
-);
-
-/** Editorial (Politics): text-first briefing lead + vertical agenda list */
-const LayoutEditorial = ({ articles }) => {
-  const [main, ...rest] = articles;
-  if (!main) return null;
-  const side = rest.slice(0, 3);
-
+/** Slanted ribbon header + மேலும் செய்திகள் */
+const SectionHeader = ({ title, slug }) => {
+  const icon = HEADER_ICONS[slug] || HEADER_ICONS.default;
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
-      <Link
-        to={getArticlePath(main)}
-        className="lg:col-span-7 group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-slate-200/90 shadow-[0_1px_3px_rgba(15,23,42,0.05)] hover:border-teal-300 hover:shadow-md transition-all"
-      >
-        <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-teal-600 z-10" aria-hidden />
-        <div className="aspect-[16/10] overflow-hidden bg-slate-100 shrink-0">
-          <NewsImage
-            src={main.featuredImage}
-            seed={main.slug}
-            alt={main.imageAlt || main.title}
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            loading="lazy"
+    <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div className="relative inline-flex items-stretch min-w-0">
+        <div
+          className="relative flex items-center gap-2.5 text-white pl-3.5 pr-8 py-2.5 rounded-l-xl shadow-soft"
+          style={{ background: 'linear-gradient(90deg, rgb(229, 9, 20) 0%, rgb(200, 8, 18) 100%)' }}
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15">
+            <HeaderIcon name={icon} />
+          </span>
+          <h2 className="text-base sm:text-lg md:text-xl font-bold font-tamil truncate mb-0">{title}</h2>
+          {/* Diagonal slant */}
+          <span
+            className="pointer-events-none absolute top-0 -right-4 h-full w-8"
+            style={{
+              backgroundColor: 'rgb(229, 9, 20)',
+              clipPath: 'polygon(0 0, 100% 0, 40% 100%, 0 100%)',
+            }}
+            aria-hidden
           />
         </div>
-        <div className="pl-4 sm:pl-5 pr-4 sm:pr-5 pt-4 sm:pt-5 pb-5 sm:pb-6 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-teal-700 bg-teal-50 px-2 py-0.5 rounded">
-              Briefing
-            </span>
-            <CatLabel article={main} />
-          </div>
-          <h3 className="mt-3 text-xl sm:text-2xl lg:text-[1.75rem] font-bold leading-snug font-headline text-slate-900 group-hover:text-teal-800 transition-colors">
-            {main.title}
-          </h3>
-          {main.excerpt ? (
-            <p className="mt-3 text-sm text-slate-500 line-clamp-3 leading-relaxed">{main.excerpt}</p>
-          ) : null}
-        </div>
-      </Link>
-
-      {side.length > 0 ? (
-        <div className="lg:col-span-5 flex flex-col gap-3">
-          {side.map((a, i) => (
-            <Link
-              key={a._id}
-              to={getArticlePath(a)}
-              className="group flex gap-3 flex-1 min-h-0 overflow-hidden rounded-xl bg-slate-50 border border-slate-200/70 hover:bg-white hover:border-teal-300 hover:shadow-sm transition-all p-3"
-            >
-              <span className="text-2xl font-black text-teal-200/90 leading-none tabular-nums shrink-0 w-8 pt-1 group-hover:text-teal-400 transition-colors">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <div className="w-20 sm:w-24 aspect-[4/3] rounded-lg overflow-hidden shrink-0 bg-slate-200 self-center">
-                <NewsImage
-                  src={a.featuredImage}
-                  seed={a.slug}
-                  alt={a.imageAlt || a.title}
-                  className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
-                  loading="lazy"
-                />
-              </div>
-              <div className="min-w-0 flex-1 self-center">
-                <CatLabel article={a} />
-                <h3 className="mt-0.5 text-sm sm:text-[15px] font-bold text-slate-900 group-hover:text-teal-800 line-clamp-3 leading-snug font-headline">
-                  {a.title}
-                </h3>
-              </div>
-            </Link>
-          ))}
-        </div>
+      </div>
+      {slug ? (
+        <Link
+          to={`/${slug}`}
+          className="inline-flex items-center gap-1.5 rounded-full border-2 text-xs sm:text-sm font-bold px-3.5 py-1.5 transition-colors shrink-0 hover:bg-red-50"
+          style={{ borderColor: 'rgb(229, 9, 20)', color: 'rgb(229, 9, 20)' }}
+        >
+          மேலும் செய்திகள்
+          <span aria-hidden>→</span>
+        </Link>
       ) : null}
     </div>
   );
 };
 
-/** Compact market-style rows */
-const LayoutTicker = ({ articles }) => (
-  <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-white overflow-hidden">
-    <ul className="divide-y divide-emerald-100/80">
-      {articles.slice(0, 6).map((a, i) => (
-        <li key={a._id}>
-          <Link to={getArticlePath(a)} className="flex items-center gap-3 sm:gap-4 px-4 py-3.5 hover:bg-emerald-50/70 transition-colors group">
-            <span className="text-[11px] font-bold text-emerald-700/70 w-6 tabular-nums">{i + 1}</span>
-            <div className="w-14 h-10 rounded-md overflow-hidden shrink-0">
-              <NewsImage
-                src={a.featuredImage}
-                seed={a.slug}
-                alt={a.imageAlt || a.title}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </div>
-            <h3 className="flex-1 text-sm font-semibold text-slate-900 group-hover:text-emerald-800 line-clamp-2 leading-snug">
-              {a.title}
-            </h3>
-            <span className="hidden sm:inline text-emerald-600 text-xs font-medium shrink-0">→</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
+const catName = (article) => article?.category?.nameTamil || article?.category?.name || '';
 
-/** Featured image above text + 3 equal action cards */
-const LayoutArena = ({ articles }) => {
-  const [main, ...rest] = articles;
-  if (!main) return null;
+/** Horizontal carousel cards (மாவட்டம் style) */
+const LayoutCarousel = ({ articles, accent = 'brand' }) => {
+  const scrollerRef = useRef(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+  const list = (articles || []).slice(0, 8);
 
-  return (
-    <div className="space-y-4">
-      <Link
-        to={getArticlePath(main)}
-        className="group flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-orange-100 bg-white hover:border-orange-300 transition-colors"
-      >
-        <div className="sm:w-1/2 aspect-[16/10] sm:aspect-auto sm:min-h-[220px] overflow-hidden bg-slate-100 shrink-0">
-          <NewsImage
-            src={main.featuredImage}
-            seed={main.slug}
-            alt={main.imageAlt || main.title}
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            loading="lazy"
-          />
-        </div>
-        <div className="flex-1 p-4 sm:p-6 flex flex-col justify-center bg-orange-50/40">
-          <span className="inline-block w-fit text-[10px] font-bold uppercase tracking-wider bg-orange-500 text-white px-2 py-0.5 rounded mb-3">
-            Sports
-          </span>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-orange-700 leading-tight font-headline">
-            {main.title}
-          </h3>
-          {main.excerpt && (
-            <p className="text-sm text-slate-600 mt-2 line-clamp-3 leading-relaxed">{main.excerpt}</p>
-          )}
-        </div>
-      </Link>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {rest.slice(0, 3).map((a) => (
-          <Link
-            key={a._id}
-            to={getArticlePath(a)}
-            className="rounded-xl border border-orange-100 bg-orange-50/40 p-3 flex gap-3 group hover:border-orange-300 transition-colors"
-          >
-            <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0">
-              <NewsImage
-                src={a.featuredImage}
-                seed={a.slug}
-                alt={a.imageAlt || a.title}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 group-hover:text-orange-700 line-clamp-3 self-center leading-snug">
-              {a.title}
-            </h3>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-};
+  const sync = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(max > 4 && el.scrollLeft < max - 4);
+  };
 
-/** Portrait poster grid */
-const LayoutPosters = ({ articles }) => (
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-    {articles.slice(0, 5).map((a) => (
-      <Link key={a._id} to={getArticlePath(a)} className="group block">
-        <div className="aspect-[3/4] rounded-xl overflow-hidden ring-1 ring-black/5 bg-slate-100 shadow-sm">
-          <NewsImage
-            src={a.featuredImage}
-            seed={a.slug}
-            alt={a.imageAlt || a.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
-        </div>
-        <h3 className="mt-2 text-xs sm:text-sm font-semibold text-slate-900 group-hover:text-rose-700 line-clamp-2 leading-snug">
-          {a.title}
-        </h3>
-      </Link>
-    ))}
-  </div>
-);
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return undefined;
+    sync();
+    el.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    return () => {
+      el.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+    };
+  }, [list.length]);
 
-/** Story stack left + image/title card right (no overlay) */
-const LayoutSplit = ({ articles }) => {
-  const [main, ...rest] = articles;
-  if (!main) return null;
+  const scrollByDir = (dir) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.min(340, el.clientWidth * 0.8), behavior: 'smooth' });
+  };
+
+  const badgeTone =
+    accent === 'violet'
+      ? 'bg-violet-600'
+      : accent === 'rose'
+        ? 'bg-rose-600'
+        : accent === 'orange'
+          ? 'bg-orange-500'
+          : 'bg-brand-700';
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-      <div className="order-2 lg:order-1 space-y-0 divide-y divide-cyan-100 rounded-2xl border border-cyan-100 bg-cyan-50/30 px-4">
-        {rest.slice(0, 4).map((a) => (
-          <Link key={a._id} to={getArticlePath(a)} className="block py-3.5 group">
-            <CatLabel article={a} />
-            <h3 className="text-sm font-semibold text-slate-900 group-hover:text-cyan-800 line-clamp-2 mt-0.5 leading-snug">
-              {a.title}
-            </h3>
-          </Link>
-        ))}
-      </div>
-      <Link
-        to={getArticlePath(main)}
-        className="order-1 lg:order-2 group flex flex-col overflow-hidden rounded-2xl border border-cyan-100 bg-white hover:border-cyan-300 transition-colors"
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => scrollByDir(-1)}
+        disabled={!canLeft}
+        aria-label="Previous"
+        className="hidden sm:flex absolute -left-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center
+          rounded-full bg-white border border-stone-200 text-slate-600 shadow-soft
+          hover:border-brand-400 hover:text-brand-700 disabled:opacity-30 transition-all"
       >
-        <div className="aspect-[16/10] overflow-hidden bg-slate-100 shrink-0">
-          <NewsImage
-            src={main.featuredImage}
-            seed={main.slug}
-            alt={main.imageAlt || main.title}
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            loading="lazy"
-          />
-        </div>
-        <div className="p-4 sm:p-5">
-          <span className="text-[10px] uppercase tracking-wider text-cyan-700 font-bold">Tech</span>
-          <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-cyan-800 mt-1 leading-snug">
-            {main.title}
-          </h3>
-        </div>
-      </Link>
-    </div>
-  );
-};
-
-/** Vertical timeline rail */
-const LayoutTimeline = ({ articles }) => (
-  <ol className="relative border-l-2 border-amber-200 ml-3 sm:ml-4 space-y-5">
-    {articles.slice(0, 5).map((a) => (
-      <li key={a._id} className="ml-5 sm:ml-7 relative">
-        <span className="absolute -left-[1.65rem] sm:-left-[1.9rem] top-3 w-3 h-3 rounded-full bg-amber-500 ring-4 ring-amber-100" />
-        <ThumbTitle article={a} imgClass="w-24 h-16 sm:w-32 sm:h-20" titleClass="text-sm sm:text-base font-semibold" />
-      </li>
-    ))}
-  </ol>
-);
-
-/** Job-board style cards */
-const LayoutBoard = ({ articles }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-    {articles.slice(0, 6).map((a) => (
-      <Link
-        key={a._id}
-        to={getArticlePath(a)}
-        className="flex gap-3 rounded-xl border border-slate-200 bg-white p-3.5 hover:border-brand-400 hover:shadow-sm transition-all group"
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={() => scrollByDir(1)}
+        disabled={!canRight}
+        aria-label="Next"
+        className="hidden sm:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center
+          rounded-full bg-white border border-stone-200 text-slate-600 shadow-soft
+          hover:border-brand-400 hover:text-brand-700 disabled:opacity-30 transition-all"
       >
-        <div className="w-1 self-stretch rounded-full bg-brand-500 shrink-0" />
-        <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0">
-          <NewsImage
-            src={a.featuredImage}
-            seed={a.slug}
-            alt={a.imageAlt || a.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <span className="inline-block text-[10px] font-bold uppercase tracking-wide text-brand-700 bg-brand-50 px-1.5 py-0.5 rounded">
-            Opportunity
-          </span>
-          <h3 className="text-sm font-semibold text-slate-900 group-hover:text-brand-700 line-clamp-2 mt-1 leading-snug">
-            {a.title}
-          </h3>
-        </div>
-      </Link>
-    ))}
-  </div>
-);
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
 
-/** Serene: soft frame, lead card (image then text — no overlay) + side list */
-const LayoutSerene = ({ articles }) => {
-  const [main, ...rest] = articles;
-  if (!main) return null;
-  const side = rest.slice(0, 3);
-
-  return (
-    <div className="rounded-2xl border border-amber-100/80 bg-gradient-to-br from-amber-50/40 via-white to-teal-50/30 p-3 sm:p-5">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4">
-        <Link
-          to={getArticlePath(main)}
-          className="lg:col-span-5 group flex flex-col overflow-hidden rounded-2xl bg-white border border-stone-200/80 shadow-sm"
-        >
-          <div className="aspect-[16/11] overflow-hidden bg-stone-100 shrink-0">
-            <NewsImage
-              src={main.featuredImage}
-              seed={main.slug}
-              alt={main.imageAlt || main.title}
-              className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
-              loading="lazy"
-            />
-          </div>
-          <div className="p-4 sm:p-5 flex-1">
-            <CatLabel article={main} />
-            <h3 className="mt-1 text-lg sm:text-xl font-bold leading-snug font-headline text-slate-900 group-hover:text-teal-800 transition-colors line-clamp-3">
-              {main.title}
-            </h3>
-            {main.excerpt ? (
-              <p className="mt-2 text-sm text-slate-500 line-clamp-2 leading-relaxed">{main.excerpt}</p>
-            ) : null}
-          </div>
-        </Link>
-
-        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
-          {side.map((a) => (
+      <div
+        ref={scrollerRef}
+        className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide
+          overscroll-x-contain touch-pan-x scroll-smooth px-0.5"
+      >
+        {list.map((a) => {
+          const dateLabel = shortDate(a.publishedAt);
+          const label = catName(a);
+          return (
             <Link
               key={a._id}
               to={getArticlePath(a)}
-              className="group flex gap-3 overflow-hidden rounded-xl bg-white/90 border border-stone-200/70 hover:border-teal-300 hover:shadow-sm transition-all p-2.5"
+              className="snap-start shrink-0 w-[78%] sm:w-[46%] lg:w-[31%] group flex flex-col overflow-hidden
+                rounded-2xl bg-white ring-1 ring-stone-200/80 shadow-soft
+                hover:shadow-lift hover:-translate-y-0.5 transition-all duration-300"
             >
-              <div className="w-24 sm:w-28 aspect-[4/3] rounded-lg overflow-hidden shrink-0 bg-stone-100">
+              <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
                 <NewsImage
                   src={a.featuredImage}
                   seed={a.slug}
                   alt={a.imageAlt || a.title}
-                  className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
                   loading="lazy"
                 />
+                {dateLabel ? (
+                  <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-md bg-brand-800/90 px-2 py-1 text-[10px] font-bold text-white">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {dateLabel}
+                  </span>
+                ) : null}
+                {label ? (
+                  <span className={`absolute bottom-2.5 left-2.5 rounded-md ${badgeTone} px-2 py-0.5 text-[10px] font-bold text-white`}>
+                    {label}
+                  </span>
+                ) : null}
               </div>
-              <div className="min-w-0 flex-1 self-center pr-1">
-                <CatLabel article={a} />
-                <h3 className="mt-0.5 text-sm sm:text-[15px] font-bold text-slate-900 group-hover:text-teal-800 line-clamp-3 leading-snug font-headline">
+              <div className="p-3.5 sm:p-4 flex flex-col flex-1">
+                <h3
+                  className="text-sm sm:text-[15px] font-bold font-tamil text-slate-900 line-clamp-2 group-hover:text-brand-800"
+                  style={{ lineHeight: 1.45 }}
+                >
                   {a.title}
                 </h3>
+                {a.excerpt ? (
+                  <p className="mt-1.5 text-xs text-slate-500 line-clamp-2 leading-relaxed flex-1">{a.excerpt}</p>
+                ) : (
+                  <div className="flex-1" />
+                )}
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  {a.publishedAt ? (
+                    <span className="text-[10px] text-slate-400">{timeAgo(a.publishedAt)}</span>
+                  ) : (
+                    <span />
+                  )}
+                  <ArrowCircle />
+                </div>
               </div>
             </Link>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-/** Mosaic grid — image on top, title below (no overlay) */
-const LayoutMosaic = ({ articles }) => {
-  const [a, b, c, d, e] = articles;
-  if (!a) return null;
-
-  const Tile = ({ item, wide = false }) => (
-    <Link
-      to={getArticlePath(item)}
-      className={`group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-teal-300 transition-colors ${
-        wide ? 'col-span-2 row-span-2' : ''
-      }`}
-    >
-      <div className={`overflow-hidden bg-slate-100 shrink-0 ${wide ? 'aspect-[16/11] flex-1' : 'aspect-[16/10]'}`}>
-        <NewsImage
-          src={item.featuredImage}
-          seed={item.slug}
-          alt={item.imageAlt || item.title}
-          className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
-          loading="lazy"
-        />
-      </div>
-      <h3
-        className={`p-2.5 sm:p-3 font-semibold text-slate-900 group-hover:text-teal-800 leading-snug ${
-          wide ? 'text-base sm:text-xl line-clamp-3' : 'text-xs sm:text-sm line-clamp-2'
-        }`}
-      >
-        {item.title}
-      </h3>
-    </Link>
-  );
+/** Featured image + text below (no overlay) + side list */
+const LayoutFeatured = ({ articles }) => {
+  const [main, ...rest] = articles || [];
+  if (!main) return null;
+  const side = rest.slice(0, 3);
+  const dateLabel = shortDate(main.publishedAt);
+  const label = catName(main);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <Tile item={a} wide />
-      {[b, c, d, e].filter(Boolean).map((item) => (
-        <Tile key={item._id} item={item} />
-      ))}
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 items-stretch">
+      <Link
+        to={getArticlePath(main)}
+        className="lg:col-span-7 group flex flex-col overflow-hidden rounded-2xl bg-white shadow-lift ring-1 ring-stone-200/80
+          hover:ring-brand-300 transition-all"
+      >
+        <div className="relative aspect-[16/10] overflow-hidden bg-stone-100 shrink-0">
+          <NewsImage
+            src={main.featuredImage}
+            seed={main.slug}
+            alt={main.imageAlt || main.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+          {dateLabel ? (
+            <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-md bg-brand-800 px-2 py-1 text-[10px] font-bold text-white shadow-sm">
+              {dateLabel}
+            </span>
+          ) : null}
+        </div>
+        <div className="p-4 sm:p-5 flex flex-col flex-1">
+          {label ? (
+            <span className="w-fit inline-flex items-center gap-1 rounded-md bg-brand-50 text-brand-800 px-2.5 py-1 text-[10px] font-bold mb-2">
+              {label}
+            </span>
+          ) : null}
+          <h3
+            className="text-xl sm:text-2xl font-bold font-tamil text-slate-900 leading-snug line-clamp-3 group-hover:text-brand-800 transition-colors"
+            style={{ lineHeight: 1.35 }}
+          >
+            {main.title}
+          </h3>
+          {main.excerpt ? (
+            <p className="mt-2 text-sm text-slate-500 line-clamp-2 leading-relaxed">{main.excerpt}</p>
+          ) : null}
+          <div className="mt-4 flex justify-end">
+            <ArrowCircle />
+          </div>
+        </div>
+      </Link>
+
+      <div className="lg:col-span-5 flex flex-col gap-3">
+        {side.map((a) => (
+          <Link
+            key={a._id}
+            to={getArticlePath(a)}
+            className="group flex-1 flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-stone-200/80 shadow-soft
+              hover:shadow-lift hover:ring-brand-300 transition-all min-h-[5.5rem]"
+          >
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0 bg-stone-100">
+              <NewsImage
+                src={a.featuredImage}
+                seed={a.slug}
+                alt={a.imageAlt || a.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              {a.publishedAt ? (
+                <p className="text-[10px] font-semibold text-brand-700 mb-0.5">{shortDate(a.publishedAt)}</p>
+              ) : null}
+              <h3
+                className="text-sm font-bold font-tamil text-slate-900 line-clamp-3 group-hover:text-brand-800"
+                style={{ lineHeight: 1.4 }}
+              >
+                {a.title}
+              </h3>
+            </div>
+            <ArrowCircle className="self-center" />
+          </Link>
+        ))}
+      </div>
     </div>
   );
 };
 
-const LAYOUTS = {
-  spotlight: LayoutSpotlight,
-  magazine: LayoutMagazine,
-  grid: LayoutGrid,
-  numbered: LayoutNumbered,
-  editorial: LayoutEditorial,
-  ticker: LayoutTicker,
-  arena: LayoutArena,
-  posters: LayoutPosters,
-  split: LayoutSplit,
-  timeline: LayoutTimeline,
-  board: LayoutBoard,
-  serene: LayoutSerene,
-  mosaic: LayoutMosaic,
+/** Vertical stack cards with arrow CTA */
+const LayoutStack = ({ articles }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+    {(articles || []).slice(0, 6).map((a) => {
+      const label = catName(a);
+      return (
+        <Link
+          key={a._id}
+          to={getArticlePath(a)}
+          className="group flex gap-3 rounded-2xl bg-white p-3 ring-1 ring-stone-200/80 shadow-soft
+            hover:shadow-lift hover:ring-brand-300 hover:-translate-y-0.5 transition-all"
+        >
+          <div className="relative w-28 sm:w-32 aspect-[4/3] rounded-xl overflow-hidden shrink-0 bg-stone-100">
+            <NewsImage
+              src={a.featuredImage}
+              seed={a.slug}
+              alt={a.imageAlt || a.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            {label ? (
+              <span className="absolute bottom-1.5 left-1.5 rounded bg-brand-700 px-1.5 py-0.5 text-[9px] font-bold text-white">
+                {label}
+              </span>
+            ) : null}
+          </div>
+          <div className="min-w-0 flex-1 flex flex-col justify-center py-0.5">
+            {a.publishedAt ? (
+              <p className="text-[10px] font-semibold text-brand-700 mb-0.5">{shortDate(a.publishedAt)}</p>
+            ) : null}
+            <h3 className="text-sm font-bold font-tamil text-slate-900 line-clamp-3 group-hover:text-brand-800 leading-snug">
+              {a.title}
+            </h3>
+            {a.excerpt ? (
+              <p className="mt-1 text-xs text-slate-500 line-clamp-2 hidden sm:block">{a.excerpt}</p>
+            ) : null}
+          </div>
+          <ArrowCircle className="self-center" />
+        </Link>
+      );
+    })}
+  </div>
+);
+
+const ACCENT_BY_SLUG = {
+  cinema: 'rose',
+  sports: 'orange',
+  special: 'violet',
+  chennai: 'violet',
 };
 
 const CategorySection = ({ title, articles, slug, loading }) => {
   if (loading) {
     return (
       <section className="mb-8">
-        <div className="skeleton h-8 w-48 mb-4" />
+        <div className="skeleton h-10 w-56 mb-4 rounded-xl" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="skeleton h-64 rounded-lg" />
+            <div key={i} className="skeleton h-64 rounded-2xl" />
           ))}
         </div>
       </section>
@@ -559,13 +437,18 @@ const CategorySection = ({ title, articles, slug, loading }) => {
 
   if (!articles?.length) return null;
 
-  const layoutKey = LAYOUT_BY_SLUG[slug] || 'spotlight';
-  const Layout = LAYOUTS[layoutKey] || LayoutSpotlight;
+  const layoutKey = LAYOUT_BY_SLUG[slug] || 'carousel';
 
   return (
-    <section className="mb-10 [content-visibility:auto] [contain-intrinsic-size:auto_420px]">
+    <section className="mb-10 animate-fade-up [content-visibility:auto] [contain-intrinsic-size:auto_420px]">
       <SectionHeader title={title} slug={slug} />
-      <Layout articles={articles} />
+      {layoutKey === 'featured' ? (
+        <LayoutFeatured articles={articles} />
+      ) : layoutKey === 'stack' ? (
+        <LayoutStack articles={articles} />
+      ) : (
+        <LayoutCarousel articles={articles} accent={ACCENT_BY_SLUG[slug] || 'brand'} />
+      )}
       <CategoryBanner slug={slug} className="mt-4 md:mt-5" />
     </section>
   );

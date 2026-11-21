@@ -3,7 +3,7 @@ import ScrollToTop from './components/ScrollToTop';
 import PublicLayout from './layouts/PublicLayout';
 import Home from './pages/Home';
 import Category from './pages/Category';
-import DistrictPage from './pages/DistrictPage';
+import TamilNaduSlugRouter from './pages/TamilNaduSlugRouter';
 import Article from './pages/Article';
 import Search from './pages/Search';
 import Author from './pages/Author';
@@ -39,6 +39,8 @@ import Astrology from './pages/Astrology';
 import AstrologyRasiDetail from './pages/AstrologyRasiDetail';
 import Matrimony from './pages/Matrimony';
 import MatrimonyDetail from './pages/MatrimonyDetail';
+import Albums from './pages/Albums';
+import AlbumDetail from './pages/AlbumDetail';
 import About from './pages/About';
 import {
   Contact, PrivacyPolicy, Terms,
@@ -61,6 +63,8 @@ import Media from './admin/Media';
 import BreakingNewsAdmin from './admin/BreakingNewsAdmin';
 import Advertisements from './admin/Advertisements';
 import EventGifAdmin from './admin/EventGifAdmin';
+import AlbumsAdmin from './admin/Albums';
+import AlbumFormAdmin from './admin/AlbumForm';
 import Users from './admin/Users';
 import RolePermissions from './admin/RolePermissions';
 import Settings from './admin/Settings';
@@ -165,13 +169,16 @@ function App() {
         <Route path="astrology/rasi/:slug" element={<AstrologyRasiDetail />} />
         <Route path="matrimony" element={<Matrimony />} />
         <Route path="matrimony/:id" element={<MatrimonyDetail />} />
+        <Route path="albums" element={<Albums />} />
+        <Route path="albums/:slug" element={<AlbumDetail />} />
         {CATEGORY_ROUTES.map((slug) => (
           <Route key={slug} path={slug} element={<Category />} />
         ))}
-        {CATEGORY_ROUTES.map((slug) => (
+        {/* Districts share /tamil-nadu/:slug with TN articles — resolve before plain Article */}
+        <Route path="tamil-nadu/:articleSlug" element={<TamilNaduSlugRouter />} />
+        {CATEGORY_ROUTES.filter((slug) => slug !== 'tamil-nadu').map((slug) => (
           <Route key={`${slug}-article`} path={`${slug}/:articleSlug`} element={<Article />} />
         ))}
-        <Route path="tamil-nadu/:district" element={<DistrictPage />} />
         {/* Legacy /news and /post — CMS articles redirect to /{category}/{slug} */}
         <Route path="news/:slug" element={<Article />} />
         <Route path="post/:slug" element={<Article />} />
@@ -229,6 +236,9 @@ function App() {
         <Route path="categories" element={<Categories />} />
         <Route path="authors" element={<Authors />} />
         <Route path="media" element={<Media />} />
+        <Route path="albums" element={<AlbumsAdmin />} />
+        <Route path="albums/new" element={<AlbumFormAdmin />} />
+        <Route path="albums/edit/:id" element={<AlbumFormAdmin />} />
         <Route path="breaking-news" element={<BreakingNewsAdmin />} />
         <Route path="advertisements" element={<Advertisements />} />
         <Route path="event-gif" element={<EventGifAdmin />} />

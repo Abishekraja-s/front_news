@@ -11,6 +11,7 @@ import NewsImage from '../components/NewsImage';
 import ShareButtons from '../components/ShareButtons';
 import MustPicksLists from '../components/MustPicksLists';
 import RelatedNews from '../components/RelatedNews';
+import MustReadArticles from '../components/MustReadArticles';
 import Advertisement from '../components/Advertisement';
 import AdSenseSlot from '../components/AdSenseSlot';
 import Loading from '../components/Loading';
@@ -100,7 +101,14 @@ const Article = () => {
     };
   }, [slug, categorySlug]);
 
-  if (loading) return <Loading />;
+  // URL changed (e.g. related-news click) but previous article is still in state —
+  // wait for fetch. Otherwise the canonical Navigate below bounces back to the old URL.
+  const articleMatchesUrl = Boolean(article?.slug && article.slug === slug);
+  const googleMatchesUrl = Boolean(googleNews?.slug && googleNews.slug === slug);
+  const waitingForNewArticle =
+    Boolean(slug) && (article || googleNews) && !articleMatchesUrl && !googleMatchesUrl;
+
+  if (loading || waitingForNewArticle) return <Loading />;
   if (error || (!article && !googleNews)) {
     return (
       <div className="container-news py-16 text-center">
@@ -114,8 +122,8 @@ const Article = () => {
     return <GoogleNewsArticleView item={googleNews} related={related} />;
   }
 
-  // Enforce /{category-slug}/{news-slug} from MongoDB (legacy /news/:slug redirects here)
-  if (article?.category?.slug && article?.slug) {
+  // Enforce /{category-slug}/{news-slug} only after the loaded article matches this URL
+  if (articleMatchesUrl && article?.category?.slug) {
     const expectedPath = getArticlePath(article);
     const onCategoryUrl =
       Boolean(categorySlug) &&
@@ -213,8 +221,8 @@ const Article = () => {
 
         {article.isLive && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <span className="inline-flex items-center gap-2 text-red-600 font-bold text-sm">
-              <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
+            <span className="inline-flex items-center gap-2 text-red-600 font-bold text-sm live-label-blink">
+              <span className="w-2.5 h-2.5 bg-red-600 rounded-full live-dot-blink shrink-0" aria-hidden />
               LIVE
             </span>
             {article.liveUpdates?.length > 0 && (
@@ -252,7 +260,7 @@ const Article = () => {
           content={article.content}
         />
 
-        <ArticleSocialLinks article={article} />
+        <MustReadArticles articles={article.mustReadArticles} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -282,6 +290,11 @@ const Article = () => {
                 ))}
               </div>
             )}
+
+            {/* Social embeds at article end */}
+            <div className="mt-8 pt-6 border-t">
+              <ArticleSocialLinks article={article} />
+            </div>
 
             {/* Mobile / tablet: share once under article */}
             <div className="mt-6 pt-6 border-t lg:hidden">

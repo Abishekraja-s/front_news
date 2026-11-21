@@ -97,6 +97,7 @@ const ArticleForm = () => {
   const [categories, setCategories] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [authors, setAuthors] = useState([]);
+  const [mustReadOptions, setMustReadOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [audioUploading, setAudioUploading] = useState(false);
   const [form, setForm] = useState({
@@ -136,6 +137,7 @@ const ArticleForm = () => {
     isBreaking: false,
     isLive: false,
     isMustWatch: false,
+    mustReadArticles: [],
     audioReader: '',
     youtubeVideoLink: '',
     socialX: '',
@@ -149,10 +151,13 @@ const ArticleForm = () => {
       categoryService.getAll({ districts: 'false' }),
       categoryService.getAll({ districts: 'true' }),
       authorService.getAllAdmin ? authorService.getAllAdmin() : authorService.getAll(),
-    ]).then(([catRes, distRes, authRes]) => {
+      articleService.getAll({ limit: 20, page: 1, status: 'PUBLISHED' }),
+    ]).then(([catRes, distRes, authRes, articlesRes]) => {
       setCategories(catRes.data.data || []);
       setDistricts(distRes.data.data || []);
       setAuthors(authRes.data.data || []);
+      const rows = articlesRes.data?.data || [];
+      setMustReadOptions(rows);
     });
   }, []);
 
@@ -160,6 +165,7 @@ const ArticleForm = () => {
     if (isEdit) {
       articleService.getById(id).then(({ data }) => {
         const a = data.data;
+        const linked = (a.mustReadArticles || []).filter((m) => m && (m._id || m));
         setForm({
           title: a.title || '',
           slug: a.slug || '',
@@ -197,6 +203,7 @@ const ArticleForm = () => {
           isBreaking: a.isBreaking || false,
           isLive: a.isLive || false,
           isMustWatch: a.isMustWatch || false,
+          mustReadArticles: linked.map((m) => String(m._id || m)),
           audioReader: a.audioReader || '',
           youtubeVideoLink: a.youtubeVideoLink || '',
           socialX: a.socialX || '',
@@ -204,6 +211,15 @@ const ArticleForm = () => {
           socialFacebook: a.socialFacebook || '',
           socialTiktok: a.socialTiktok || '',
         });
+        // Keep previously linked articles visible even if they fall outside last-30 list
+        const linkedDocs = linked.filter((m) => m && m._id && m.title);
+        if (linkedDocs.length) {
+          setMustReadOptions((prev) => {
+            const ids = new Set(prev.map((x) => String(x._id)));
+            const extras = linkedDocs.filter((m) => !ids.has(String(m._id)));
+            return extras.length ? [...extras, ...prev] : prev;
+          });
+        }
       });
     }
   }, [id, isEdit]);
@@ -367,6 +383,7 @@ const ArticleForm = () => {
       category: form.category || undefined,
       district: form.district || undefined,
       author: form.author || undefined,
+      mustReadArticles: (form.mustReadArticles || []).map(String).filter(Boolean).slice(0, 10),
     };
 
     // Empty date strings clear publishedAt in Mongo and hide the article on the site
@@ -493,6 +510,57 @@ const ArticleForm = () => {
                     <option key={a._id} value={a._id}>{a.name}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className={labelClass}>Must Read</label>
+                <p className="text-[11px] text-slate-500 mb-1.5">
+                  Select up to 10 from the last 20 published articles (scroll to see all).
+                </p>
+                <div className="admin-input !h-auto h-48 overflow-y-scroll py-2 space-y-1.5 overscroll-contain">
+                  {mustReadOptions.filter((a) => String(a._id) !== String(id)).length === 0 ? (
+                    <p className="text-xs text-slate-400 px-1">No published articles available yet.</p>
+                  ) : (
+                    mustReadOptions
+                      .filter((a) => String(a._id) !== String(id))
+                      .map((a) => {
+                        const checked = (form.mustReadArticles || []).includes(String(a._id));
+                        const atLimit =
+                          !checked && (form.mustReadArticles || []).length >= 10;
+                        return (
+                          <label
+                            key={a._id}
+                            className={`flex items-start gap-2 text-sm text-slate-700 px-1 py-0.5 rounded hover:bg-stone-50 cursor-pointer ${
+                              atLimit ? 'opacity-50' : ''
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="mt-0.5 rounded border-slate-300 text-brand-600 shrink-0"
+                              checked={checked}
+                              disabled={atLimit}
+                              onChange={() => {
+                                setForm((prev) => {
+                                  const cur = (prev.mustReadArticles || []).map(String);
+                                  const next = checked
+                                    ? cur.filter((x) => x !== String(a._id))
+                                    : cur.length >= 10
+                                      ? cur
+                                      : [...cur, String(a._id)];
+                                  return { ...prev, mustReadArticles: next };
+                                });
+                              }}
+                            />
+                            <span className="leading-snug line-clamp-2">{a.title}</span>
+                          </label>
+                        );
+                      })
+                  )}
+                </div>
+                {(form.mustReadArticles || []).length > 0 && (
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {(form.mustReadArticles || []).length} selected
+                  </p>
+                )}
               </div>
               <div>
                 <label className={labelClass}>Tags (comma separated)</label>

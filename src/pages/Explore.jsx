@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { featureService, articleService } from '../services/articleService';
+import { featureService, articleService, albumService } from '../services/articleService';
 import { FeatureModule } from '../features/FeatureWidgets';
 import { colSpanClass, StatusPill } from '../features/FeatureIcons';
 import TravelUpdatesSection from '../components/TravelUpdatesSection';
 import SportsWidgets from '../components/SportsWidgets';
+import ExploreAlbumsSection from '../components/ExploreAlbumsSection';
 
 const Explore = () => {
   const [features, setFeatures] = useState([]);
   const [articles, setArticles] = useState([]);
+  const [albums, setAlbums] = useState([]);
+  const [albumsLoading, setAlbumsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -37,6 +40,25 @@ const Explore = () => {
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAlbumsLoading(true);
+    albumService
+      .getPublic({ page: 1, limit: 12 })
+      .then(({ data }) => {
+        if (!cancelled) setAlbums(data.data || []);
+      })
+      .catch(() => {
+        if (!cancelled) setAlbums([]);
+      })
+      .finally(() => {
+        if (!cancelled) setAlbumsLoading(false);
       });
     return () => {
       cancelled = true;
@@ -79,6 +101,12 @@ const Explore = () => {
 
           <div className="mt-6 -mx-4 px-4 sm:mx-0 sm:px-0">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <Link to="/albums" className="hub-pill">
+                Albums
+                <span className="ml-1.5 inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700">
+                  Live
+                </span>
+              </Link>
               {features.map((f) => (
                 <Link key={f.key} to={`/explore/${f.key}`} className="hub-pill">
                   {f.name}
@@ -91,6 +119,8 @@ const Explore = () => {
       </div>
 
       <div className="container-news py-6 sm:py-8 space-y-5 sm:space-y-6">
+        <ExploreAlbumsSection albums={albums} loading={albumsLoading} />
+
         {loading && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
