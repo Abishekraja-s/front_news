@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 /**
- * Exact horizontal pill portal cards (Marketplace / Matrimony / Quiz)
+ * Horizontal pill portal cards (Marketplace / Matrimony / Quiz)
  * — white capsule + left gradient icon blob + right circular arrow.
  */
 const FeaturePortalCards = ({ className = '', centered = false }) => (
@@ -16,15 +16,8 @@ const FeaturePortalCards = ({ className = '', centered = false }) => (
       {/* Marketplace — green */}
       <Link
         to="/marketplace"
-        className="portal-pill group relative block w-full max-w-md md:max-w-none pt-3 pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-[2rem]"
+        className="portal-pill group relative block w-full max-w-md md:max-w-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-[2rem]"
       >
-        <span className="portal-dash portal-dash-g" aria-hidden="true" />
-        <span className="portal-dots portal-dots-g" aria-hidden="true" />
-        <span
-          className="pointer-events-none absolute -bottom-2 right-4 h-16 w-28 rounded-full blur-2xl opacity-40"
-          style={{ background: 'radial-gradient(circle, #34d399, transparent 70%)' }}
-        />
-
         <div className="relative flex items-center gap-3 sm:gap-3.5 rounded-[2rem] bg-white pl-2 pr-3 py-2.5 shadow-[0_14px_36px_rgba(15,23,42,0.1)] ring-1 ring-emerald-100/80 group-hover:shadow-[0_18px_44px_rgba(5,150,105,0.18)] transition-shadow duration-300">
           <div
             className="portal-blob portal-blob-g relative shrink-0 flex h-[4.6rem] w-[4.6rem] sm:h-[5rem] sm:w-[5rem] items-center justify-center text-white shadow-[0_12px_28px_rgba(5,150,105,0.4)] -ml-1 -my-1"
@@ -54,22 +47,8 @@ const FeaturePortalCards = ({ className = '', centered = false }) => (
       {/* Matrimony — pink / magenta */}
       <Link
         to="/matrimony"
-        className="portal-pill group relative block w-full max-w-md md:max-w-none pt-3 pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 rounded-[2rem]"
+        className="portal-pill group relative block w-full max-w-md md:max-w-none focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 rounded-[2rem]"
       >
-        <span className="portal-hearts" aria-hidden="true">
-          <svg className="w-3.5 h-3.5 text-pink-400" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-          </svg>
-          <svg className="w-3 h-3 text-rose-400 -mt-1 ml-3" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-          </svg>
-        </span>
-        <span className="portal-dots portal-dots-p" aria-hidden="true" />
-        <span
-          className="pointer-events-none absolute -bottom-2 right-4 h-16 w-28 rounded-full blur-2xl opacity-45"
-          style={{ background: 'radial-gradient(circle, #f472b6, transparent 70%)' }}
-        />
-
         <div className="relative flex items-center gap-3 sm:gap-3.5 rounded-[2rem] bg-white pl-2 pr-3 py-2.5 shadow-[0_14px_36px_rgba(15,23,42,0.1)] ring-1 ring-pink-100/80 group-hover:shadow-[0_18px_44px_rgba(219,39,119,0.18)] transition-shadow duration-300">
           <div
             className="portal-blob portal-blob-p relative shrink-0 flex h-[4.6rem] w-[4.6rem] sm:h-[5rem] sm:w-[5rem] items-center justify-center text-white shadow-[0_12px_28px_rgba(219,39,119,0.4)] -ml-1 -my-1"
@@ -99,15 +78,8 @@ const FeaturePortalCards = ({ className = '', centered = false }) => (
       {/* Quiz — purple / indigo */}
       <Link
         to="/explore/news-quiz"
-        className="portal-pill group relative block w-full max-w-md md:max-w-none pt-3 pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-[2rem]"
+        className="portal-pill group relative block w-full max-w-md md:max-w-none focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-[2rem]"
       >
-        <span className="portal-dash portal-dash-v" aria-hidden="true" />
-        <span className="portal-dots portal-dots-v" aria-hidden="true" />
-        <span
-          className="pointer-events-none absolute -bottom-2 right-4 h-16 w-28 rounded-full blur-2xl opacity-45"
-          style={{ background: 'radial-gradient(circle, #a78bfa, transparent 70%)' }}
-        />
-
         <div className="relative flex items-center gap-3 sm:gap-3.5 rounded-[2rem] bg-white pl-2 pr-3 py-2.5 shadow-[0_14px_36px_rgba(15,23,42,0.1)] ring-1 ring-violet-100/80 group-hover:shadow-[0_18px_44px_rgba(109,40,217,0.18)] transition-shadow duration-300">
           <div
             className="portal-blob portal-blob-v relative shrink-0 flex h-[4.6rem] w-[4.6rem] sm:h-[5rem] sm:w-[5rem] items-center justify-center text-white shadow-[0_12px_28px_rgba(109,40,217,0.4)] -ml-1 -my-1"
@@ -148,47 +120,6 @@ const FeaturePortalCards = ({ className = '', centered = false }) => (
       .portal-blob-v {
         border-radius: 1.85rem 1.35rem 1.2rem 1.75rem;
       }
-
-      .portal-dash {
-        position: absolute;
-        top: 0;
-        left: 1.75rem;
-        width: 1.75rem;
-        height: 0.7rem;
-        background-image: repeating-linear-gradient(
-          -45deg,
-          transparent,
-          transparent 2px,
-          currentColor 2px,
-          currentColor 4px
-        );
-        opacity: 0.85;
-      }
-      .portal-dash-g { color: #4ade80; }
-      .portal-dash-v { color: #a78bfa; }
-
-      .portal-hearts {
-        position: absolute;
-        top: 0;
-        left: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-      }
-
-      .portal-dots {
-        position: absolute;
-        right: 0.25rem;
-        bottom: -0.15rem;
-        width: 3.25rem;
-        height: 1.5rem;
-        background-image: radial-gradient(currentColor 1.1px, transparent 1.2px);
-        background-size: 6px 6px;
-        opacity: 0.45;
-      }
-      .portal-dots-g { color: #34d399; }
-      .portal-dots-p { color: #f472b6; }
-      .portal-dots-v { color: #a78bfa; }
     `}</style>
   </div>
 );
