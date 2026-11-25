@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { articleService } from '../services/articleService';
+import { articleService, albumService, categoryService } from '../services/articleService';
 import FeaturedNews from '../components/FeaturedNews';
 import { LatestNews, PopularNews } from '../components/LatestNews';
 import CategorySection from '../components/CategorySection';
@@ -11,7 +11,7 @@ import { SkeletonCard } from '../components/Loading';
 import CategoryScrollSection from '../components/CategoryScrollSection';
 import FeaturePortalCards from '../components/FeaturePortalCards';
 import CategoryDeckSection from '../components/CategoryDeckSection';
-import { CATEGORY_SLUGS, CATEGORY_TITLES } from '../utils/helpers';
+import { CATEGORY_SLUGS, CATEGORY_TITLES, SITE_CATEGORIES } from '../utils/helpers';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { Helmet } from 'react-helmet-async';
 
@@ -20,11 +20,36 @@ const YoutubeVideoSlider = lazy(() => import('../components/YoutubeVideoSlider')
 const InstagramPostsSection = lazy(() => import('../components/InstagramPostsSection'));
 const GoogleNewsSection = lazy(() => import('../components/GoogleNewsSection'));
 const GovernmentNotificationsSection = lazy(() => import('../components/GovernmentNotificationsSection'));
+const ExploreAlbumsSection = lazy(() => import('../components/ExploreAlbumsSection'));
 const DistrictNews = lazy(() => import('../components/DistrictNews'));
 
 const SectionFallback = ({ h = 160 }) => (
   <div className="mb-8 rounded-2xl bg-stone-100/80 animate-pulse" style={{ minHeight: h }} aria-hidden />
 );
+
+/** Fetches albums only after LazyMount — keeps initial homepage free */
+const HomeAlbumsBlock = () => {
+  const [albums, setAlbums] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    albumService
+      .getPublic({ page: 1, limit: 8 })
+      .then(({ data }) => {
+        if (!cancelled) setAlbums(data.data || []);
+      })
+      .catch(() => {
+        if (!cancelled) setAlbums([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return <ExploreAlbumsSection albums={albums} loading={loading} />;
+};
 
 const CAT_BATCH = 4;
 
@@ -34,6 +59,7 @@ const Home = () => {
   const [recentUpdated, setRecentUpdated] = useState([]);
   const [popular, setPopular] = useState([]);
   const [categoryData, setCategoryData] = useState({});
+  const [homeCatSlugs, setHomeCatSlugs] = useState(CATEGORY_SLUGS);
   const [heroLoading, setHeroLoading] = useState(true);
   const [catsLoading, setCatsLoading] = useState(true);
 
@@ -81,20 +107,41 @@ const Home = () => {
     };
   }, []);
 
-  // Categories in small batches after hero — progressive fill, less network storm
+  // Homepage category visibility + article batches — wait until hero finishes
   useEffect(() => {
+    if (heroLoading) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await categoryService.getAll({ homepage: 'true' });
+        if (cancelled) return;
+        const enabled = new Set((data.data || []).map((c) => c.slug));
+        const ordered = SITE_CATEGORIES.map((c) => c.slug).filter((slug) => enabled.has(slug));
+        setHomeCatSlugs(ordered.length ? ordered : CATEGORY_SLUGS);
+      } catch {
+        if (!cancelled) setHomeCatSlugs(CATEGORY_SLUGS);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [heroLoading]);
+
+  // Categories in small batches after hero — only admin-enabled homepage sections
+  useEffect(() => {
+    if (heroLoading) return undefined;
     let cancelled = false;
     (async () => {
       setCatsLoading(true);
       const next = {};
       try {
-        for (let i = 0; i < CATEGORY_SLUGS.length; i += CAT_BATCH) {
+        for (let i = 0; i < homeCatSlugs.length; i += CAT_BATCH) {
           if (cancelled) return;
-          const batch = CATEGORY_SLUGS.slice(i, i + CAT_BATCH);
+          const batch = homeCatSlugs.slice(i, i + CAT_BATCH);
           await Promise.all(
             batch.map(async (slug) => {
               try {
-                const { data } = await articleService.getByCategory(slug, 1, 6);
+                const { data } = await articleService.getByCategory(slug, 1, 4);
                 next[slug] = data.data || [];
               } catch {
                 next[slug] = [];
@@ -110,7 +157,7 @@ const Home = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [homeCatSlugs, heroLoading]);
 
   const heroArticle = latest[0] || recentUpdated[0] || featured[0] || null;
   const heroId = heroArticle ? String(heroArticle._id) : '';
@@ -166,9 +213,9 @@ const Home = () => {
             <div className="flex items-end justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-news-dark font-tamil">
-                  சமீபத்தில் புதுப்பிக்கப்பட்டவை
+                  சமீபத்திய செய்திகள்
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">Recently updated news</p>
+                <p className="text-xs text-slate-500 mt-0.5">Latest news</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
@@ -206,7 +253,7 @@ const Home = () => {
                   data-hscroll-item
                   className="shrink-0 w-[85%] max-w-[18rem] sm:w-[48%] sm:max-w-none lg:w-[calc(25%-0.75rem)] snap-start"
                 >
-                  <NewsCard article={article} />
+                  <NewsCard article={article} hideExcerpt fullTitle />
                 </div>
               ))}
             </div>
@@ -228,37 +275,43 @@ const Home = () => {
           </Suspense>
         </LazyMount>
 
-        <div className="w-full min-w-0">
-          <CategoryScrollSection />
-        </div>
-        <div className="w-full min-w-0">
-          <FeaturePortalCards />
-        </div>
+        <LazyMount minHeight={220} rootMargin="160px">
+          <div className="w-full min-w-0">
+            <CategoryScrollSection />
+          </div>
+        </LazyMount>
+        <LazyMount minHeight={140} rootMargin="160px">
+          <div className="w-full min-w-0">
+            <FeaturePortalCards />
+          </div>
+        </LazyMount>
 
-        <div className="w-full min-w-0">
-          <CategoryDeckSection />
-        </div>
+        <LazyMount minHeight={220} rootMargin="160px">
+          <div className="w-full min-w-0">
+            <CategoryDeckSection />
+          </div>
+        </LazyMount>
 
-        <LazyMount minHeight={420} rootMargin="320px">
+        <LazyMount minHeight={320} rootMargin="120px">
+          <Suspense fallback={<SectionFallback h={320} />}>
+            <HomeAlbumsBlock />
+          </Suspense>
+        </LazyMount>
+
+        <LazyMount minHeight={420} rootMargin="120px">
           <Suspense fallback={<SectionFallback h={420} />}>
-            <GovernmentNotificationsSection />
-          </Suspense>
-        </LazyMount>
-
-        <LazyMount minHeight={280}>
-          <Suspense fallback={<SectionFallback h={280} />}>
-            <GoogleNewsSection />
-          </Suspense>
-        </LazyMount>
-
-        <LazyMount minHeight={240}>
-          <Suspense fallback={<SectionFallback h={240} />}>
             <DistrictNews />
           </Suspense>
         </LazyMount>
 
-        {CATEGORY_SLUGS.map((slug) => (
-          <LazyMount key={slug} minHeight={200} rootMargin="240px">
+        <LazyMount minHeight={140} rootMargin="100px">
+          <div className="w-full min-w-0 flex justify-center">
+            <FeaturePortalCards centered className="w-full" />
+          </div>
+        </LazyMount>
+
+        {homeCatSlugs.map((slug) => (
+          <LazyMount key={slug} minHeight={200} rootMargin="120px">
             <CategorySection
               title={CATEGORY_TITLES[slug]}
               slug={slug}
@@ -267,6 +320,19 @@ const Home = () => {
             />
           </LazyMount>
         ))}
+
+        {/* Gov + Google last — tight rootMargin so they don't fetch until near bottom */}
+        <LazyMount minHeight={420} rootMargin="80px">
+          <Suspense fallback={<SectionFallback h={420} />}>
+            <GovernmentNotificationsSection />
+          </Suspense>
+        </LazyMount>
+
+        <LazyMount minHeight={280} rootMargin="80px">
+          <Suspense fallback={<SectionFallback h={280} />}>
+            <GoogleNewsSection />
+          </Suspense>
+        </LazyMount>
       </div>
     </>
   );

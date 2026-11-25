@@ -1050,6 +1050,25 @@
     display: none;
   }
 
+  .must-read-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(100 116 139) rgb(241 245 249);
+  }
+  .must-read-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+  .must-read-scroll::-webkit-scrollbar-track {
+    background: rgb(241 245 249);
+    border-radius: 999px;
+  }
+  .must-read-scroll::-webkit-scrollbar-thumb {
+    background: rgb(148 163 184);
+    border-radius: 999px;
+  }
+  .must-read-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgb(100 116 139);
+  }
+
   .district-scroll {
     scrollbar-width: thin;
     scrollbar-color: rgb(203 213 225) transparent;
@@ -1071,6 +1090,15 @@
 
   .district-scroll::-webkit-scrollbar-thumb:hover {
     background: rgb(148 163 184);
+  }
+
+  /* District news listing — flat 2-col cards, no shadow tint */
+  .district-news-cards .card-news {
+    box-shadow: none;
+    outline: 1px solid rgb(231 229 228);
+  }
+  .district-news-cards .card-news:hover {
+    box-shadow: none;
   }
 }
 

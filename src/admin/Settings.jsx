@@ -107,6 +107,8 @@ const Settings = () => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testingMail, setTestingMail] = useState(false);
+  const [testEmailTo, setTestEmailTo] = useState('');
   const [uploadingKey, setUploadingKey] = useState(null);
 
   useEffect(() => {
@@ -182,12 +184,42 @@ const Settings = () => {
       delete payload.favicon;
       delete payload.logo;
       delete payload.androidAppApk;
+      delete payload.mailStatus;
+      delete payload.smtpPasswordSet;
+      delete payload.resendApiKeySet;
+      delete payload.brevoApiKeySet;
       await settingService.update(payload);
+      const { data } = await settingService.getAll();
+      if (data?.data) {
+        setSettings((prev) => ({
+          ...data.data,
+          resendApiKey: prev.resendApiKey || '',
+          brevoApiKey: prev.brevoApiKey || '',
+          smtpPassword: prev.smtpPassword || '',
+        }));
+      }
       toast.success('Settings saved');
     } catch {
       toast.error('Save failed');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestEmail = async () => {
+    const to = (testEmailTo || settings.contactEmail || settings.smtpFromEmail || '').trim();
+    if (!to) {
+      toast.error('Enter a test email address');
+      return;
+    }
+    setTestingMail(true);
+    try {
+      const { data } = await settingService.sendTestEmail(to);
+      toast.success(data.message || `Test email sent to ${to}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Test email failed');
+    } finally {
+      setTestingMail(false);
     }
   };
 
@@ -348,9 +380,28 @@ const Settings = () => {
             Email (OTP & password reset)
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 mb-4">
-            Live API on Render often <strong>blocks SMTP ports 587/465</strong> (timeout). Use{' '}
-            <strong>Resend</strong> or <strong>Brevo</strong> HTTPS API for Netlify production. SMTP still works on local/dev.
+            Local SMTP works; <strong>Render blocks SMTP 587/465</strong>. On live, use{' '}
+            <strong>Resend</strong> or <strong>Brevo</strong> API (HTTPS) — set key + From email below, then Save.
           </p>
+          {settings.mailStatus?.smtpBlockedOnHost && !settings.mailStatus?.ready && (
+            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+              Live host detected — SMTP will not work. Add a <strong>Resend</strong> or <strong>Brevo</strong> API key
+              and a verified <strong>From email</strong>, or set <code className="text-xs">RESEND_API_KEY</code> on Render.
+            </div>
+          )}
+          {settings.mailStatus?.ready && (
+            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900">
+              Mail ready
+              {settings.mailStatus.resendConfigured
+                ? ' (Resend)'
+                : settings.mailStatus.brevoConfigured
+                  ? ' (Brevo)'
+                  : settings.mailStatus.smtpConfigured
+                    ? ' (SMTP)'
+                    : ''}
+              .
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Mail provider</label>
@@ -362,7 +413,7 @@ const Settings = () => {
                 <option value="auto">Auto (Resend → Brevo → SMTP)</option>
                 <option value="resend">Resend API (recommended on Render)</option>
                 <option value="brevo">Brevo API</option>
-                <option value="smtp">SMTP only</option>
+                <option value="smtp">SMTP only (local/dev)</option>
               </select>
             </div>
 
@@ -483,8 +534,31 @@ const Settings = () => {
                 Use SSL (port 465 only — leave unchecked for 587 / STARTTLS)
               </label>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                Or set <code className="text-xs">RESEND_API_KEY</code> / <code className="text-xs">BREVO_API_KEY</code> on the Render backend env.
+                Or set <code className="text-xs">RESEND_API_KEY</code> / <code className="text-xs">BREVO_API_KEY</code> and{' '}
+                <code className="text-xs">MAIL_FROM_EMAIL</code> on the Render backend env.
               </p>
+            </div>
+
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">Send test email</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="email"
+                  value={testEmailTo}
+                  onChange={(e) => setTestEmailTo(e.target.value)}
+                  className="admin-input flex-1"
+                  placeholder={settings.contactEmail || settings.smtpFromEmail || 'you@example.com'}
+                />
+                <button
+                  type="button"
+                  disabled={testingMail}
+                  onClick={handleTestEmail}
+                  className="btn-secondary shrink-0"
+                >
+                  {testingMail ? 'Sending…' : 'Send test'}
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-1.5">Save settings first, then send a test from the live admin.</p>
             </div>
           </div>
         </div>

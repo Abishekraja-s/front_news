@@ -98,7 +98,14 @@ const ArticleForm = () => {
   const [districts, setDistricts] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [mustReadOptions, setMustReadOptions] = useState([]);
+  const mustReadListRef = useRef(null);
   const [loading, setLoading] = useState(false);
+
+  const scrollMustRead = useCallback((dir) => {
+    const el = mustReadListRef.current;
+    if (!el) return;
+    el.scrollBy({ top: dir * 120, behavior: 'smooth' });
+  }, []);
   const [audioUploading, setAudioUploading] = useState(false);
   const [form, setForm] = useState({
     title: '',
@@ -516,45 +523,74 @@ const ArticleForm = () => {
                 <p className="text-[11px] text-slate-500 mb-1.5">
                   Select up to 10 from the last 20 published articles (scroll to see all).
                 </p>
-                <div className="admin-input !h-auto h-48 overflow-y-scroll py-2 space-y-1.5 overscroll-contain">
-                  {mustReadOptions.filter((a) => String(a._id) !== String(id)).length === 0 ? (
-                    <p className="text-xs text-slate-400 px-1">No published articles available yet.</p>
-                  ) : (
-                    mustReadOptions
-                      .filter((a) => String(a._id) !== String(id))
-                      .map((a) => {
-                        const checked = (form.mustReadArticles || []).includes(String(a._id));
-                        const atLimit =
-                          !checked && (form.mustReadArticles || []).length >= 10;
-                        return (
-                          <label
-                            key={a._id}
-                            className={`flex items-start gap-2 text-sm text-slate-700 px-1 py-0.5 rounded hover:bg-stone-50 cursor-pointer ${
-                              atLimit ? 'opacity-50' : ''
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              className="mt-0.5 rounded border-slate-300 text-brand-600 shrink-0"
-                              checked={checked}
-                              disabled={atLimit}
-                              onChange={() => {
-                                setForm((prev) => {
-                                  const cur = (prev.mustReadArticles || []).map(String);
-                                  const next = checked
-                                    ? cur.filter((x) => x !== String(a._id))
-                                    : cur.length >= 10
-                                      ? cur
-                                      : [...cur, String(a._id)];
-                                  return { ...prev, mustReadArticles: next };
-                                });
-                              }}
-                            />
-                            <span className="leading-snug line-clamp-2">{a.title}</span>
-                          </label>
-                        );
-                      })
-                  )}
+                <div className="relative rounded-xl border border-slate-200 bg-white">
+                  <button
+                    type="button"
+                    onClick={() => scrollMustRead(-1)}
+                    aria-label="Scroll Must Read list up"
+                    className="absolute top-1 right-1 z-10 inline-flex h-7 w-7 items-center justify-center rounded-md
+                      bg-slate-100 text-slate-600 border border-slate-200
+                      hover:bg-brand-50 hover:text-brand-700 hover:border-brand-300 transition"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
+                      <path d="M10 6l6 8H4l6-8z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollMustRead(1)}
+                    aria-label="Scroll Must Read list down"
+                    className="absolute bottom-1 right-1 z-10 inline-flex h-7 w-7 items-center justify-center rounded-md
+                      bg-slate-100 text-slate-600 border border-slate-200
+                      hover:bg-brand-50 hover:text-brand-700 hover:border-brand-300 transition"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
+                      <path d="M10 14L4 6h12l-6 8z" />
+                    </svg>
+                  </button>
+                  <div
+                    ref={mustReadListRef}
+                    className="must-read-scroll h-52 overflow-y-auto overscroll-contain py-2 pr-9 pl-2 space-y-1.5"
+                  >
+                    {mustReadOptions.filter((a) => String(a._id) !== String(id)).length === 0 ? (
+                      <p className="text-xs text-slate-400 px-1">No published articles available yet.</p>
+                    ) : (
+                      mustReadOptions
+                        .filter((a) => String(a._id) !== String(id))
+                        .map((a) => {
+                          const checked = (form.mustReadArticles || []).includes(String(a._id));
+                          const atLimit =
+                            !checked && (form.mustReadArticles || []).length >= 10;
+                          return (
+                            <label
+                              key={a._id}
+                              className={`flex items-start gap-2 text-sm text-slate-700 px-1 py-0.5 rounded hover:bg-stone-50 cursor-pointer ${
+                                atLimit ? 'opacity-50' : ''
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                className="mt-0.5 rounded border-slate-300 text-brand-600 shrink-0"
+                                checked={checked}
+                                disabled={atLimit}
+                                onChange={() => {
+                                  setForm((prev) => {
+                                    const cur = (prev.mustReadArticles || []).map(String);
+                                    const next = checked
+                                      ? cur.filter((x) => x !== String(a._id))
+                                      : cur.length >= 10
+                                        ? cur
+                                        : [...cur, String(a._id)];
+                                    return { ...prev, mustReadArticles: next };
+                                  });
+                                }}
+                              />
+                              <span className="leading-snug line-clamp-2">{a.title}</span>
+                            </label>
+                          );
+                        })
+                    )}
+                  </div>
                 </div>
                 {(form.mustReadArticles || []).length > 0 && (
                   <p className="text-[11px] text-slate-500 mt-1">

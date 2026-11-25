@@ -108,6 +108,7 @@ export const settingService = {
   getPublic: () => api.get('/settings/public'),
   getAll: () => api.get('/settings'),
   update: (data) => api.put('/settings', data),
+  sendTestEmail: (to) => api.post('/settings/test-email', { to }),
   uploadBrand: (type, file) => {
     const formData = new FormData();
     formData.append('type', type);

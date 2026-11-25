@@ -11,6 +11,7 @@ const emptyForm = {
   order: 0,
   status: 'active',
   showInHeader: true,
+  showOnHomepage: true,
 };
 
 const Categories = () => {
@@ -19,16 +20,19 @@ const Categories = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
-  const [togglingId, setTogglingId] = useState(null);
+  const [togglingKey, setTogglingKey] = useState(null);
 
   const fetchCategories = () => {
     setLoading(true);
-    categoryService.getAll()
+    categoryService
+      .getAll()
       .then(({ data }) => setCategories(data.data || []))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchCategories(); }, []);
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const resetForm = () => {
     setForm(emptyForm);
@@ -43,6 +47,7 @@ const Categories = () => {
         ...form,
         order: parseInt(form.order, 10) || 0,
         showInHeader: Boolean(form.showInHeader),
+        showOnHomepage: Boolean(form.showOnHomepage),
       };
       if (editId) {
         await categoryService.update(editId, payload);
@@ -66,6 +71,7 @@ const Categories = () => {
       order: cat.order,
       status: cat.status,
       showInHeader: cat.showInHeader !== false,
+      showOnHomepage: cat.showOnHomepage !== false,
     });
     setEditId(cat._id);
     setShowForm(true);
@@ -82,90 +88,191 @@ const Categories = () => {
     }
   };
 
-  const toggleHeader = useCallback(async (row) => {
-    const next = row.showInHeader === false;
-    setTogglingId(row._id);
+  const toggleFlag = useCallback(async (row, field) => {
+    const current = row[field] !== false;
+    const next = !current;
+    const key = `${row._id}:${field}`;
+    setTogglingKey(key);
     try {
-      await categoryService.update(row._id, { showInHeader: next });
+      await categoryService.update(row._id, { [field]: next });
       setCategories((prev) =>
-        prev.map((c) => (c._id === row._id ? { ...c, showInHeader: next } : c))
+        prev.map((c) => (c._id === row._id ? { ...c, [field]: next } : c))
       );
-      toast.success(next ? 'Visible in header' : 'Hidden from header');
+      if (field === 'showOnHomepage') {
+        toast.success(next ? 'Enabled on homepage' : 'Disabled on homepage');
+      } else {
+        toast.success(next ? 'Visible in header' : 'Hidden from header');
+      }
     } catch {
       toast.error('Update failed');
     } finally {
-      setTogglingId(null);
+      setTogglingKey(null);
     }
   }, []);
 
-  const columns = useMemo(() => [
-    { key: 'nameTamil', header: 'Tamil Name', sortable: true, render: (row) => <span className="font-medium text-slate-900">{row.nameTamil}</span> },
-    { key: 'name', header: 'English', sortable: true },
-    { key: 'slug', header: 'Slug', sortable: true, render: (row) => <code className="text-xs bg-slate-100 px-2 py-0.5 rounded">{row.slug}</code> },
-    { key: 'order', header: 'Order', sortable: true, sortValue: (row) => row.order || 0 },
-    {
-      key: 'showInHeader',
-      header: 'Header',
-      sortable: true,
-      sortValue: (row) => (row.showInHeader === false ? 0 : 1),
-      render: (row) => {
-        const visible = row.showInHeader !== false;
-        return (
-          <button
-            type="button"
-            onClick={() => toggleHeader(row)}
-            disabled={togglingId === row._id}
-            className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors disabled:opacity-50 ${
-              visible
-                ? 'bg-teal-100 text-teal-800 hover:bg-teal-200'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-            title={visible ? 'Click to hide from header' : 'Click to show in header'}
-          >
-            {visible ? 'Visible in header' : 'Not visible in header'}
-          </button>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        key: 'nameTamil',
+        header: 'Tamil Name',
+        sortable: true,
+        render: (row) => <span className="font-medium text-slate-900">{row.nameTamil}</span>,
       },
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      sortable: true,
-      render: (row) => (
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${row.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
-          {row.status}
-        </span>
-      ),
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: (row) => (
-        <div className="data-table-actions">
-          <button type="button" onClick={() => handleEdit(row)} className="data-table-action data-table-action-edit">Edit</button>
-          <button type="button" onClick={() => handleDelete(row._id)} className="data-table-action data-table-action-delete">Delete</button>
-        </div>
-      ),
-    },
-  ], [toggleHeader, togglingId]);
+      { key: 'name', header: 'English', sortable: true },
+      {
+        key: 'slug',
+        header: 'Slug',
+        sortable: true,
+        render: (row) => <code className="text-xs bg-slate-100 px-2 py-0.5 rounded">{row.slug}</code>,
+      },
+      { key: 'order', header: 'Order', sortable: true, sortValue: (row) => row.order || 0 },
+      {
+        key: 'showOnHomepage',
+        header: 'Homepage',
+        sortable: true,
+        sortValue: (row) => (row.showOnHomepage === false ? 0 : 1),
+        render: (row) => {
+          if (row.isDistrict) {
+            return <span className="text-xs text-slate-400">District chip</span>;
+          }
+          const enabled = row.showOnHomepage !== false;
+          return (
+            <button
+              type="button"
+              onClick={() => toggleFlag(row, 'showOnHomepage')}
+              disabled={togglingKey === `${row._id}:showOnHomepage`}
+              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors disabled:opacity-50 ${
+                enabled
+                  ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                  : 'bg-rose-100 text-rose-700 hover:bg-rose-200'
+              }`}
+              title={enabled ? 'Click to hide homepage section' : 'Click to show homepage section'}
+            >
+              {enabled ? 'Enabled' : 'Disabled'}
+            </button>
+          );
+        },
+      },
+      {
+        key: 'showInHeader',
+        header: 'Header',
+        sortable: true,
+        sortValue: (row) => (row.showInHeader === false ? 0 : 1),
+        render: (row) => {
+          const visible = row.showInHeader !== false;
+          return (
+            <button
+              type="button"
+              onClick={() => toggleFlag(row, 'showInHeader')}
+              disabled={togglingKey === `${row._id}:showInHeader`}
+              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors disabled:opacity-50 ${
+                visible
+                  ? 'bg-teal-100 text-teal-800 hover:bg-teal-200'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+              title={visible ? 'Click to hide from header' : 'Click to show in header'}
+            >
+              {visible ? 'Visible' : 'Hidden'}
+            </button>
+          );
+        },
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        sortable: true,
+        render: (row) => (
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
+              row.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
+            }`}
+          >
+            {row.status}
+          </span>
+        ),
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        render: (row) => (
+          <div className="data-table-actions">
+            <button
+              type="button"
+              onClick={() => handleEdit(row)}
+              className="data-table-action data-table-action-edit"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDelete(row._id)}
+              className="data-table-action data-table-action-delete"
+            >
+              Delete
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [toggleFlag, togglingKey]
+  );
 
   return (
     <div>
       <AdminPageHeader
         title="Categories"
-        subtitle="Manage news categories"
+        subtitle="Manage news categories — enable/disable homepage sections"
         actionLabel={showForm ? undefined : '+ Add Category'}
-        onAction={() => { setShowForm(true); setEditId(null); setForm(emptyForm); }}
+        onAction={() => {
+          setShowForm(true);
+          setEditId(null);
+          setForm(emptyForm);
+        }}
       />
 
       {showForm && (
         <form onSubmit={handleSubmit} className="admin-card mb-6">
           <h2 className="font-semibold text-slate-900 mb-4">{editId ? 'Edit Category' : 'New Category'}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <input placeholder="Name (English)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="admin-input" />
-            <input placeholder="Name (Tamil)" value={form.nameTamil} onChange={(e) => setForm({ ...form, nameTamil: e.target.value })} required className="admin-input" />
-            <input placeholder="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required className="admin-input" />
-            <input type="number" placeholder="Order" value={form.order} onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 0 })} className="admin-input" />
+            <input
+              placeholder="Name (English)"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              required
+              className="admin-input"
+            />
+            <input
+              placeholder="Name (Tamil)"
+              value={form.nameTamil}
+              onChange={(e) => setForm({ ...form, nameTamil: e.target.value })}
+              required
+              className="admin-input"
+            />
+            <input
+              placeholder="Slug"
+              value={form.slug}
+              onChange={(e) => setForm({ ...form, slug: e.target.value })}
+              required
+              className="admin-input"
+            />
+            <input
+              type="number"
+              placeholder="Order"
+              value={form.order}
+              onChange={(e) => setForm({ ...form, order: parseInt(e.target.value, 10) || 0 })}
+              className="admin-input"
+            />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Homepage section</label>
+              <select
+                value={form.showOnHomepage ? 'yes' : 'no'}
+                onChange={(e) => setForm({ ...form, showOnHomepage: e.target.value === 'yes' })}
+                className="admin-input"
+              >
+                <option value="yes">Enabled on homepage</option>
+                <option value="no">Disabled on homepage</option>
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Header visibility</label>
               <select
@@ -190,8 +297,12 @@ const Categories = () => {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 mt-4">
-            <button type="submit" className="btn-primary text-sm">Save</button>
-            <button type="button" onClick={resetForm} className="btn-secondary text-sm">Cancel</button>
+            <button type="submit" className="btn-primary text-sm">
+              Save
+            </button>
+            <button type="button" onClick={resetForm} className="btn-secondary text-sm">
+              Cancel
+            </button>
           </div>
         </form>
       )}

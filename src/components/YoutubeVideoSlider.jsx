@@ -189,7 +189,7 @@ const FeaturedVideoCard = ({ video, onPlay }) => {
 
       <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 z-[1]">
         <h3
-          className="text-base sm:text-lg md:text-xl font-bold text-white font-tamil line-clamp-2"
+          className="text-base sm:text-lg md:text-xl font-bold text-white font-tamil"
           style={{ lineHeight: 1.55 }}
         >
           {video.title}
@@ -239,7 +239,7 @@ const SmallVideoCard = ({ video, onPlay }) => {
       </div>
       <div className="px-3 py-2.5 sm:px-3.5 sm:py-3">
         <h3
-          className="text-sm font-bold text-slate-900 font-tamil line-clamp-2 group-hover:text-red-700 transition-colors"
+          className="text-sm font-bold text-slate-900 font-tamil group-hover:text-red-700 transition-colors"
           style={{ lineHeight: 1.55 }}
         >
           {video.title}
@@ -294,7 +294,7 @@ const MobileTileCard = ({ video, onPlay, accent }) => {
 
       <div className="relative px-2 pt-1.5 pb-2 bg-white min-h-[3.6rem] flex flex-col justify-between border-t-2" style={{ borderColor: accent || ACCENT_RED }}>
         <h3
-          className="text-[11px] font-bold text-slate-900 font-tamil line-clamp-2"
+          className="text-[11px] font-bold text-slate-900 font-tamil"
           style={{ lineHeight: 1.45 }}
         >
           {video.title}

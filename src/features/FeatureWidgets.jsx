@@ -578,10 +578,28 @@ export const UtilityWidget = ({ feature }) => {
   );
 };
 
-export const TopNewsWidget = ({ feature, articles = [] }) => {
+const topNewsTitles = (meta, feature) => {
+  const days = meta?.days;
+  if (days === 1) {
+    return { title: 'Top News Today', titleTamil: 'இன்றைய முக்கிய செய்திகள்' };
+  }
+  if (days === 7 || (meta?.fallback && meta?.requestedDays === 1 && days === 7)) {
+    return { title: 'Top News This Week', titleTamil: 'இந்த வார முக்கிய செய்திகள்' };
+  }
+  if (meta?.fallback && days === 0) {
+    return { title: 'Top News', titleTamil: 'முக்கிய செய்திகள்' };
+  }
+  return {
+    title: feature.name || 'Top News',
+    titleTamil: feature.nameTamil || 'முக்கிய செய்திகள்',
+  };
+};
+
+export const TopNewsWidget = ({ feature, articles = [], meta = null }) => {
   const [hero, ...rest] = articles.slice(0, 4);
+  const titles = topNewsTitles(meta, feature);
   return (
-    <CardShell title={feature.name} titleTamil={feature.nameTamil} viewAllTo="/">
+    <CardShell title={titles.title} titleTamil={titles.titleTamil} viewAllTo="/">
       {!hero ? (
         <p className="text-sm text-slate-600">No headlines yet.</p>
       ) : (
@@ -1252,7 +1270,7 @@ export const FEATURE_RENDERERS = {
   portal_news: PortalWidget,
 };
 
-export const FeatureModule = ({ feature, articles, detail = false }) => {
+export const FeatureModule = ({ feature, articles, topNewsMeta = null, detail = false }) => {
   const Renderer = FEATURE_RENDERERS[feature.key];
   if (!Renderer) {
     return (
@@ -1263,7 +1281,7 @@ export const FeatureModule = ({ feature, articles, detail = false }) => {
     );
   }
   if (feature.key === 'top_news') {
-    return <Renderer feature={feature} articles={articles} />;
+    return <Renderer feature={feature} articles={articles} meta={topNewsMeta} />;
   }
   if (feature.key === 'weather') {
     return <Renderer feature={feature} detail={detail} />;

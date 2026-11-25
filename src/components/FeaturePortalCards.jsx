@@ -4,13 +4,19 @@ import { Link } from 'react-router-dom';
  * Exact horizontal pill portal cards (Marketplace / Matrimony / Quiz)
  * — white capsule + left gradient icon blob + right circular arrow.
  */
-const FeaturePortalCards = ({ className = '' }) => (
+const FeaturePortalCards = ({ className = '', centered = false }) => (
   <div className={`mb-8 w-full max-w-full min-w-0 ${className}`.trim()}>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+    <div
+      className={`grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 items-stretch mx-auto ${
+        centered
+          ? 'max-w-5xl justify-items-center'
+          : 'justify-items-center md:justify-items-stretch'
+      }`}
+    >
       {/* Marketplace — green */}
       <Link
         to="/marketplace"
-        className="portal-pill group relative block pt-3 pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-[2rem]"
+        className="portal-pill group relative block w-full max-w-md md:max-w-none pt-3 pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-[2rem]"
       >
         <span className="portal-dash portal-dash-g" aria-hidden="true" />
         <span className="portal-dots portal-dots-g" aria-hidden="true" />
@@ -48,7 +54,7 @@ const FeaturePortalCards = ({ className = '' }) => (
       {/* Matrimony — pink / magenta */}
       <Link
         to="/matrimony"
-        className="portal-pill group relative block pt-3 pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 rounded-[2rem]"
+        className="portal-pill group relative block w-full max-w-md md:max-w-none pt-3 pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 rounded-[2rem]"
       >
         <span className="portal-hearts" aria-hidden="true">
           <svg className="w-3.5 h-3.5 text-pink-400" viewBox="0 0 20 20" fill="currentColor">
@@ -93,7 +99,7 @@ const FeaturePortalCards = ({ className = '' }) => (
       {/* Quiz — purple / indigo */}
       <Link
         to="/explore/news-quiz"
-        className="portal-pill group relative block pt-3 pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-[2rem]"
+        className="portal-pill group relative block w-full max-w-md md:max-w-none pt-3 pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-[2rem]"
       >
         <span className="portal-dash portal-dash-v" aria-hidden="true" />
         <span className="portal-dots portal-dots-v" aria-hidden="true" />

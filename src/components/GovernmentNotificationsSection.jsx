@@ -56,8 +56,24 @@ function isGovLevel(level) {
   return level === 'central' || level === 'tamil_nadu';
 }
 
+/** Official government hosts only — hide private news-site listings */
+function isOfficialGovUrl(url = '') {
+  try {
+    const host = new URL(String(url || '').trim()).hostname.toLowerCase().replace(/^www\./, '');
+    if (!host) return false;
+    if (host.includes('news.google.com')) return false;
+    return host.endsWith('.gov.in') || host.endsWith('.nic.in');
+  } catch {
+    return false;
+  }
+}
+
+function isOfficialGovItem(item) {
+  return isOfficialGovUrl(item?.officialUrl) || isOfficialGovUrl(item?.sourceUrl);
+}
+
 function buildListParams(scope, category) {
-  const params = { page: 1, limit: 18 };
+  const params = { page: 1, limit: 12, lite: '1' };
   if (scope === 'central' || scope === 'tamil_nadu') {
     params.level = scope;
   }
@@ -205,6 +221,15 @@ const FeaturedHero = ({ items }) => {
 
   const safeIndex = slides.length ? index % slides.length : 0;
   const item = slides[safeIndex];
+  const goPrev = () => {
+    if (!slides.length) return;
+    setIndex((i) => (i - 1 + slides.length) % slides.length);
+  };
+  const goNext = () => {
+    if (!slides.length) return;
+    setIndex((i) => (i + 1) % slides.length);
+  };
+
   if (!item) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 min-h-[220px] flex items-center justify-center text-sm text-slate-500">
@@ -234,17 +259,48 @@ const FeaturedHero = ({ items }) => {
       </div>
 
       {slides.length > 1 && (
-        <div className="absolute top-3 right-3 z-[2] flex gap-1.5">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`Slide ${i + 1}`}
-              onClick={() => setIndex(i)}
-              className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-white' : 'w-1.5 bg-white/40'}`}
-            />
-          ))}
-        </div>
+        <>
+          <div className="absolute top-3 right-3 z-[2] flex gap-1.5">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Slide ${i + 1}`}
+                onClick={() => setIndex(i)}
+                className={`h-1.5 rounded-full transition-all ${i === safeIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/40'}`}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={goPrev}
+            aria-label="Previous notification"
+            className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-[3]
+              inline-flex h-9 w-11 sm:h-10 sm:w-12 items-center justify-center rounded-full
+              bg-white text-slate-800 border border-white
+              shadow-[0_6px_18px_rgba(0,0,0,0.28)]
+              hover:bg-red-600 hover:text-white hover:border-red-600 active:scale-95 transition"
+          >
+            <svg className="w-[1.15rem] h-[1.15rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 19l-7-7 7-7M18 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            aria-label="Next notification"
+            className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-[3]
+              inline-flex h-9 w-11 sm:h-10 sm:w-12 items-center justify-center rounded-full
+              bg-white text-slate-800 border border-white
+              shadow-[0_6px_18px_rgba(0,0,0,0.28)]
+              hover:bg-red-600 hover:text-white hover:border-red-600 active:scale-95 transition"
+          >
+            <svg className="w-[1.15rem] h-[1.15rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 5l7 7-7 7M6 5l7 7-7 7" />
+            </svg>
+          </button>
+        </>
       )}
 
       <div className="relative z-[1] flex flex-col justify-end h-full min-h-[300px] lg:min-h-[420px] p-5 sm:p-6">
@@ -257,13 +313,13 @@ const FeaturedHero = ({ items }) => {
             {meta.short}
           </span>
           <LevelBadge level={item.level || 'central'} light />
-        </div>
+    </div>
         <h3
           className="mt-3 text-xl sm:text-2xl font-bold text-white font-tamil line-clamp-3"
           style={{ lineHeight: 1.4 }}
         >
           {itemTitle(item)}
-        </h3>
+    </h3>
         {itemSummary(item) ? (
           <p className="mt-2 text-sm text-white/80 line-clamp-2 leading-relaxed">{itemSummary(item)}</p>
         ) : null}
@@ -282,16 +338,22 @@ const FeaturedHero = ({ items }) => {
             </svg>
             {item.sourceName || item.department || 'Official'}
           </span>
-        </div>
+    </div>
         {item.officialUrl ? (
-          <a
-            href={item.officialUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-5 inline-flex w-fit items-center gap-1.5 rounded-full px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-lg hover:brightness-110 transition"
+      <a
+        href={item.officialUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+            className="mt-5 inline-flex w-fit items-center gap-2 rounded-full px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-lg hover:brightness-110 transition"
             style={{ backgroundColor: ACCENT }}
           >
-            View official source →
+            View official source
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
+            <svg className="w-4 h-4 shrink-0 -ml-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
           </a>
         ) : null}
       </div>
@@ -350,7 +412,7 @@ const SideCard = ({ item }) => {
           </svg>
         </a>
       ) : null}
-    </article>
+  </article>
   );
 };
 
@@ -389,7 +451,7 @@ const GovernmentNotificationsSection = () => {
         const listRes = await governmentNotificationService.getPublicList(params);
         if (cancelled) return;
 
-        let listItems = listRes.data?.data || [];
+        let listItems = (listRes.data?.data || []).filter(isOfficialGovItem);
         // Default All: prefer Central + Tamil Nadu only
         if (scope === 'all') {
           const govOnly = listItems.filter((i) => isGovLevel(i.level || 'central'));
@@ -408,7 +470,9 @@ const GovernmentNotificationsSection = () => {
             if (cancelled) return;
             const latest = data?.data?.latest || [];
             const alerts = data?.data?.alerts || [];
-            const merged = [...latest, ...alerts].filter((i) => isGovLevel(i.level || 'central'));
+            const merged = [...latest, ...alerts]
+              .filter(isOfficialGovItem)
+              .filter((i) => isGovLevel(i.level || 'central'));
             if (merged.length || data?.enabled) {
               setPayload({
                 success: true,
@@ -528,25 +592,25 @@ const GovernmentNotificationsSection = () => {
   const jsonLd =
     showBlock
       ? {
-          '@context': 'https://schema.org',
-          '@type': 'ItemList',
-          name: titles.latest || 'Government Notifications',
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: titles.latest || 'Government Notifications',
           itemListElement: pool.slice(0, 8).map((item, i) => ({
-            '@type': 'ListItem',
-            position: i + 1,
-            name: item.title,
-            url: item.officialUrl || undefined,
-            datePublished: item.publishedAt,
-          })),
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.title,
+      url: item.officialUrl || undefined,
+      datePublished: item.publishedAt,
+    })),
         }
       : null;
 
   return (
     <section className="mb-10 min-w-0">
       {jsonLd && (
-        <Helmet>
-          <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-        </Helmet>
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      </Helmet>
       )}
 
       {showBlock && (
@@ -582,7 +646,7 @@ const GovernmentNotificationsSection = () => {
                 <div className="min-w-0">
                   <h2 className="text-xl sm:text-2xl md:text-[1.7rem] font-bold text-white font-tamil leading-tight">
                     {titles.latestTa || 'அரசு அறிவிப்புகள்'}
-                  </h2>
+            </h2>
                   <p className="text-sm text-blue-100/90 mt-0.5">
                     {titles.latest || 'Latest Government Notifications'}
                     <span className="text-blue-100/70"> · Central & Tamil Nadu</span>
@@ -684,9 +748,9 @@ const GovernmentNotificationsSection = () => {
                 <div className="flex flex-col gap-3">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="h-20 rounded-2xl bg-slate-100 animate-pulse" />
-                  ))}
-                </div>
-              </div>
+            ))}
+          </div>
+        </div>
             ) : filtered.length === 0 ? (
               <p className="text-sm text-slate-500 py-10 text-center rounded-2xl border border-dashed border-slate-200 bg-white px-4">
                 {emptyMessage}
@@ -746,13 +810,19 @@ const GovernmentNotificationsSection = () => {
                       />
                     ))}
                 </div>
-                <Link
-                  to="/government-notifications"
+            <Link
+              to="/government-notifications"
                   className="shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full px-5 py-3 text-sm font-bold text-white shadow-lg hover:brightness-110 transition"
                   style={{ backgroundColor: ACCENT }}
                 >
-                  View All Notifications →
-                </Link>
+                  View All Notifications
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                  <svg className="w-4 h-4 shrink-0 -ml-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+            </Link>
               </div>
             </div>
           </div>

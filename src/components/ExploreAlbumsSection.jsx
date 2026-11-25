@@ -5,6 +5,15 @@ import { getImageUrl } from '../utils/images';
 
 const STORY_MS = 4500;
 
+const albumDisplayTitle = (title = '') => {
+  const t = String(title || '').trim();
+  if (!t || /^latest news photos$/i.test(t)) return 'சமீபத்திய செய்திப் புகைப்படங்கள்';
+  if (/^today'?s news/i.test(t)) {
+    return t.replace(/^today'?s news/i, 'இன்றைய செய்தி');
+  }
+  return t;
+};
+
 const formatAlbumDate = (value) => {
   if (!value) return '';
   const d = new Date(value);
@@ -168,7 +177,7 @@ const AlbumStatusPopup = ({ albums, startIndex, onClose }) => {
   };
 
   const currentSrc = images[imageIndex];
-  const title = albumMeta?.title || '';
+  const title = albumDisplayTitle(albumMeta?.title);
 
   return (
     <div
@@ -363,11 +372,11 @@ const ExploreAlbumsSection = ({ albums = [], loading = false }) => {
               </svg>
             </div>
             <div className="min-w-0">
-              <h2 className="explore-albums__title text-xl sm:text-2xl font-headline font-bold text-slate-900 tracking-tight">
-                Albums
+              <h2 className="explore-albums__title text-xl sm:text-2xl font-headline font-bold text-slate-900 tracking-tight font-tamil">
+                சமீபத்திய செய்திப் புகைப்படங்கள்
               </h2>
-              <p className="explore-albums__sub text-xs sm:text-sm text-slate-500 font-tamil mt-0.5 truncate">
-                புகைப்பட தொகுப்புகள்
+              <p className="explore-albums__sub text-xs sm:text-sm text-slate-500 mt-0.5 truncate">
+                Latest News Photos
               </p>
             </div>
           </div>
@@ -431,9 +440,9 @@ const ExploreAlbumsSection = ({ albums = [], loading = false }) => {
                     <span className="explore-album-card__copy">
                       <span
                         className="explore-album-card__title font-tamil"
-                        title={album.title}
+                        title={albumDisplayTitle(album.title)}
                       >
-                        {album.title || 'Untitled album'}
+                        {albumDisplayTitle(album.title)}
                       </span>
                       {album.albumDate ? (
                         <span className="explore-album-card__date">

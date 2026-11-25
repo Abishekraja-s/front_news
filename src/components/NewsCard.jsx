@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import NewsImage from './NewsImage';
 import { getArticlePath } from '../utils/articlePaths';
 
-const NewsCard = ({ article, variant = 'default' }) => {
+const NewsCard = ({ article, variant = 'default', hideExcerpt = false, fullTitle = false }) => {
   if (!article) return null;
   const href = getArticlePath(article);
 
@@ -44,29 +44,33 @@ const NewsCard = ({ article, variant = 'default' }) => {
   }
 
   return (
-    <Link to={href} className="card-news group block">
-      <div className="aspect-video overflow-hidden bg-stone-100">
+    <Link to={href} className="card-news group block h-full">
+      <div className="aspect-[16/10] sm:aspect-video overflow-hidden bg-stone-100">
         <NewsImage
           src={article.featuredImage}
           seed={article.slug}
           alt={article.imageAlt || article.title}
           className="w-full h-full object-cover object-center"
           loading="lazy"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
         />
       </div>
-      <div className="p-4">
+      <div className="p-2.5 sm:p-4">
         {article.category && (
-          <span className="inline-block text-xs text-brand-600 font-semibold uppercase tracking-wide mb-1">
+          <span className="inline-block text-[10px] sm:text-xs text-brand-600 font-semibold uppercase tracking-wide mb-0.5 sm:mb-1">
             {article.category.nameTamil || article.category.name}
           </span>
         )}
-        <h3 className="text-base font-bold text-gray-900 group-hover:text-brand-600 line-clamp-2 leading-snug font-headline">
+        <h3
+          className={`text-sm sm:text-base font-bold text-gray-900 group-hover:text-brand-600 leading-snug font-headline ${
+            fullTitle ? '' : 'line-clamp-2'
+          }`}
+        >
           {article.title}
         </h3>
-        {article.excerpt && (
-          <p className="text-sm text-gray-500 mt-2 line-clamp-2">{article.excerpt}</p>
-        )}
+        {!hideExcerpt && article.excerpt ? (
+          <p className="text-sm text-gray-500 mt-2 line-clamp-2 hidden sm:block">{article.excerpt}</p>
+        ) : null}
       </div>
     </Link>
   );

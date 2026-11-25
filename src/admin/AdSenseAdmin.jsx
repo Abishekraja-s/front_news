@@ -508,12 +508,12 @@ const AdSenseAdmin = () => {
               </p>
               <p>
                 <span className="font-semibold text-slate-700">Placement:</span>{' '}
-                {LOCATION_LABELS[preview.location] || preview.location}
-                {preview.location === 'custom' && preview.customLocation ? ` / ${preview.customLocation}` : ''}
-                {' · '}
-                {preview.adFormat} · {preview.sizeMode}
+                  {LOCATION_LABELS[preview.location] || preview.location}
+                  {preview.location === 'custom' && preview.customLocation ? ` / ${preview.customLocation}` : ''}
+                  {' · '}
+                  {preview.adFormat} · {preview.sizeMode}
                 {preview.sizeMode === 'fixed' ? ` · ${preview.width || 336}×${preview.height || 280}` : ''}
-              </p>
+                </p>
             </div>
           </div>
         </div>

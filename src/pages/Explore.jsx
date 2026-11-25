@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { featureService, articleService, albumService } from '../services/articleService';
+import { featureService, articleService } from '../services/articleService';
 import { FeatureModule } from '../features/FeatureWidgets';
 import { colSpanClass, StatusPill } from '../features/FeatureIcons';
 import TravelUpdatesSection from '../components/TravelUpdatesSection';
 import SportsWidgets from '../components/SportsWidgets';
-import ExploreAlbumsSection from '../components/ExploreAlbumsSection';
 
 const Explore = () => {
   const [features, setFeatures] = useState([]);
   const [articles, setArticles] = useState([]);
-  const [albums, setAlbums] = useState([]);
-  const [albumsLoading, setAlbumsLoading] = useState(true);
+  const [topNewsMeta, setTopNewsMeta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -21,44 +19,20 @@ const Explore = () => {
     setLoading(true);
     Promise.all([
       featureService.getHub(),
-      articleService.getFeatured().catch(() => ({ data: { data: [] } })),
-      articleService.getLatest(6).catch(() => ({ data: { data: [] } })),
+      // Prefer today; server auto-falls back to last 7 days, then latest
+      articleService.getLatest(8, { by: 'published', days: 1 }).catch(() => ({ data: { data: [] } })),
     ])
-      .then(([hubRes, featuredRes, latestRes]) => {
+      .then(([hubRes, latestRes]) => {
         if (cancelled) return;
         setFeatures(hubRes.data?.data?.features || []);
-        const featured = featuredRes.data?.data || [];
-        const latest = latestRes.data?.data || [];
-        const merged = [...featured];
-        latest.forEach((a) => {
-          if (!merged.find((x) => x._id === a._id)) merged.push(a);
-        });
-        setArticles(merged);
+        setArticles(latestRes.data?.data || []);
+        setTopNewsMeta(latestRes.data?.meta || null);
       })
       .catch(() => {
         if (!cancelled) setError('Could not load features. Please try again.');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setAlbumsLoading(true);
-    albumService
-      .getPublic({ page: 1, limit: 12 })
-      .then(({ data }) => {
-        if (!cancelled) setAlbums(data.data || []);
-      })
-      .catch(() => {
-        if (!cancelled) setAlbums([]);
-      })
-      .finally(() => {
-        if (!cancelled) setAlbumsLoading(false);
       });
     return () => {
       cancelled = true;
@@ -119,8 +93,6 @@ const Explore = () => {
       </div>
 
       <div className="container-news py-6 sm:py-8 space-y-5 sm:space-y-6">
-        <ExploreAlbumsSection albums={albums} loading={albumsLoading} />
-
         {loading && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -152,7 +124,11 @@ const Explore = () => {
                 <div key={row} className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                   {modules.map((feature) => (
                     <div key={feature.key} className={`col-span-1 ${colSpanClass(feature.colSpan)}`}>
-                      <FeatureModule feature={feature} articles={articles} />
+                      <FeatureModule
+                        feature={feature}
+                        articles={articles}
+                        topNewsMeta={topNewsMeta}
+                      />
                     </div>
                   ))}
                 </div>

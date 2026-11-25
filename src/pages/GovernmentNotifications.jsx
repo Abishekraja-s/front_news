@@ -210,13 +210,13 @@ const FeaturedHero = ({ item }) => {
             {meta.short}
           </span>
           <LevelBadge level={item.level || 'central'} light />
-        </div>
+    </div>
         <h2
           className="mt-3 text-xl sm:text-2xl font-bold text-white font-tamil line-clamp-4"
           style={{ lineHeight: 1.4 }}
         >
           {itemTitle(item)}
-        </h2>
+    </h2>
         {itemSummary(item) ? (
           <p className="mt-2 text-sm text-white/80 line-clamp-3 leading-relaxed">{itemSummary(item)}</p>
         ) : null}
@@ -235,17 +235,17 @@ const FeaturedHero = ({ item }) => {
             </svg>
             {item.sourceName || item.department || 'Official'}
           </span>
-        </div>
+    </div>
         {item.officialUrl ? (
-          <a
-            href={item.officialUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+      <a
+        href={item.officialUrl}
+        target="_blank"
+        rel="noopener noreferrer"
             className="mt-5 inline-flex w-fit items-center gap-1.5 rounded-full px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg hover:brightness-110 transition"
             style={{ backgroundColor: ACCENT }}
-          >
-            View official source →
-          </a>
+      >
+        View official source →
+      </a>
         ) : null}
       </div>
     </article>
@@ -303,8 +303,8 @@ const SideCard = ({ item }) => {
           </svg>
         </a>
       ) : null}
-    </article>
-  );
+  </article>
+);
 };
 
 const GovernmentNotifications = () => {
@@ -393,9 +393,9 @@ const GovernmentNotifications = () => {
       </Helmet>
 
       <div className="container-news py-6 sm:py-8">
-        <Link to="/" className="text-xs font-semibold text-brand-700 hover:underline">
-          ← முகப்பு
-        </Link>
+          <Link to="/" className="text-xs font-semibold text-brand-700 hover:underline">
+            ← முகப்பு
+          </Link>
 
         <div className="mt-4 relative overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-b from-slate-50 via-white to-slate-50 shadow-[0_8px_40px_rgba(11,31,74,0.08)]">
           {/* Navy header — matches homepage / first-image design */}
@@ -439,10 +439,10 @@ const GovernmentNotifications = () => {
             </div>
 
             <form onSubmit={handleSearch} className="relative z-[1] mt-5 flex flex-col sm:flex-row gap-2 max-w-xl">
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search notifications…"
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search notifications…"
                 className="flex-1 border-0 rounded-xl px-4 py-2.5 text-sm bg-white/95 shadow-sm focus:ring-2 focus:ring-white/40 outline-none"
               />
               <button
@@ -450,9 +450,9 @@ const GovernmentNotifications = () => {
                 className="rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-md hover:brightness-110"
                 style={{ backgroundColor: ACCENT }}
               >
-                Search
-              </button>
-            </form>
+              Search
+            </button>
+          </form>
           </div>
 
           <div className="px-4 sm:px-6 py-5 space-y-4">
@@ -507,23 +507,23 @@ const GovernmentNotifications = () => {
                   </button>
                 );
               })}
-              <button
-                type="button"
-                onClick={() => {
-                  setImportantOnly((v) => !v);
-                  setPage(1);
-                }}
+            <button
+              type="button"
+              onClick={() => {
+                setImportantOnly((v) => !v);
+                setPage(1);
+              }}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold border transition ${
-                  importantOnly
-                    ? 'bg-rose-600 text-white border-rose-600'
+                importantOnly
+                  ? 'bg-rose-600 text-white border-rose-600'
                     : 'bg-white text-slate-600 border-slate-200'
-                }`}
-              >
-                Important only
-              </button>
-            </div>
+              }`}
+            >
+              Important only
+            </button>
+      </div>
 
-            {loading ? (
+        {loading ? (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 <div className="lg:col-span-5 skeleton min-h-[320px] rounded-2xl" />
                 <div className="lg:col-span-7 space-y-3">
@@ -531,8 +531,8 @@ const GovernmentNotifications = () => {
                     <div key={i} className="skeleton h-24 rounded-2xl" />
                   ))}
                 </div>
-              </div>
-            ) : !enabled || !items.length ? (
+          </div>
+        ) : !enabled || !items.length ? (
               <div className="text-center py-14 text-slate-500 rounded-2xl border border-dashed border-slate-200 bg-white">
                 <p>No published government notifications for this filter.</p>
                 <button
@@ -548,9 +548,9 @@ const GovernmentNotifications = () => {
                 >
                   Reset filters
                 </button>
-              </div>
-            ) : (
-              <>
+          </div>
+        ) : (
+          <>
                 <p className="text-xs text-slate-400">{pagination.total} notifications</p>
 
                 {/* Featured + side list — first-image layout */}
@@ -596,34 +596,34 @@ const GovernmentNotifications = () => {
                         <p className="text-[10px] text-slate-500 mt-0.5 truncate">{s.label}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
+              ))}
+            </div>
 
-                {pagination.pages > 1 && (
+            {pagination.pages > 1 && (
                   <div className="flex items-center justify-center gap-3 pt-4">
-                    <button
-                      type="button"
-                      disabled={page <= 1}
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                       className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40 hover:bg-slate-50"
-                    >
-                      Previous
-                    </button>
-                    <span className="text-sm text-slate-500">
-                      Page {pagination.page} / {pagination.pages}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={page >= pagination.pages}
-                      onClick={() => setPage((p) => p + 1)}
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-slate-500">
+                  Page {pagination.page} / {pagination.pages}
+                </span>
+                <button
+                  type="button"
+                  disabled={page >= pagination.pages}
+                  onClick={() => setPage((p) => p + 1)}
                       className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40 hover:bg-slate-50"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
+                >
+                  Next
+                </button>
+              </div>
             )}
+          </>
+        )}
           </div>
         </div>
       </div>
