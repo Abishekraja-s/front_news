@@ -40,7 +40,11 @@ export const getArticleImage = (article) => {
 export const getMediaUrl = (url) => {
   if (!url || url.trim() === '') return '';
   if (url.startsWith('blob:') || url.startsWith('data:')) return url;
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // Live HTTPS pages block mixed-content http:// audio/images
+  if (url.startsWith('http://')) {
+    return url.replace(/^http:/i, 'https:');
+  }
+  if (url.startsWith('https://')) return url;
   if (url.startsWith('/')) {
     return API_BASE ? `${API_BASE}${url}` : url;
   }

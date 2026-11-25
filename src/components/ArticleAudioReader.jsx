@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getMediaUrl } from '../utils/images';
 
 /** Strip HTML to plain text for speech / preview. */
@@ -16,6 +16,35 @@ const htmlToSpeechText = (html = '') =>
     .replace(/&quot;/g, '"')
     .replace(/\s+/g, ' ')
     .trim();
+
+/** Chrome often stops / hangs after ~15s on long utterances — speak in chunks. */
+const chunkSpeechText = (text, maxLen = 160) => {
+  const raw = String(text || '').trim();
+  if (!raw) return [];
+  if (raw.length <= maxLen) return [raw];
+
+  const parts = [];
+  let rest = raw;
+  while (rest.length > maxLen) {
+    let cut = rest.lastIndexOf('. ', maxLen);
+    if (cut < maxLen * 0.4) cut = rest.lastIndexOf(' ', maxLen);
+    if (cut < maxLen * 0.3) cut = maxLen;
+    parts.push(rest.slice(0, cut + (rest[cut] === '.' ? 1 : 0)).trim());
+    rest = rest.slice(cut + (rest[cut] === '.' ? 1 : 0)).trim();
+  }
+  if (rest) parts.push(rest);
+  return parts.filter(Boolean);
+};
+
+const pickVoice = (lang) => {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+  const exact = voices.find((v) => v.lang === lang);
+  if (exact) return exact;
+  const prefix = lang.split('-')[0];
+  return voices.find((v) => String(v.lang || '').toLowerCase().startsWith(prefix)) || null;
+};
 
 const WaveBars = ({ active }) => (
   <div className="hidden sm:flex items-end gap-[2px] h-3.5 shrink-0" aria-hidden>
@@ -38,12 +67,15 @@ const WaveBars = ({ active }) => (
 /**
  * Article Audio Reader — premium player UI.
  * 1) Uploaded / linked audio when audioReader URL is set
- * 2) Otherwise browser speech (Tamil/English)
+ * 2) Otherwise browser speech (Tamil/English) — chunked for live Chrome reliability
  */
 const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '' }) => {
   const audioUrl = getMediaUrl(audioReader);
   const [speaking, setSpeaking] = useState(false);
   const [supported, setSupported] = useState(true);
+  const [voicesReady, setVoicesReady] = useState(false);
+  const stopRef = useRef(false);
+  const keepAliveRef = useRef(null);
 
   const speechText = useMemo(() => {
     const body = htmlToSpeechText(content);
@@ -51,30 +83,107 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
   }, [title, excerpt, content]);
 
   useEffect(() => {
-    setSupported(typeof window !== 'undefined' && 'speechSynthesis' in window);
+    const ok = typeof window !== 'undefined' && 'speechSynthesis' in window;
+    setSupported(ok);
+    if (!ok) return undefined;
+
+    const markVoices = () => {
+      if (window.speechSynthesis.getVoices().length) setVoicesReady(true);
+    };
+    markVoices();
+    window.speechSynthesis.addEventListener?.('voiceschanged', markVoices);
+    // Some mobile browsers fire voices late
+    const t = window.setTimeout(markVoices, 250);
+
     return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+      window.clearTimeout(t);
+      window.speechSynthesis.removeEventListener?.('voiceschanged', markVoices);
+      stopRef.current = true;
+      if (keepAliveRef.current) {
+        window.clearInterval(keepAliveRef.current);
+        keepAliveRef.current = null;
       }
+      window.speechSynthesis.cancel();
     };
   }, []);
 
+  const clearKeepAlive = () => {
+    if (keepAliveRef.current) {
+      window.clearInterval(keepAliveRef.current);
+      keepAliveRef.current = null;
+    }
+  };
+
   const stopSpeech = () => {
+    stopRef.current = true;
+    clearKeepAlive();
     window.speechSynthesis?.cancel();
     setSpeaking(false);
   };
 
+  const speakChunks = (chunks, lang) => {
+    if (!chunks.length || stopRef.current) {
+      clearKeepAlive();
+      setSpeaking(false);
+      return;
+    }
+
+    const [head, ...rest] = chunks;
+    const utter = new SpeechSynthesisUtterance(head);
+    utter.lang = lang;
+    utter.rate = 0.95;
+    const voice = pickVoice(lang);
+    if (voice) utter.voice = voice;
+
+    utter.onend = () => {
+      if (stopRef.current) {
+        clearKeepAlive();
+        setSpeaking(false);
+        return;
+      }
+      speakChunks(rest, lang);
+    };
+    utter.onerror = () => {
+      // Skip a bad chunk and continue (live browsers sometimes error mid-stream)
+      if (stopRef.current) {
+        clearKeepAlive();
+        setSpeaking(false);
+        return;
+      }
+      speakChunks(rest, lang);
+    };
+
+    window.speechSynthesis.speak(utter);
+  };
+
   const startSpeech = () => {
     if (!speechText || !window.speechSynthesis) return;
+
+    stopRef.current = false;
     window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(speechText);
+
+    // Warm voices on live Chrome / Safari
+    window.speechSynthesis.getVoices();
+
     const hasTamil = /[\u0B80-\u0BFF]/.test(speechText);
-    utter.lang = hasTamil ? 'ta-IN' : 'en-IN';
-    utter.rate = 0.95;
-    utter.onend = () => setSpeaking(false);
-    utter.onerror = () => setSpeaking(false);
+    const lang = hasTamil ? 'ta-IN' : 'en-IN';
+    const chunks = chunkSpeechText(speechText);
+
     setSpeaking(true);
-    window.speechSynthesis.speak(utter);
+    clearKeepAlive();
+    // Chrome can silently pause speechSynthesis; nudge resume while “playing”
+    keepAliveRef.current = window.setInterval(() => {
+      if (stopRef.current) return;
+      if (window.speechSynthesis.speaking && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    }, 5000);
+
+    // Tiny delay helps voices load on first tap (especially mobile live)
+    window.setTimeout(() => {
+      if (stopRef.current) return;
+      speakChunks(chunks, lang);
+    }, voicesReady ? 0 : 120);
   };
 
   if (audioUrl) {
