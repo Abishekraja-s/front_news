@@ -188,97 +188,113 @@ const LayoutCarousel = ({ articles, accent = 'brand' }) => {
           ? 'bg-orange-500'
           : 'bg-brand-700';
 
+  const renderCard = (a) => {
+    const dateLabel = shortDate(a.publishedAt);
+    const label = catName(a);
+    return (
+      <Link
+        to={getArticlePath(a)}
+        className="group flex flex-col overflow-hidden h-full
+          rounded-2xl bg-white ring-1 ring-stone-200/80 shadow-soft
+          hover:shadow-lift hover:-translate-y-0.5 transition-all duration-300"
+      >
+        <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
+          <NewsImage
+            src={a.featuredImage}
+            seed={a.slug}
+            alt={a.imageAlt || a.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+            loading="lazy"
+          />
+          {dateLabel ? (
+            <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-md bg-brand-800/90 px-2 py-1 text-[10px] font-bold text-white">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {dateLabel}
+            </span>
+          ) : null}
+          {label ? (
+            <span className={`absolute bottom-2.5 left-2.5 rounded-md ${badgeTone} px-2 py-0.5 text-[10px] font-bold text-white`}>
+              {label}
+            </span>
+          ) : null}
+        </div>
+        <div className="p-3.5 sm:p-4 flex flex-col flex-1">
+          <h3
+            className="text-sm sm:text-[15px] font-bold font-tamil text-slate-900 line-clamp-2 group-hover:text-brand-800"
+            style={{ lineHeight: 1.45 }}
+          >
+            {a.title}
+          </h3>
+          {a.excerpt ? (
+            <p className="mt-1.5 text-xs text-slate-500 line-clamp-2 leading-relaxed flex-1">{a.excerpt}</p>
+          ) : (
+            <div className="flex-1" />
+          )}
+          <div className="mt-3 flex items-center justify-between gap-2">
+            {a.publishedAt ? (
+              <span className="text-[10px] text-slate-400">{timeAgo(a.publishedAt)}</span>
+            ) : (
+              <span />
+            )}
+            <ArrowCircle />
+          </div>
+        </div>
+      </Link>
+    );
+  };
+
   return (
     <div className="relative">
-      <button
-        type="button"
-        onClick={() => scrollByDir(-1)}
-        disabled={!canLeft}
-        aria-label="Previous"
-        className="hidden sm:flex absolute -left-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center
-          rounded-full bg-white border border-stone-200 text-slate-600 shadow-soft
-          hover:border-brand-400 hover:text-brand-700 disabled:opacity-30 transition-all"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={() => scrollByDir(1)}
-        disabled={!canRight}
-        aria-label="Next"
-        className="hidden sm:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center
-          rounded-full bg-white border border-stone-200 text-slate-600 shadow-soft
-          hover:border-brand-400 hover:text-brand-700 disabled:opacity-30 transition-all"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
+      {/* Mobile: vertical stack — no horizontal scroller trapping page scroll */}
+      <div className="grid grid-cols-1 gap-3 sm:hidden">
+        {list.map((a) => (
+          <div key={a._id}>{renderCard(a)}</div>
+        ))}
+      </div>
 
-      <div
-        ref={scrollerRef}
-        className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide
-          overscroll-x-contain touch-pan-x scroll-smooth px-0.5"
-      >
-        {list.map((a) => {
-          const dateLabel = shortDate(a.publishedAt);
-          const label = catName(a);
-          return (
-            <Link
-              key={a._id}
-              to={getArticlePath(a)}
-              className="snap-start shrink-0 w-[78%] sm:w-[46%] lg:w-[31%] group flex flex-col overflow-hidden
-                rounded-2xl bg-white ring-1 ring-stone-200/80 shadow-soft
-                hover:shadow-lift hover:-translate-y-0.5 transition-all duration-300"
-            >
-              <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
-                <NewsImage
-                  src={a.featuredImage}
-                  seed={a.slug}
-                  alt={a.imageAlt || a.title}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
-                  loading="lazy"
-                />
-                {dateLabel ? (
-                  <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-md bg-brand-800/90 px-2 py-1 text-[10px] font-bold text-white">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    {dateLabel}
-                  </span>
-                ) : null}
-                {label ? (
-                  <span className={`absolute bottom-2.5 left-2.5 rounded-md ${badgeTone} px-2 py-0.5 text-[10px] font-bold text-white`}>
-                    {label}
-                  </span>
-                ) : null}
-              </div>
-              <div className="p-3.5 sm:p-4 flex flex-col flex-1">
-                <h3
-                  className="text-sm sm:text-[15px] font-bold font-tamil text-slate-900 line-clamp-2 group-hover:text-brand-800"
-                  style={{ lineHeight: 1.45 }}
-                >
-                  {a.title}
-                </h3>
-                {a.excerpt ? (
-                  <p className="mt-1.5 text-xs text-slate-500 line-clamp-2 leading-relaxed flex-1">{a.excerpt}</p>
-                ) : (
-                  <div className="flex-1" />
-                )}
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  {a.publishedAt ? (
-                    <span className="text-[10px] text-slate-400">{timeAgo(a.publishedAt)}</span>
-                  ) : (
-                    <span />
-                  )}
-                  <ArrowCircle />
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+      {/* Tablet/desktop: horizontal carousel */}
+      <div className="relative hidden sm:block">
+        <button
+          type="button"
+          onClick={() => scrollByDir(-1)}
+          disabled={!canLeft}
+          aria-label="Previous"
+          className="hidden md:flex absolute -left-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center
+            rounded-full bg-white border border-stone-200 text-slate-600 shadow-soft
+            hover:border-brand-400 hover:text-brand-700 disabled:opacity-30 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollByDir(1)}
+          disabled={!canRight}
+          aria-label="Next"
+          className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center
+            rounded-full bg-white border border-stone-200 text-slate-600 shadow-soft
+            hover:border-brand-400 hover:text-brand-700 disabled:opacity-30 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <div
+          ref={scrollerRef}
+          className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide
+            overscroll-x-contain scroll-smooth px-0.5"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
+        >
+          {list.map((a) => (
+            <div key={a._id} className="snap-start shrink-0 w-[46%] lg:w-[31%]">
+              {renderCard(a)}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

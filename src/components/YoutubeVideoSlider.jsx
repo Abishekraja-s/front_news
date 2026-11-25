@@ -422,8 +422,8 @@ const YoutubeVideoSlider = () => {
       <div className="lg:hidden min-w-0">
         <div
           ref={mobileScrollerRef}
-          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide touch-pan-x -mx-1 px-1"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-1 px-1"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
           aria-label="Videos 2 by 2"
         >
           {mobilePages.map((page, pageIdx) => (

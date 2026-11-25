@@ -33,10 +33,10 @@ const Navigation = () => {
           ref={scrollerRef}
           className="flex items-center gap-1 overflow-x-auto overflow-y-hidden py-2.5 scrollbar-hide
             -mx-4 px-4 sm:mx-0 sm:px-0
-            overscroll-x-contain touch-pan-x
+            overscroll-x-contain
             [scrollbar-width:none] [-ms-overflow-style:none]
             [-webkit-overflow-scrolling:touch]"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
         >
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;

@@ -114,7 +114,8 @@ const CategoryScrollSection = ({ className = '', categories = FIRST_TEN_CATEGORI
 
           <div
             ref={catRef}
-            className="flex-1 min-w-0 flex gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-0.5 touch-pan-x"
+            className="flex-1 min-w-0 flex gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide py-0.5"
+            style={{ touchAction: 'pan-x pan-y' }}
             role="tablist"
             aria-label="News categories"
           >
@@ -181,7 +182,7 @@ const CategoryScrollSection = ({ className = '', categories = FIRST_TEN_CATEGORI
 
         <div
           ref={articleScroll.ref}
-          className="flex items-start gap-3 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory scrollbar-hide touch-pan-x w-full min-w-0 select-none sm:px-6"
+          className="flex items-start gap-3 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory scrollbar-hide w-full min-w-0 select-none sm:px-6"
           style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
         >
           {loading &&

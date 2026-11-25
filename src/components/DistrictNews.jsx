@@ -133,10 +133,11 @@ const DistrictNews = () => {
       <div className="rounded-2xl bg-white border border-stone-200 p-3 sm:p-4 mb-5 shadow-none">
         <div
           ref={scrollerRef}
-          className="district-scroll overflow-x-auto overflow-y-hidden py-1
-            overscroll-x-contain touch-pan-x
+          className="district-scroll overflow-x-auto py-1
+            overscroll-x-contain
             scroll-smooth snap-x snap-mandatory
             [-webkit-overflow-scrolling:touch]"
+          style={{ touchAction: 'pan-x pan-y' }}
         >
           {/* Row-major: All → Ariyalur → … left-to-right, then second row */}
           <div

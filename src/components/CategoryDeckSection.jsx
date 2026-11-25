@@ -154,7 +154,7 @@ const CategoryDeckCard = ({ category, articles, loading, index, showBreaking }) 
   return (
     <article
       data-deck-card
-      className="shrink-0 w-[min(86vw,20.5rem)] sm:w-[21.5rem] snap-start self-stretch flex flex-col rounded-[1.25rem] bg-white/95 backdrop-blur-sm border border-white/80 shadow-[0_10px_36px_rgba(15,23,42,0.1)] overflow-hidden hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(15,23,42,0.14)] transition-all duration-300"
+      className="category-deck-card shrink-0 w-[min(86vw,20.5rem)] sm:w-[21.5rem] snap-start self-stretch flex flex-col rounded-[1.25rem] bg-white backdrop-blur-sm border border-stone-200/80 shadow-[0_10px_36px_rgba(15,23,42,0.1)] overflow-hidden hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(15,23,42,0.14)] transition-all duration-300"
     >
       {/* Gradient header */}
       <Link
@@ -380,17 +380,36 @@ const CategoryDeckSection = ({ className = '', categories = CAROUSEL_CATEGORIES 
 
     const onDown = (e) => {
       if (e.button !== 0) return;
-      dragRef.current = { active: true, startX: e.pageX, scrollLeft: el.scrollLeft, moved: false };
+      if (e.pointerType === 'touch' || window.matchMedia('(pointer: coarse)').matches) return;
+      dragRef.current = {
+        active: true,
+        startX: e.pageX,
+        startY: e.pageY,
+        scrollLeft: el.scrollLeft,
+        moved: false,
+        axis: null,
+      };
       el.style.cursor = 'grabbing';
     };
     const onMove = (e) => {
       if (!dragRef.current.active) return;
       const dx = e.pageX - dragRef.current.startX;
+      const dy = e.pageY - (dragRef.current.startY || e.pageY);
+      if (!dragRef.current.axis) {
+        if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+        if (Math.abs(dy) > Math.abs(dx)) {
+          dragRef.current.active = false;
+          el.style.cursor = 'grab';
+          return;
+        }
+        dragRef.current.axis = 'x';
+      }
       if (Math.abs(dx) > 4) dragRef.current.moved = true;
       el.scrollLeft = dragRef.current.scrollLeft - dx;
     };
     const onUp = () => {
       dragRef.current.active = false;
+      dragRef.current.axis = null;
       el.style.cursor = 'grab';
     };
     const onClickCapture = (e) => {
@@ -447,7 +466,7 @@ const CategoryDeckSection = ({ className = '', categories = CAROUSEL_CATEGORIES 
 
       <div
         ref={scrollerRef}
-        className="flex items-stretch gap-3.5 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory touch-pan-x w-full min-w-0 max-w-full scrollbar-hide sm:px-6"
+        className="flex items-stretch gap-3.5 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory w-full min-w-0 max-w-full scrollbar-hide sm:px-6"
         style={{
           WebkitOverflowScrolling: 'touch',
           // Allow vertical page scroll; horizontal pan still works for the carousel

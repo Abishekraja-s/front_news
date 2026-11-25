@@ -244,7 +244,7 @@ const Home = () => {
             </div>
             <div
               ref={recentScroll.ref}
-              className="flex gap-3 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory scrollbar-hide touch-pan-x select-none"
+              className="flex gap-3 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory scrollbar-hide select-none"
               style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
             >
               {recentUpdatedCards.map((article) => (

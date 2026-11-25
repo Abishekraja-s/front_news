@@ -784,8 +784,8 @@ const GoogleNewsSection = () => {
 
       {/* Category nav */}
       <div
-        className="mb-5 -mx-1 px-1 overflow-x-auto scrollbar-hide touch-pan-x"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        className="mb-5 -mx-1 px-1 overflow-x-auto scrollbar-hide"
+        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
       >
         <div className="inline-flex min-w-full sm:min-w-0 items-center gap-1.5 rounded-xl bg-stone-100/90 p-1.5">
           {NAV_CATEGORIES.map((cat) => {

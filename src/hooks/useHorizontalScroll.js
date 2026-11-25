@@ -63,17 +63,38 @@ export function useHorizontalScroll({
 
     const onDown = (e) => {
       if (e.button !== 0) return;
-      dragRef.current = { active: true, startX: e.pageX, scrollLeft: el.scrollLeft, moved: false };
+      // Touch / mobile: let the browser handle vertical page scroll — no mouse-drag hijack
+      if (e.pointerType === 'touch' || window.matchMedia('(pointer: coarse)').matches) return;
+      dragRef.current = {
+        active: true,
+        startX: e.pageX,
+        startY: e.pageY,
+        scrollLeft: el.scrollLeft,
+        moved: false,
+        axis: null,
+      };
       el.style.cursor = 'grabbing';
     };
     const onMove = (e) => {
       if (!dragRef.current.active) return;
       const dx = e.pageX - dragRef.current.startX;
+      const dy = e.pageY - (dragRef.current.startY || e.pageY);
+      // If gesture is mostly vertical, release so the page can scroll up/down
+      if (!dragRef.current.axis) {
+        if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+        if (Math.abs(dy) > Math.abs(dx)) {
+          dragRef.current.active = false;
+          el.style.cursor = 'grab';
+          return;
+        }
+        dragRef.current.axis = 'x';
+      }
       if (Math.abs(dx) > 4) dragRef.current.moved = true;
       el.scrollLeft = dragRef.current.scrollLeft - dx;
     };
     const onUp = () => {
       dragRef.current.active = false;
+      dragRef.current.axis = null;
       el.style.cursor = 'grab';
     };
     const onClickCapture = (e) => {

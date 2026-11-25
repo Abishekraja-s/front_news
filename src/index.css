@@ -5,6 +5,11 @@
 @layer base {
   html {
     scroll-behavior: auto;
+    /* Keep page vertically scrollable on mobile (carousels must not trap the document) */
+    overflow-x: clip;
+    overflow-y: auto;
+    height: auto;
+    overscroll-behavior-y: auto;
   }
   @media (prefers-reduced-motion: no-preference) {
     html {
@@ -19,6 +24,10 @@
   body {
     @apply font-sans antialiased text-slate-900 bg-stone-100;
     /* Solid bg only — fixed multi-layer gradients cause severe scroll jank */
+    overflow-x: clip;
+    overflow-y: visible;
+    min-height: 100%;
+    touch-action: pan-x pan-y;
   }
   html.dark body {
     @apply text-slate-100 bg-slate-950;
@@ -1512,22 +1521,106 @@ body.admin-theme-dark .react-hot-toast > div {
 }
 
 /* ——— Public site dark mode surfaces ——— */
-html.dark .site-shell .bg-white {
+html.dark .site-shell {
+  color: rgb(226 232 240);
+}
+
+/* Solid + translucent light fills → dark panels */
+html.dark .site-shell .bg-white,
+html.dark .site-shell .bg-white\/95,
+html.dark .site-shell .bg-white\/90,
+html.dark .site-shell .bg-white\/80,
+html.dark .site-shell .bg-white\/70,
+html.dark .site-shell .bg-white\/60,
+html.dark .site-shell .bg-white\/50 {
   background-color: rgb(15 23 42) !important;
 }
 html.dark .site-shell .bg-stone-50,
-html.dark .site-shell .bg-stone-100 {
+html.dark .site-shell .bg-stone-50\/80,
+html.dark .site-shell .bg-stone-50\/60,
+html.dark .site-shell .bg-stone-100,
+html.dark .site-shell .bg-stone-100\/90,
+html.dark .site-shell .bg-stone-100\/80,
+html.dark .site-shell .bg-slate-50,
+html.dark .site-shell .bg-slate-100,
+html.dark .site-shell .bg-gray-50,
+html.dark .site-shell .bg-gray-100,
+html.dark .site-shell .bg-brand-50,
+html.dark .site-shell .bg-teal-50,
+html.dark .site-shell .bg-cyan-50,
+html.dark .site-shell .bg-red-50,
+html.dark .site-shell .hover\:bg-brand-50:hover,
+html.dark .site-shell .hover\:bg-teal-50:hover,
+html.dark .site-shell .hover\:bg-red-50:hover,
+html.dark .site-shell .hover\:bg-stone-50:hover,
+html.dark .site-shell .hover\:bg-stone-100:hover,
+html.dark .site-shell .hover\:bg-white:hover,
+html.dark .site-shell .hover\:bg-white\/80:hover {
   background-color: rgb(30 41 59) !important;
 }
+html.dark .site-shell .bg-stone-200,
+html.dark .site-shell .bg-stone-300 {
+  background-color: rgb(51 65 85) !important;
+}
+
+/* Gradient stops that keep panels washed-out light in dark mode */
+html.dark .site-shell .from-white {
+  --tw-gradient-from: rgb(15 23 42) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+html.dark .site-shell .via-white,
+html.dark .site-shell .via-stone-50,
+html.dark .site-shell .via-stone-50\/50 {
+  --tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), rgb(30 41 59) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+html.dark .site-shell .to-white,
+html.dark .site-shell .to-stone-50,
+html.dark .site-shell .to-teal-50\/50,
+html.dark .site-shell .to-cyan-50\/40,
+html.dark .site-shell .to-cyan-50\/50 {
+  --tw-gradient-to: rgb(15 23 42) var(--tw-gradient-to-position) !important;
+}
+html.dark .site-shell .from-brand-50\/80,
+html.dark .site-shell .from-teal-50,
+html.dark .site-shell .from-stone-50 {
+  --tw-gradient-from: rgb(30 41 59) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(30 41 59 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+/* Borders / rings / dividers */
 html.dark .site-shell .border-stone-100,
 html.dark .site-shell .border-stone-200,
 html.dark .site-shell .border-stone-200\/60,
-html.dark .site-shell .border-stone-200\/80 {
+html.dark .site-shell .border-stone-200\/70,
+html.dark .site-shell .border-stone-200\/80,
+html.dark .site-shell .border-slate-100,
+html.dark .site-shell .border-slate-200,
+html.dark .site-shell .border-gray-100,
+html.dark .site-shell .border-gray-200,
+html.dark .site-shell .border-white\/80,
+html.dark .site-shell .border-dashed {
   border-color: rgb(51 65 85) !important;
 }
+html.dark .site-shell .ring-stone-200,
+html.dark .site-shell .ring-stone-200\/80,
+html.dark .site-shell .ring-1.ring-stone-200\/80,
+html.dark .site-shell .ring-black\/5 {
+  --tw-ring-color: rgb(51 65 85) !important;
+}
+html.dark .site-shell .divide-stone-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .site-shell .divide-stone-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .site-shell .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(51 65 85) !important;
+}
+
+/* Text */
 html.dark .site-shell .text-slate-900,
 html.dark .site-shell .text-gray-900,
-html.dark .site-shell .text-news-dark {
+html.dark .site-shell .text-news-dark,
+html.dark .site-shell .text-black {
   color: rgb(241 245 249) !important;
 }
 html.dark .site-shell .text-slate-800,
@@ -1537,17 +1630,112 @@ html.dark .site-shell .text-slate-700 {
 html.dark .site-shell .text-slate-600,
 html.dark .site-shell .text-slate-500,
 html.dark .site-shell .text-gray-500,
-html.dark .site-shell .text-gray-600 {
+html.dark .site-shell .text-gray-600,
+html.dark .site-shell .text-stone-500,
+html.dark .site-shell .text-stone-600 {
   color: rgb(148 163 184) !important;
 }
+html.dark .site-shell .text-slate-400,
+html.dark .site-shell .text-stone-400 {
+  color: rgb(100 116 139) !important;
+}
+html.dark .site-shell .text-brand-800,
+html.dark .site-shell .text-brand-900,
+html.dark .site-shell .text-teal-800,
+html.dark .site-shell .text-teal-900 {
+  color: rgb(94 234 212) !important;
+}
+html.dark .site-shell .text-brand-700,
+html.dark .site-shell .text-teal-700 {
+  color: rgb(45 212 191) !important;
+}
+
+/* Card / hub / deck shells */
 html.dark .site-shell .card-news,
+html.dark .site-shell .hub-card,
+html.dark .site-shell .util-tile,
+html.dark .site-shell .category-deck-card,
+html.dark .site-shell [data-deck-card],
+html.dark .site-shell .portal-pill .bg-white,
 html.dark .site-shell .rounded-2xl.bg-white,
-html.dark .site-shell .rounded-xl.bg-white {
+html.dark .site-shell .rounded-xl.bg-white,
+html.dark .site-shell .rounded-\[1\.25rem\].bg-white,
+html.dark .site-shell .rounded-\[2rem\].bg-white {
   background-color: rgb(15 23 42) !important;
   border-color: rgb(51 65 85);
+  outline-color: rgb(51 65 85);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
 }
+html.dark .site-shell .hub-card-header {
+  background-color: rgb(30 41 59 / 0.85) !important;
+  border-color: rgb(51 65 85) !important;
+}
+html.dark .site-shell .hub-pill {
+  background-color: rgb(15 23 42) !important;
+  color: rgb(203 213 225) !important;
+  border-color: rgb(51 65 85) !important;
+}
+html.dark .site-shell .hub-pill:hover {
+  background-color: rgb(19 78 74 / 0.35) !important;
+  color: rgb(94 234 212) !important;
+  border-color: rgb(45 212 191 / 0.5) !important;
+}
+html.dark .site-shell .btn-secondary {
+  background-color: rgb(30 41 59) !important;
+  color: rgb(203 213 225) !important;
+  border-color: rgb(51 65 85) !important;
+}
+html.dark .site-shell .btn-secondary:hover {
+  border-color: rgb(45 212 191) !important;
+  color: rgb(94 234 212) !important;
+}
+html.dark .site-shell .skeleton {
+  background-color: rgb(51 65 85) !important;
+}
+
+/* Article body */
+html.dark .site-shell .article-content h1,
+html.dark .site-shell .article-content h2,
+html.dark .site-shell .article-content h3,
+html.dark .site-shell .article-content h4,
+html.dark .site-shell .article-content h5,
+html.dark .site-shell .article-content h6,
+html.dark .site-shell .section-title {
+  color: rgb(241 245 249) !important;
+}
+html.dark .site-shell .article-content p,
+html.dark .site-shell .article-content li {
+  color: rgb(203 213 225) !important;
+}
+html.dark .site-shell .article-content blockquote {
+  background-color: rgb(19 78 74 / 0.25) !important;
+  color: rgb(203 213 225) !important;
+  border-color: rgb(45 212 191) !important;
+}
+html.dark .site-shell .article-content a {
+  color: rgb(45 212 191) !important;
+}
+
+/* Keep readable hover accents */
+html.dark .site-shell .group:hover .group-hover\:text-blue-700,
+html.dark .site-shell .group-hover\:text-blue-700:hover,
+html.dark .site-shell .group:hover .group-hover\:text-brand-800,
+html.dark .site-shell .group:hover .group-hover\:text-red-700 {
+  color: rgb(96 165 250) !important;
+}
+html.dark .site-shell .group:hover .group-hover\:text-brand-800 {
+  color: rgb(94 234 212) !important;
+}
+html.dark .site-shell .group:hover .group-hover\:text-red-700 {
+  color: rgb(252 165 165) !important;
+}
+
 html.dark .site-shell .nav-link {
   color: rgb(203 213 225);
+}
+html.dark .site-shell .nav-link:hover {
+  background-color: rgb(19 78 74 / 0.35);
+  color: rgb(94 234 212);
 }
 html.dark .site-shell .nav-link-active {
   background-color: rgb(19 78 74 / 0.45);
@@ -1559,6 +1747,16 @@ html.dark .site-shell select {
   background-color: rgb(30 41 59);
   border-color: rgb(51 65 85);
   color: rgb(241 245 249);
+}
+
+/* Explore albums shell + common section wrappers */
+html.dark .site-shell .explore-albums {
+  background: linear-gradient(135deg, rgb(15 23 42), rgb(30 41 59), rgb(15 23 42)) !important;
+  border-color: rgb(51 65 85) !important;
+}
+html.dark .site-shell .mobile-sticky-ad {
+  background-color: rgb(15 23 42) !important;
+  border-color: rgb(51 65 85) !important;
 }
 
 .ql-editor {
