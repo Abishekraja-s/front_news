@@ -302,14 +302,28 @@ const SocialPreviewCard = ({ link, coverSrc, coverSeed }) => {
  * Mobile-first full-size social posts:
  * X uses official widget sized to screen width + auto height (no empty space / no scroll box).
  */
-const ArticleSocialLinks = ({ article, className = '' }) => {
-  const links = useMemo(() => getArticleSocialLinks(article), [article]);
+const ArticleSocialLinks = ({
+  article,
+  className = '',
+  excludeIds = [],
+  includeIds = null,
+  hideHeading = false,
+}) => {
+  const includeKey = includeIds ? includeIds.join(',') : '';
+  const excludeKey = excludeIds.join(',');
+  const links = useMemo(
+    () => getArticleSocialLinks(article, { excludeIds, includeIds }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable via joined keys
+    [article, excludeKey, includeKey]
+  );
 
   if (!links.length) return null;
 
   return (
     <div className={`mb-6 min-w-0 w-full ${className}`.trim()}>
-      <p className="text-sm font-semibold text-slate-800 mb-3">Related links</p>
+      {!hideHeading && (
+        <p className="text-sm font-semibold text-slate-800 mb-3">Related links</p>
+      )}
       <div className="flex flex-col gap-4 w-full min-w-0">
         {links.map((link) => (
           <SocialPreviewCard

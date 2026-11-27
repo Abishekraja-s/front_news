@@ -203,12 +203,6 @@ const Article = () => {
           )}
           <span>•</span>
           <time dateTime={article.publishedAt}>{formatDateTime(article.publishedAt)}</time>
-          {article.updatedAt && article.updatedAt !== article.publishedAt && (
-            <>
-              <span>•</span>
-              <span>Updated: {formatDateTime(article.updatedAt)}</span>
-            </>
-          )}
         </div>
 
         <Advertisement position="article_top" className="mb-6" />

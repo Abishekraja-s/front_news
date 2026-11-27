@@ -9,8 +9,9 @@ export const articleService = {
   },
   getFeatured: () => api.get('/articles/featured'),
   getMustWatch: (limit = 8) => api.get(`/articles/must-watch?limit=${limit}`),
+  getBreaking: (limit = 10) => api.get(`/articles/breaking?limit=${limit}`),
   /** Popular within recent window only (default last 7 days) */
-  getPopular: (limit = 10, days = 7) =>
+  getPopular: (limit = 5, days = 7) =>
     api.get(`/articles/popular?limit=${limit}&days=${days}`),
   getByCategory: (slug, page = 1, limit = 10) =>
     api.get(`/articles/category/${slug}?page=${page}&limit=${limit}`),
@@ -41,6 +42,7 @@ export const categoryService = {
 export const authorService = {
   getAll: () => api.get('/authors'),
   getAllAdmin: () => api.get('/authors/all'),
+  getLinkableUsers: () => api.get('/authors/linkable-users'),
   getBySlug: (slug, page = 1) => api.get(`/authors/${slug}?page=${page}`),
   create: (data) => api.post('/authors', data),
   update: (id, data) => api.put(`/authors/${id}`, data),
@@ -142,6 +144,7 @@ export const userService = {
     api.put(`/users/permissions/${role}`, { pages }),
   create: (data) => api.post('/users', data),
   update: (id, data) => api.put(`/users/${id}`, data),
+  setPassword: (id, password) => api.put(`/users/${id}/password`, { password }),
   delete: (id) => api.delete(`/users/${id}`),
 };
 
@@ -267,7 +270,9 @@ export const rssIngestService = {
   publishArticle: (id) => api.post(`/rss-ingest/articles/${id}/publish`),
   bulkPublish: (ids) => api.post('/rss-ingest/articles/bulk-publish', { ids }),
   bulkDelete: (ids) => api.post('/rss-ingest/articles/bulk-delete', { ids }),
-  deleteByDate: (data) => api.post('/rss-ingest/articles/delete-by-date', data),
+  refreshSlugs: (ids) => api.post('/rss-ingest/articles/refresh-slugs', { ids }),
+  deleteByDate: (data) =>
+    api.post('/rss-ingest/articles/delete-by-date', data, { timeout: 300000 }),
   deleteArticle: (id) => api.delete(`/rss-ingest/articles/${id}`),
 };
 

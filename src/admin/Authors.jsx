@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { authorService } from '../services/articleService';
 import toast from 'react-hot-toast';
 import AdminPageHeader from './AdminPageHeader';
@@ -102,10 +103,15 @@ const Authors = () => {
     <div>
       <AdminPageHeader
         title="Authors"
-        subtitle="Manage reporters and writers"
-        actionLabel={showForm ? undefined : '+ Add Author'}
-        onAction={() => { setShowForm(true); setEditId(null); setForm(emptyForm); }}
+        subtitle="Bylines for articles — create login accounts under Users (role AUTHOR)"
       />
+      <p className="mb-4 text-sm text-slate-600 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+        Author logins are managed in{' '}
+        <Link to="/admin/users" className="font-semibold text-brand-700 underline">
+          Users
+        </Link>
+        . Create a user with role <strong>AUTHOR</strong> and the same name to link the byline automatically.
+      </p>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="admin-card mb-6">

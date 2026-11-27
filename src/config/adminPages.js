@@ -1,11 +1,9 @@
-/** Client mirror of server admin page keys — keep in sync with server/config/adminPages.js */
+/** Sidebar nav — view-level modules only (keep in sync with server ADMIN_MODULES) */
 export const ADMIN_PAGES = [
   { key: 'dashboard', label: 'Dashboard', path: '/admin', icon: '📊', exact: true },
   { key: 'articles', label: 'Articles', path: '/admin/articles', icon: '📰', match: 'articles-list' },
   { key: 'articles-create', label: 'Add Article', path: '/admin/articles/create', icon: '✏️', exact: true },
   { key: 'categories', label: 'Categories', path: '/admin/categories', icon: '📁' },
-  { key: 'authors', label: 'Authors', path: '/admin/authors', icon: '👤' },
-  { key: 'media', label: 'Media', path: '/admin/media', icon: '🖼️' },
   { key: 'albums', label: 'Album', path: '/admin/albums', icon: '🗂️' },
   { key: 'breaking-news', label: 'Breaking News', path: '/admin/breaking-news', icon: '🔴' },
   { key: 'advertisements', label: 'Advertisements', path: '/admin/advertisements', icon: '📢' },
@@ -18,8 +16,7 @@ export const ADMIN_PAGES = [
   { key: 'matrimony', label: 'Matrimony', path: '/admin/matrimony', icon: '💍' },
   { key: 'astrology', label: 'Astrology', path: '/admin/astrology', icon: '🔮' },
   { key: 'youtube-slider', label: 'YouTube Slider', path: '/admin/youtube-slider', icon: '▶️' },
-  // Instagram Posts menu hidden — route/page still available at /admin/instagram-posts
-  // { key: 'instagram-posts', label: 'Instagram Posts', path: '/admin/instagram-posts', icon: '📸' },
+  { key: 'instagram-posts', label: 'Instagram Posts', path: '/admin/instagram-posts', icon: '📸' },
   { key: 'google-news', label: 'Google News', path: '/admin/google-news', icon: '🌐' },
   { key: 'rss-feed', label: 'RSS Feed', path: '/admin/rss-feed', icon: '📡' },
   { key: 'travel-notifications', label: 'Travel Notifications', path: '/admin/travel-notifications', icon: '🚆' },
@@ -37,11 +34,15 @@ export const pathToPageKey = (pathname) => {
   if (!pathname || !pathname.startsWith('/admin')) return null;
   if (pathname === '/admin') return 'dashboard';
   if (pathname.startsWith('/admin/articles/create')) return 'articles-create';
+  if (pathname.startsWith('/admin/articles/edit')) return 'articles-edit';
   if (pathname.startsWith('/admin/articles')) return 'articles';
+  if (pathname.startsWith('/admin/albums/new')) return 'albums-create';
+  if (pathname.startsWith('/admin/albums/edit')) return 'albums-edit';
   if (pathname.startsWith('/admin/role-permissions')) return 'role-permissions';
   if (pathname.startsWith('/admin/matrimony')) return 'matrimony';
   if (pathname.startsWith('/admin/astrology')) return 'astrology';
   if (pathname.startsWith('/admin/page-menu')) return 'menu-management';
+  if (pathname.startsWith('/admin/instagram-posts')) return 'instagram-posts';
 
   const match = ADMIN_PAGES.find(
     (p) => p.path !== '/admin' && (pathname === p.path || pathname.startsWith(`${p.path}/`))
@@ -55,4 +56,6 @@ export const ROLE_LABELS = {
   REPORTER: 'Reporter',
   AUTHOR: 'Author',
   AD_MANAGER: 'Ad Manager',
+  SELLER: 'Seller',
+  MATRIMONY: 'Matrimony',
 };

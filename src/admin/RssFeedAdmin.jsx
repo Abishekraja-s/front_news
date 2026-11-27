@@ -428,45 +428,66 @@ const RssFeedAdmin = () => {
     }
   };
 
-  const handleDeleteByDate = async () => {
-    if (!dateFrom && !dateTo) {
-      return toast.error('Pick a from and/or to date');
-    }
+  const handleRefreshSlugs = async () => {
+    if (!selected.length) return toast.error('Select articles first');
     try {
       setBulkBusy(true);
-      const preview = await rssIngestService.deleteByDate({
-        from: dateFrom || undefined,
-        to: dateTo || undefined,
-        status: statusFilter || undefined,
-        dryRun: true,
-      });
-      const count = preview.data?.data?.count ?? 0;
-      if (!count) {
-        toast.error('No articles match that date range');
-        return;
-      }
-      const rangeLabel = [dateFrom || '…', dateTo || '…'].join(' → ');
-      const statusLabel = statusFilter ? ` (${statusFilter})` : '';
-      if (
-        !confirm(
-          `Permanently delete ${count} imported article(s) imported ${rangeLabel}${statusLabel}? This cannot be undone.`
-        )
-      ) {
-        return;
-      }
-      const { data } = await rssIngestService.deleteByDate({
-        from: dateFrom || undefined,
-        to: dateTo || undefined,
-        status: statusFilter || undefined,
-      });
-      toast.success(data.message || `Deleted ${data.data?.deleted || 0}`);
-      loadArticles(1);
+      const { data } = await rssIngestService.refreshSlugs(selected);
+      toast.success(data.message || 'Slugs updated from titles');
+      loadArticles(pagination.page || 1);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Date delete failed');
+      toast.error(err.response?.data?.message || 'Slug refresh failed');
     } finally {
       setBulkBusy(false);
     }
   };
+
+  const runBulkDeleteByFilter = async ({ all = false } = {}) => {
+    if (!all && !dateFrom && !dateTo) {
+      return toast.error('Pick a from and/or to date');
+    }
+    try {
+      setBulkBusy(true);
+      const payload = {
+        status: statusFilter || undefined,
+        dryRun: true,
+        ...(all
+          ? { all: true }
+          : { from: dateFrom || undefined, to: dateTo || undefined }),
+      };
+      const preview = await rssIngestService.deleteByDate(payload);
+      const count = preview.data?.data?.count ?? 0;
+      if (!count) {
+        toast.error(
+          all
+            ? 'No imported articles match the status filter'
+            : `No articles in that date range (${pagination.total || 0} total shown — widen dates or use Delete all matching)`
+        );
+        return;
+      }
+      const statusLabel = statusFilter || 'all statuses';
+      const rangeLabel = [dateFrom || '…', dateTo || '…'].join(' → ');
+      const scopeLabel = all
+        ? `ALL ${count} imported article(s) (${statusLabel})`
+        : `${count} imported article(s) imported ${rangeLabel} (${statusLabel})`;
+      if (!confirm(`Permanently delete ${scopeLabel}? This cannot be undone.`)) {
+        return;
+      }
+      const { data } = await rssIngestService.deleteByDate({
+        ...payload,
+        dryRun: false,
+      });
+      toast.success(data.message || `Deleted ${data.data?.deleted || 0}`);
+      loadArticles(1);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Delete failed');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleDeleteByDate = () => runBulkDeleteByFilter({ all: false });
+  const handleDeleteAllMatching = () => runBulkDeleteByFilter({ all: true });
 
   const handleDeleteArticle = async (id) => {
     if (!confirm('Delete this imported article?')) return;
@@ -1026,6 +1047,15 @@ const RssFeedAdmin = () => {
             </button>
             <button
               type="button"
+              onClick={handleRefreshSlugs}
+              disabled={!selected.length || bulkBusy}
+              className="btn-secondary text-sm disabled:opacity-50"
+              title="Rebuild URL slugs automatically from each article title"
+            >
+              Update slugs from title ({selected.length})
+            </button>
+            <button
+              type="button"
               onClick={handleBulkDelete}
               disabled={!selected.length || bulkBusy}
               className="text-sm font-semibold px-3 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
@@ -1064,8 +1094,17 @@ const RssFeedAdmin = () => {
             >
               Delete by date
             </button>
-            <p className="text-xs text-slate-500 w-full sm:w-auto sm:ml-2">
-              Uses the status filter above. Example: Draft + today → delete only today&apos;s drafts.
+            <button
+              type="button"
+              onClick={handleDeleteAllMatching}
+              disabled={bulkBusy || !(pagination.total > 0)}
+              className="text-sm font-semibold px-3 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
+            >
+              Delete all matching ({pagination.total || 0})
+            </button>
+            <p className="text-xs text-slate-500 w-full">
+              Uses the status filter above. Date range must cover import days (widen &quot;to&quot; through today).
+              For a full clear of the list, use <strong>Delete all matching</strong>.
             </p>
           </div>
 

@@ -57,6 +57,7 @@ const Home = () => {
   const [featured, setFeatured] = useState([]);
   const [latest, setLatest] = useState([]);
   const [recentUpdated, setRecentUpdated] = useState([]);
+  const [breaking, setBreaking] = useState([]);
   const [popular, setPopular] = useState([]);
   const [categoryData, setCategoryData] = useState({});
   const [homeCatSlugs, setHomeCatSlugs] = useState(CATEGORY_SLUGS);
@@ -68,17 +69,18 @@ const Home = () => {
     let cancelled = false;
     (async () => {
       try {
-        const [featuredRes, latestRes, recentRes, popularRes] = await Promise.allSettled([
+        const [featuredRes, latestRes, recentRes, breakingRes, popularRes] = await Promise.allSettled([
           articleService.getFeatured(),
           // Real latest news by publish date (not old seeds with bumped updatedAt)
           articleService.getLatest(12, { by: 'published' }),
           // Truly recently updated: updated in 7d AND published within 30d
           articleService.getLatest(10, { by: 'updated', days: 7 }),
+          articleService.getBreaking(10),
           articleService.getPopular(5, 7),
         ]);
         if (cancelled) return;
         setFeatured(
-          featuredRes.status === 'fulfilled' ? featuredRes.value.data.data || [] : []
+          (featuredRes.status === 'fulfilled' ? featuredRes.value.data.data || [] : []).slice(0, 5)
         );
         const latestList =
           latestRes.status === 'fulfilled' ? latestRes.value.data.data || [] : [];
@@ -86,15 +88,20 @@ const Home = () => {
           recentRes.status === 'fulfilled' ? recentRes.value.data.data || [] : [];
         setLatest(latestList);
         setRecentUpdated(recentList.length ? recentList : latestList.slice(0, 10));
+        setBreaking(
+          (breakingRes.status === 'fulfilled' ? breakingRes.value.data.data || [] : []).slice(0, 10)
+        );
         const popularRaw =
           popularRes.status === 'fulfilled' ? popularRes.value.data.data || [] : [];
         // Client safety net: only last 7 days
         const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
         setPopular(
-          popularRaw.filter((a) => {
-            const t = new Date(a.publishedAt || a.createdAt || 0).getTime();
-            return Number.isFinite(t) && t >= weekAgo;
-          })
+          popularRaw
+            .filter((a) => {
+              const t = new Date(a.publishedAt || a.createdAt || 0).getTime();
+              return Number.isFinite(t) && t >= weekAgo;
+            })
+            .slice(0, 5)
         );
       } catch (err) {
         console.error(err);
@@ -161,15 +168,17 @@ const Home = () => {
 
   const heroArticle = latest[0] || recentUpdated[0] || featured[0] || null;
   const heroId = heroArticle ? String(heroArticle._id) : '';
-  const restLatest = latest.filter((a) => String(a._id) !== heroId);
-  const sidebarLatest = restLatest.slice(0, 6);
-  // Grid: prefer recently-updated feed; exclude hero so multiple cards show
-  const recentUpdatedCards = (recentUpdated.length ? recentUpdated : restLatest)
+  // Sidebar: admin "Latest" checkbox — max 5
+  const sidebarFeatured = featured
+    .filter((a) => String(a._id) !== heroId)
+    .slice(0, 5);
+  // முக்கிய செய்திகள்: admin "Breaking" checkbox — max 10
+  const breakingCards = breaking
     .filter((a) => String(a._id) !== heroId)
     .slice(0, 10);
 
   const recentScroll = useHorizontalScroll({
-    deps: [recentUpdatedCards.length, heroLoading],
+    deps: [breakingCards.length, heroLoading],
     autoplayMs: 4500,
   });
 
@@ -202,20 +211,20 @@ const Home = () => {
               {heroArticle ? <FeaturedNews article={heroArticle} /> : null}
             </div>
             <div className="space-y-6">
-              <LatestNews articles={sidebarLatest} />
+              <LatestNews articles={sidebarFeatured} />
               <PopularNews articles={popular} />
             </div>
           </div>
         )}
 
-        {!heroLoading && recentUpdatedCards.length > 0 && (
+        {!heroLoading && breakingCards.length > 0 && (
           <section className="mb-8 relative">
             <div className="flex items-end justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-news-dark font-tamil">
-                  சமீபத்திய செய்திகள்
+                  முக்கிய செய்திகள்
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">Latest news</p>
+                <p className="text-xs text-slate-500 mt-0.5">Important news</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
@@ -247,7 +256,7 @@ const Home = () => {
               className="flex gap-3 overflow-x-auto overscroll-x-contain pb-2 snap-x snap-mandatory scrollbar-hide select-none"
               style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}
             >
-              {recentUpdatedCards.map((article) => (
+              {breakingCards.map((article) => (
                 <div
                   key={article._id}
                   data-hscroll-item

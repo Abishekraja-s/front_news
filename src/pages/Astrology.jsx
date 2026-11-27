@@ -102,12 +102,16 @@ const Astrology = () => {
                     <p className="text-sm text-slate-500 mt-0.5">{rasi.rasiEnglish}</p>
                   </div>
                   {rasi.previewTamil && (
-                    <p className="text-sm text-slate-800 mt-4 line-clamp-3 font-tamil leading-relaxed text-left">
+                    <p className="text-sm text-slate-900 mt-4 line-clamp-3 font-tamil leading-[1.65] text-left">
                       {rasi.previewTamil}
                     </p>
                   )}
                   {rasi.previewEnglish && (
-                    <p className={`text-sm text-slate-600 line-clamp-2 leading-relaxed text-left ${rasi.previewTamil ? 'mt-2' : 'mt-4'}`}>
+                    <p
+                      className={`text-sm text-slate-600 line-clamp-2 leading-relaxed text-left font-sans ${
+                        rasi.previewTamil ? 'mt-2 pt-2 border-t border-stone-100' : 'mt-4'
+                      }`}
+                    >
                       {rasi.previewEnglish}
                     </p>
                   )}

@@ -11,7 +11,7 @@ export const AdminPermissionsProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || user.role === 'SELLER') {
+    if (!user) {
       setPages([]);
       setLoading(false);
       return;
@@ -33,15 +33,47 @@ export const AdminPermissionsProvider = ({ children }) => {
     return pages.includes(pageKey);
   };
 
+  /**
+   * Action check: articles-edit, categories-delete, users-create, …
+   * Backward compatible: if only legacy view key exists and no *-edit keys were
+   * ever assigned for that module, view grants edit/create/delete.
+   */
+  const canDo = (actionKey) => {
+    if (!actionKey) return true;
+    if (isSuperAdmin) return true;
+    if (pages.includes(actionKey)) return true;
+
+    // AUTHOR always may create/edit articles (submit-for-review workflow)
+    if (
+      user?.role === 'AUTHOR' &&
+      (actionKey === 'articles-create' || actionKey === 'articles-edit')
+    ) {
+      return true;
+    }
+
+    const m = String(actionKey).match(/^(.*)-(create|edit|delete)$/);
+    if (!m) return false;
+    const moduleKey = m[1];
+    const hasGranular = pages.some((k) => k.startsWith(`${moduleKey}-`));
+    if (!hasGranular && pages.includes(moduleKey)) return true;
+    return false;
+  };
+
   const canAccessPath = (pathname) => {
     const key = pathToPageKey(pathname);
-    return canAccessPage(key);
+    if (!key) return true;
+    if (canAccessPage(key)) return true;
+    // Opening edit/create routes: allow if action granted
+    if (key.endsWith('-create') || key.endsWith('-edit')) return canDo(key);
+    // Fallback: module view
+    const moduleKey = key.replace(/-(create|edit|delete)$/, '');
+    return canAccessPage(moduleKey);
   };
 
   const firstAllowedPath = useMemo(() => {
     if (isSuperAdmin) return '/admin';
     for (const item of ADMIN_PAGES) {
-      if (pages.includes(item.key)) return item.path;
+      if (pages.includes(item.key) || canDo(item.key)) return item.path;
     }
     return '/admin';
   }, [isSuperAdmin, pages]);
@@ -53,6 +85,7 @@ export const AdminPermissionsProvider = ({ children }) => {
         loading,
         canAccessPage,
         canAccessPath,
+        canDo,
         firstAllowedPath,
         isSuperAdmin,
         refreshPermissions: async () => {

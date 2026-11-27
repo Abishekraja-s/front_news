@@ -10,14 +10,17 @@ import { ADMIN_PAGES } from '../config/adminPages';
 
 const AdminLayoutInner = () => {
   const { user, logout, loading } = useAuth();
-  const { pages, loading: permLoading, canAccessPage } = useAdminPermissions();
+  const { pages, loading: permLoading, canAccessPage, canDo } = useAdminPermissions();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const visibleNav = useMemo(() => {
     if (user?.role === 'SUPER_ADMIN') return ADMIN_PAGES;
-    return ADMIN_PAGES.filter((item) => canAccessPage(item.key));
-  }, [user?.role, pages, canAccessPage]);
+    return ADMIN_PAGES.filter((item) => {
+      if (item.key === 'articles-create') return canDo('articles-create');
+      return canAccessPage(item.key);
+    });
+  }, [user?.role, pages, canAccessPage, canDo]);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -43,11 +46,15 @@ const AdminLayoutInner = () => {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
-  if (user.role === 'SELLER') {
+  // Seller / Matrimony may enter admin when Role Permissions grants them pages
+  const hasAdminPages =
+    user.role === 'SUPER_ADMIN' || (Array.isArray(pages) && pages.length > 0);
+
+  if (user.role === 'SELLER' && !hasAdminPages) {
     return <Navigate to="/seller" replace />;
   }
 
-  if (user.role === 'MATRIMONY') {
+  if (user.role === 'MATRIMONY' && !hasAdminPages) {
     return <Navigate to="/matrimony/member" replace />;
   }
 

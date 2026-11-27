@@ -134,13 +134,15 @@ export const ARTICLE_SOCIAL_DEFS = [
  * Order: YouTube (from youtubeVideoLink) → X → Instagram → Facebook → TikTok.
  * Empty / invalid URLs are omitted.
  */
-export function getArticleSocialLinks(article) {
+export function getArticleSocialLinks(article, { excludeIds = [], includeIds = null } = {}) {
   if (!article || typeof article !== 'object') return [];
 
+  const skip = new Set(excludeIds);
+  const allow = includeIds ? new Set(includeIds) : null;
   const links = [];
 
   const youtubeUrl = normalizeExternalUrl(article.youtubeVideoLink || article.socialYoutube);
-  if (youtubeUrl) {
+  if (youtubeUrl && !skip.has('youtube') && (!allow || allow.has('youtube'))) {
     links.push({
       id: 'youtube',
       key: 'youtubeVideoLink',
@@ -152,6 +154,8 @@ export function getArticleSocialLinks(article) {
   }
 
   for (const def of ARTICLE_SOCIAL_DEFS) {
+    if (skip.has(def.id)) continue;
+    if (allow && !allow.has(def.id)) continue;
     const url = normalizeExternalUrl(article[def.key]);
     if (!url) continue;
     links.push({

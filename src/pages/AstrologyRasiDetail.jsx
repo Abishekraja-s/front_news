@@ -110,12 +110,16 @@ const AstrologyRasiDetail = () => {
                       <span className="font-tamil font-semibold normal-case">{taLabel}</span>
                     </h2>
                     {ta && (
-                      <p className="mt-3 text-slate-900 leading-relaxed whitespace-pre-wrap font-tamil text-[15px]">
+                      <p className="mt-3 text-slate-900 leading-[1.75] whitespace-pre-wrap font-tamil text-[15px] sm:text-base">
                         {ta}
                       </p>
                     )}
                     {en && (
-                      <p className={`text-slate-600 leading-relaxed whitespace-pre-wrap text-sm ${ta ? 'mt-3 pt-3 border-t border-stone-100' : 'mt-3'}`}>
+                      <p
+                        className={`text-slate-600 leading-relaxed whitespace-pre-wrap text-sm font-sans ${
+                          ta ? 'mt-3 pt-3 border-t border-stone-100' : 'mt-3'
+                        }`}
+                      >
                         {en}
                       </p>
                     )}

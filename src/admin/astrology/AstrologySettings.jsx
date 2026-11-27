@@ -6,7 +6,7 @@ import AstrologyNav from './AstrologyNav';
 
 const emptyForm = () => ({
   apiProvider: 'free',
-  apiBaseUrl: 'https://ohmanda.com/api/horoscope',
+  apiBaseUrl: 'https://nammacalendar.com/data/widget/feed.json',
   apiKey: '',
   apiSecret: '',
   apiKeyMasked: '',
@@ -135,7 +135,7 @@ const AstrologySettings = () => {
                   apiProvider: value,
                   apiBaseUrl:
                     value === 'free'
-                      ? 'https://ohmanda.com/api/horoscope'
+                      ? 'https://nammacalendar.com/data/widget/feed.json'
                       : value === 'astrologyapi'
                         ? (prev.apiBaseUrl || 'https://json.astrologyapi.com')
                         : prev.apiBaseUrl,
@@ -143,7 +143,7 @@ const AstrologySettings = () => {
               }}
             >
               {(providers.length ? providers : [
-                { value: 'free', label: 'Free Daily Horoscope (no API key)' },
+                { value: 'free', label: 'Free bilingual (Namma Tamil + English sites)' },
                 { value: 'astrologyapi', label: 'AstrologyAPI.com' },
                 { value: 'custom', label: 'Custom / Generic HTTP API' },
               ]).map((p) => (
@@ -152,7 +152,8 @@ const AstrologySettings = () => {
             </select>
             {form.apiProvider === 'free' && (
               <p className="text-xs text-slate-500 mt-1">
-                No API key needed. Syncs all 12 Rasi daily from a free horoscope API.
+                No API key. Proper Tamil + English rasipalan sentences from Namma Calendar (Indian style).
+                Western moon/planet fluff is skipped. Auto-syncs every night ~12:05 AM IST, with morning catch-up if missed.
               </p>
             )}
             {form.apiProvider === 'astrologyapi' && (
@@ -239,20 +240,30 @@ const AstrologySettings = () => {
               value={form.syncTime}
               onChange={(e) => setField('syncTime', e.target.value)}
               placeholder="00:05"
+              title="24h time in Asia/Kolkata — 00:05 = 12:05 AM night update"
             />
             <p className="text-xs text-slate-500 mt-1">
-              Runs once daily at this time (Asia/Kolkata by default). If the server was offline then, auto sync
-              also catch-ups on startup and every 30 minutes when today&apos;s 12 Rasis are missing.
+              Nightly at this time in Asia/Kolkata (use <strong>00:05</strong> for ~12 AM). If the server
+              was offline then, catch-up runs on startup and about every 20 minutes until all 12 Rasis
+              for today are filled (covers morning update).
             </p>
           </label>
 
-          <label className="flex items-center gap-2 text-sm mt-6">
+          <label className="flex items-start gap-2 text-sm mt-6 sm:col-span-2">
             <input
               type="checkbox"
+              className="mt-1"
               checked={Boolean(form.autoSync)}
               onChange={(e) => setField('autoSync', e.target.checked)}
             />
-            <span className="font-medium text-slate-700 dark:text-slate-200">Auto Sync ON</span>
+            <span>
+              <span className="font-medium text-slate-700 dark:text-slate-200 block">
+                Auto Sync — daily Tamil + English update
+              </span>
+              <span className="text-xs text-slate-500 mt-0.5 block">
+                When ON, all 12 rasis refresh automatically at Sync Time with correct Tamil font text and English sentences.
+              </span>
+            </span>
           </label>
 
           <div className="sm:col-span-2 text-sm">

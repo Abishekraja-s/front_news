@@ -3,6 +3,7 @@ import { categoryService } from '../services/articleService';
 import toast from 'react-hot-toast';
 import AdminPageHeader from './AdminPageHeader';
 import DataTable from './DataTable';
+import { useAdminPermissions } from '../context/AdminPermissionsContext';
 
 const emptyForm = {
   name: '',
@@ -15,6 +16,10 @@ const emptyForm = {
 };
 
 const Categories = () => {
+  const { canDo } = useAdminPermissions();
+  const canCreate = canDo('categories-create');
+  const canEdit = canDo('categories-edit');
+  const canDelete = canDo('categories-delete');
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -196,25 +201,29 @@ const Categories = () => {
         header: 'Actions',
         render: (row) => (
           <div className="data-table-actions">
-            <button
-              type="button"
-              onClick={() => handleEdit(row)}
-              className="data-table-action data-table-action-edit"
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDelete(row._id)}
-              className="data-table-action data-table-action-delete"
-            >
-              Delete
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => handleEdit(row)}
+                className="data-table-action data-table-action-edit"
+              >
+                Edit
+              </button>
+            )}
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => handleDelete(row._id)}
+                className="data-table-action data-table-action-delete"
+              >
+                Delete
+              </button>
+            )}
           </div>
         ),
       },
     ],
-    [toggleFlag, togglingKey]
+    [toggleFlag, togglingKey, canEdit, canDelete]
   );
 
   return (
@@ -222,12 +231,16 @@ const Categories = () => {
       <AdminPageHeader
         title="Categories"
         subtitle="Manage news categories — enable/disable homepage sections"
-        actionLabel={showForm ? undefined : '+ Add Category'}
-        onAction={() => {
-          setShowForm(true);
-          setEditId(null);
-          setForm(emptyForm);
-        }}
+        actionLabel={!showForm && canCreate ? '+ Add Category' : undefined}
+        onAction={
+          canCreate
+            ? () => {
+                setShowForm(true);
+                setEditId(null);
+                setForm(emptyForm);
+              }
+            : undefined
+        }
       />
 
       {showForm && (

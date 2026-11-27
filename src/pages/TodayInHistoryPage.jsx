@@ -11,47 +11,63 @@ const TABS = [
   { id: 'deaths', label: 'Deaths', labelTa: 'இறப்பு', color: 'bg-slate-700' },
   { id: 'holidays', label: 'Holidays', labelTa: 'விடுமுறை', color: 'bg-emerald-500' },
   { id: 'tamil', label: 'Tamil', labelTa: 'தமிழ்', color: 'bg-rose-500' },
+  { id: 'tamilnadu', label: 'Tamil Nadu', labelTa: 'தமிழ்நாடு', color: 'bg-amber-600' },
 ];
 
-const HistoryCard = ({ row, featured }) => (
-  <article
-    className={`rounded-2xl p-4 sm:p-5 ring-1 transition-all ${
-      featured
-        ? 'bg-gradient-to-br from-orange-500 via-amber-500 to-rose-500 text-white ring-transparent shadow-lg'
-        : 'bg-white ring-orange-100 hover:ring-orange-200'
-    }`}
-  >
-    <div className="flex gap-3">
-      {row.thumbnail && (
-        <img
-          src={row.thumbnail}
-          alt=""
-          className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 bg-stone-100"
-        />
-      )}
-      <div className="min-w-0">
-        <p className={`text-xs font-black tracking-wide ${featured ? 'text-white/90' : 'text-orange-600'}`}>
-          {row.year != null ? row.year : 'On this day'}
-          {row.india ? ' · India' : ''}
-        </p>
-        {row.title && (
-          <h3 className={`text-sm font-bold mt-0.5 ${featured ? 'text-white' : 'text-slate-900'}`}>{row.title}</h3>
+const HistoryCard = ({ row, featured }) => {
+  const useTamilFont = Boolean(row.isTamil || row.lang === 'ta');
+  return (
+    <article
+      className={`rounded-2xl p-4 sm:p-5 ring-1 transition-all ${
+        featured
+          ? 'bg-gradient-to-br from-orange-500 via-amber-500 to-rose-500 text-white ring-transparent shadow-lg'
+          : 'bg-white ring-orange-100 hover:ring-orange-200'
+      }`}
+    >
+      <div className="flex gap-3">
+        {row.thumbnail && (
+          <img
+            src={row.thumbnail}
+            alt=""
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover shrink-0 bg-stone-100"
+          />
         )}
-        <p className={`text-sm leading-relaxed mt-1 ${featured ? 'text-white/95' : 'text-slate-700'}`}>{row.text}</p>
-        {row.url && (
-          <a
-            href={row.url}
-            target="_blank"
-            rel="noreferrer"
-            className={`inline-block text-xs font-semibold mt-2 ${featured ? 'text-white underline' : 'text-orange-700'}`}
+        <div className="min-w-0">
+          <p className={`text-xs font-black tracking-wide ${featured ? 'text-white/90' : 'text-orange-600'}`}>
+            {row.year != null ? row.year : 'On this day'}
+            {row.tamilNadu ? ' · Tamil Nadu' : row.india ? ' · India' : ''}
+          </p>
+          {row.title && (
+            <h3
+              className={`text-sm font-bold mt-0.5 ${useTamilFont ? 'font-tamil' : ''} ${
+                featured ? 'text-white' : 'text-slate-900'
+              }`}
+            >
+              {row.title}
+            </h3>
+          )}
+          <p
+            className={`text-sm leading-relaxed mt-1 ${useTamilFont ? 'font-tamil' : ''} ${
+              featured ? 'text-white/95' : 'text-slate-700'
+            }`}
           >
-            Read more →
-          </a>
-        )}
+            {row.text}
+          </p>
+          {row.url && (
+            <a
+              href={row.url}
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-block text-xs font-semibold mt-2 ${featured ? 'text-white underline' : 'text-orange-700'}`}
+            >
+              Read more →
+            </a>
+          )}
+        </div>
       </div>
-    </div>
-  </article>
-);
+    </article>
+  );
+};
 
 const TodayInHistoryPage = () => {
   const [data, setData] = useState(null);
@@ -91,6 +107,7 @@ const TodayInHistoryPage = () => {
       deaths: data?.deaths || [],
       holidays: data?.holidays || [],
       tamil: data?.tamilEvents || [],
+      tamilnadu: data?.tamilNaduEvents || [],
     }),
     [data]
   );
@@ -100,6 +117,12 @@ const TodayInHistoryPage = () => {
   const featured = items[featuredIndex];
   const rest = items.filter((_, i) => i !== featuredIndex);
   const age = data?.updatedAt ? Math.max(0, Math.round((Date.now() - new Date(data.updatedAt).getTime()) / 1000)) : null;
+
+  const visibleTabs = TABS.filter((t) => {
+    if (t.id === 'tamil') return (data?.tamilEvents || []).length > 0;
+    if (t.id === 'tamilnadu') return (data?.tamilNaduEvents || []).length > 0;
+    return true;
+  });
 
   return (
     <>
@@ -141,7 +164,7 @@ const TodayInHistoryPage = () => {
           )}
 
           <div className="flex flex-wrap gap-2">
-            {TABS.filter((t) => t.id !== 'tamil' || (data?.tamilEvents || []).length).map((t) => (
+            {visibleTabs.map((t) => (
               <button
                 key={t.id}
                 type="button"

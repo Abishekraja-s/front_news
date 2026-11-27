@@ -15,8 +15,11 @@ import { ARTICLE_SOCIAL_DEFS } from '../utils/socialLinks';
 import ImageUploadField from '../components/ImageUploadField';
 import ArticleSocialLinks from '../components/ArticleSocialLinks';
 import GeminiGeneratePanel from './GeminiGeneratePanel';
+import { useAuth } from '../context/AuthContext';
 
-const STATUS_OPTIONS = ['DRAFT', 'PENDING', 'PUBLISHED', 'SCHEDULED'];
+const STATUS_OPTIONS = ['DRAFT', 'PENDING', 'PUBLISHED', 'SCHEDULED', 'TRASH'];
+/** Authors can only draft or submit for admin review */
+const AUTHOR_STATUS_OPTIONS = ['DRAFT', 'PENDING'];
 
 const UNDO_ICON_SVG =
   '<svg viewBox="0 0 18 18"><polyline class="ql-stroke" points="3.5 7.5 1.5 9.5 3.5 11.5"/><path class="ql-stroke" fill="none" d="M5.5,9.5 C5.5,9.5 9.5,4.5 14.5,6.5 C16,7.2 16.5,9 16.5,10.5"/></svg>';
@@ -38,6 +41,35 @@ const slugFromPath = (path = '') => {
     .replace(/^-|-$/g, '');
 };
 
+/** URL slug from title (English + Tamil); keep combining marks for Tamil */
+const slugFromTitle = (title = '') => {
+  const text = String(title || '').trim().toLowerCase();
+  let base = text
+    .replace(/[^\p{L}\p{M}\p{N}\s-]+/gu, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 100);
+  if (!base || base.length < 2 || /^[\s.\-_:!|]+$/u.test(base)) {
+    base = text
+      .replace(/[^a-z0-9\s-]+/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 80);
+  }
+  return base || '';
+};
+
+const isWeakSlug = (slug = '') =>
+  !slug ||
+  slug.length < 2 ||
+  !/\p{L}/u.test(slug) ||
+  /^rss-[a-z0-9]+$/i.test(slug) ||
+  /^article-[a-z0-9]+$/i.test(slug) ||
+  /^news-[a-z0-9]+$/i.test(slug) ||
+  /^[\s.\-_:!|0-9]+$/u.test(slug);
+
 const buildArticleContentFallback = (preview = {}) => {
   if (preview.content?.trim()) return preview.content;
   const parts = [];
@@ -54,7 +86,8 @@ const buildArticleContentFallback = (preview = {}) => {
   return parts.join('\n');
 };
 
-const applyGeminiPreviewToForm = (preview, prev) => {
+/** applyMode: 'full' | 'seoAeo' — seoAeo keeps title, excerpt, content, slug unchanged */
+const applyGeminiPreviewToForm = (preview, prev, applyMode = 'full') => {
   const ogTitle = preview.ogTitle || preview.metaTitle || prev.ogTitle;
   const ogDescription = preview.ogDescription || preview.metaDescription || prev.ogDescription;
   const jsonLdStr =
@@ -63,12 +96,7 @@ const applyGeminiPreviewToForm = (preview, prev) => {
     ? preview.tags
     : [preview.focusKeyword, ...(preview.secondaryKeywords || [])].filter(Boolean);
 
-  return {
-    ...prev,
-    title: preview.h1 || prev.title,
-    slug: preview.slugSuggestion || slugFromPath(preview.canonicalSuggestion) || prev.slug,
-    excerpt: preview.excerpt || preview.metaDescription || prev.excerpt,
-    content: buildArticleContentFallback(preview) || prev.content,
+  const seoAeoFields = {
     seoTitle: preview.metaTitle || prev.seoTitle,
     metaDescription: preview.metaDescription || prev.metaDescription,
     focusKeyword: preview.focusKeyword || prev.focusKeyword,
@@ -85,6 +113,19 @@ const applyGeminiPreviewToForm = (preview, prev) => {
     faqs: preview.faqs?.length ? preview.faqs : prev.faqs,
     robots: preview.robots || prev.robots,
     customJsonLd: jsonLdStr,
+  };
+
+  if (applyMode === 'seoAeo') {
+    return { ...prev, ...seoAeoFields };
+  }
+
+  return {
+    ...prev,
+    ...seoAeoFields,
+    title: preview.h1 || prev.title,
+    slug: preview.slugSuggestion || slugFromPath(preview.canonicalSuggestion) || prev.slug,
+    excerpt: preview.excerpt || preview.metaDescription || prev.excerpt,
+    content: buildArticleContentFallback(preview) || prev.content,
     tags: tagsArr.length ? tagsArr.join(', ') : prev.tags,
   };
 };
@@ -92,6 +133,9 @@ const applyGeminiPreviewToForm = (preview, prev) => {
 const ArticleForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAuthor = user?.role === 'AUTHOR';
+  const statusOptions = isAuthor ? AUTHOR_STATUS_OPTIONS : STATUS_OPTIONS;
   const isEdit = Boolean(id);
 
   const [categories, setCategories] = useState([]);
@@ -157,25 +201,53 @@ const ArticleForm = () => {
     Promise.all([
       categoryService.getAll({ districts: 'false' }),
       categoryService.getAll({ districts: 'true' }),
-      authorService.getAllAdmin ? authorService.getAllAdmin() : authorService.getAll(),
+      authorService.getAll(),
       articleService.getAll({ limit: 20, page: 1, status: 'PUBLISHED' }),
     ]).then(([catRes, distRes, authRes, articlesRes]) => {
       setCategories(catRes.data.data || []);
       setDistricts(distRes.data.data || []);
-      setAuthors(authRes.data.data || []);
+      const activeAuthors = authRes.data.data || [];
+      // AUTHOR login → only their own byline; admin/editor/reporter → full list
+      const ownAuthor = user?._id
+        ? activeAuthors.find(
+            (a) => String(a.user?._id || a.user || '') === String(user._id)
+          )
+        : null;
+      const listForRole = isAuthor
+        ? ownAuthor
+          ? [ownAuthor]
+          : activeAuthors.filter(
+              (a) =>
+                String(a.name || '').trim().toLowerCase() ===
+                String(user?.name || '').trim().toLowerCase()
+            )
+        : activeAuthors;
+      setAuthors(listForRole);
+      if (isAuthor && listForRole[0]?._id) {
+        setForm((prev) => ({ ...prev, author: listForRole[0]._id }));
+      }
       const rows = articlesRes.data?.data || [];
       setMustReadOptions(rows);
     });
-  }, []);
+  }, [isEdit, isAuthor, user?._id, user?.name]);
 
   useEffect(() => {
     if (isEdit) {
       articleService.getById(id).then(({ data }) => {
         const a = data.data;
+        if (isAuthor && ['PUBLISHED', 'TRASH'].includes(a.status)) {
+          toast.error('Published and Trash articles can only be edited by admin');
+          navigate('/admin/articles');
+          return;
+        }
         const linked = (a.mustReadArticles || []).filter((m) => m && (m._id || m));
+        const title = a.title || '';
+        const fromTitle = slugFromTitle(title);
+        const slug =
+          isWeakSlug(a.slug) && fromTitle ? fromTitle : a.slug || fromTitle || '';
         setForm({
-          title: a.title || '',
-          slug: a.slug || '',
+          title,
+          slug,
           excerpt: a.excerpt || '',
           content: a.content || '',
           featuredImage: a.featuredImage || '',
@@ -229,7 +301,7 @@ const ArticleForm = () => {
         }
       });
     }
-  }, [id, isEdit]);
+  }, [id, isEdit, isAuthor, navigate]);
 
   const quillRef = useRef(null);
 
@@ -350,10 +422,19 @@ const ArticleForm = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    setForm((prev) => {
+      if (name === 'title') {
+        return {
+          ...prev,
+          title: value,
+          slug: slugFromTitle(value),
+        };
+      }
+      return {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      };
+    });
   };
 
   const handleAudioUpload = async (e) => {
@@ -379,9 +460,13 @@ const ArticleForm = () => {
     setLoading(true);
 
     const nextStatus = overrideStatus || form.status;
+    const lockedAuthorId = isAuthor ? authors[0]?._id || form.author : form.author;
+    const autoSlug = slugFromTitle(form.title) || form.slug;
     const payload = {
       ...form,
       status: nextStatus,
+      // Always send title-based slug (field is disabled / may be ignored by browser)
+      slug: autoSlug,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
       secondaryKeywords: (form.secondaryKeywords || '').split(',').map((t) => t.trim()).filter(Boolean),
       entities: (form.entities || '').split(',').map((t) => t.trim()).filter(Boolean),
@@ -389,7 +474,8 @@ const ArticleForm = () => {
       faqs: (form.faqs || []).filter((f) => f.question && f.answer),
       category: form.category || undefined,
       district: form.district || undefined,
-      author: form.author || undefined,
+      // disabled <select> is not submitted — force AUTHOR byline from linked account
+      author: lockedAuthorId || undefined,
       mustReadArticles: (form.mustReadArticles || []).map(String).filter(Boolean).slice(0, 10),
     };
 
@@ -399,14 +485,26 @@ const ArticleForm = () => {
       payload.publishedAt = new Date().toISOString();
     }
 
+    const successMsg =
+      nextStatus === 'PUBLISHED'
+        ? 'Published — visible on website'
+        : nextStatus === 'PENDING'
+          ? 'Submitted for review'
+          : nextStatus === 'TRASH'
+            ? 'Rejected — moved to Trash'
+            : nextStatus === 'DRAFT'
+              ? 'Saved as draft'
+              : isEdit
+                ? 'Article updated'
+                : 'Article created';
+
     try {
       if (isEdit) {
         await articleService.update(id, payload);
-        toast.success(nextStatus === 'PUBLISHED' ? 'Published — visible on website' : 'Article updated');
       } else {
         await articleService.create(payload);
-        toast.success(nextStatus === 'PUBLISHED' ? 'Published — visible on website' : 'Article created');
       }
+      toast.success(successMsg);
       navigate('/admin/articles');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Save failed');
@@ -421,7 +519,11 @@ const ArticleForm = () => {
     <div>
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{isEdit ? 'Edit Article' : 'Add Article'}</h1>
-        <p className="text-sm text-slate-500 mt-1">Write and publish news content</p>
+        <p className="text-sm text-slate-500 mt-1">
+          {isAuthor
+            ? 'Save as draft or submit for admin review. Admins publish or reject to Trash.'
+            : 'Write and publish news content'}
+        </p>
       </div>
 
       <form onSubmit={(e) => handleSubmit(e)} className="space-y-6">
@@ -434,7 +536,16 @@ const ArticleForm = () => {
               </div>
               <div>
                 <label className={labelClass}>Slug</label>
-                <input name="slug" value={form.slug} onChange={handleChange} className="admin-input" placeholder="auto-generated" />
+                <input
+                  name="slug"
+                  value={form.slug}
+                  readOnly
+                  disabled
+                  className="admin-input bg-slate-50 text-slate-600 cursor-not-allowed"
+                  placeholder="Auto from title"
+                  title="Slug is generated automatically from the title"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">Auto-updated from title (not editable)</p>
               </div>
               <div>
                 <label className={labelClass}>Short Description</label>
@@ -458,38 +569,51 @@ const ArticleForm = () => {
               </div>
             </div>
 
-            <GeminiGeneratePanel
-              mode="article"
-              compact
-              initialTopic={form.title}
-              articleId={id || null}
-              excerpt={form.excerpt}
-              content={form.content}
-              pageType="article"
-              onApplied={(preview) => {
-                setForm((p) => applyGeminiPreviewToForm(preview, p));
-              }}
-            />
+            {!isAuthor && (
+              <>
+                <GeminiGeneratePanel
+                  mode="article"
+                  compact
+                  initialTopic={form.title}
+                  articleId={id || null}
+                  excerpt={form.excerpt}
+                  content={form.content}
+                  pageType="article"
+                  onApplied={(preview, applyMode = 'full') => {
+                    setForm((p) => applyGeminiPreviewToForm(preview, p, applyMode));
+                  }}
+                />
 
-            <div className="admin-card space-y-3">
-              <h3 className="font-semibold text-slate-900">AEO / GEO fields</h3>
-              <textarea name="directAnswer" value={form.directAnswer} onChange={handleChange} rows={2} className="admin-input" placeholder="Direct answer (AEO)" />
-              <textarea name="aiSummary" value={form.aiSummary} onChange={handleChange} rows={2} className="admin-input" placeholder="AI summary (GEO)" />
-              <input name="entities" value={form.entities} onChange={handleChange} className="admin-input" placeholder="Entities (comma-separated)" />
-              <input name="aeoHeadings" value={form.aeoHeadings} onChange={handleChange} className="admin-input" placeholder="Question headings (comma-separated)" />
-            </div>
+                <div className="admin-card space-y-3">
+                  <h3 className="font-semibold text-slate-900">AEO / GEO fields</h3>
+                  <textarea name="directAnswer" value={form.directAnswer} onChange={handleChange} rows={2} className="admin-input" placeholder="Direct answer (AEO)" />
+                  <textarea name="aiSummary" value={form.aiSummary} onChange={handleChange} rows={2} className="admin-input" placeholder="AI summary (GEO)" />
+                  <input name="entities" value={form.entities} onChange={handleChange} className="admin-input" placeholder="Entities (comma-separated)" />
+                  <input name="aeoHeadings" value={form.aeoHeadings} onChange={handleChange} className="admin-input" placeholder="Question headings (comma-separated)" />
+                </div>
+              </>
+            )}
           </div>
 
           <div className="space-y-4">
             <div className="admin-card space-y-4">
-              <h3 className="font-semibold text-slate-900">Publish</h3>
+              <h3 className="font-semibold text-slate-900">{isAuthor ? 'Submit' : 'Publish'}</h3>
               <div>
                 <label className={labelClass}>Status</label>
-                <select name="status" value={form.status} onChange={handleChange} className="admin-input">
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                {isAuthor ? (
+                  <input
+                    type="text"
+                    readOnly
+                    value={form.status === 'PENDING' ? 'PENDING (awaiting review)' : form.status}
+                    className="admin-input bg-slate-50 text-slate-700"
+                  />
+                ) : (
+                  <select name="status" value={form.status} onChange={handleChange} className="admin-input">
+                    {statusOptions.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div>
                 <label className={labelClass}>Category *</label>
@@ -511,12 +635,22 @@ const ArticleForm = () => {
               </div>
               <div>
                 <label className={labelClass}>Author *</label>
-                <select name="author" value={form.author} onChange={handleChange} required className="admin-input">
-                  <option value="">Select</option>
+                <select
+                  name="author"
+                  value={form.author}
+                  onChange={handleChange}
+                  required
+                  disabled={isAuthor}
+                  className="admin-input disabled:bg-slate-50 disabled:text-slate-700"
+                >
+                  {!isAuthor && <option value="">Select</option>}
                   {authors.map((a) => (
                     <option key={a._id} value={a._id}>{a.name}</option>
                   ))}
                 </select>
+                {isAuthor && (
+                  <p className="text-[11px] text-slate-500 mt-1">Your author byline (locked to your account).</p>
+                )}
               </div>
               <div>
                 <label className={labelClass}>Must Read</label>
@@ -605,7 +739,7 @@ const ArticleForm = () => {
               <div className="flex flex-wrap gap-4">
                 <label className="flex items-center gap-2 text-sm text-slate-700">
                   <input type="checkbox" name="isFeatured" checked={form.isFeatured} onChange={handleChange} className="rounded border-slate-300 text-brand-600" />
-                  Featured
+                  Latest
                 </label>
                 <label className="flex items-center gap-2 text-sm text-slate-700">
                   <input type="checkbox" name="isBreaking" checked={form.isBreaking} onChange={handleChange} className="rounded border-slate-300 text-brand-600" />
@@ -662,40 +796,48 @@ const ArticleForm = () => {
               )}
             </div>
 
-            <div className="admin-card space-y-3">
-              <h3 className="font-semibold text-slate-900">YouTube Video</h3>
-              <input
-                name="youtubeVideoLink"
-                value={form.youtubeVideoLink}
-                onChange={handleChange}
-                className="admin-input"
-                placeholder="https://www.youtube.com/watch?v=..."
-              />
-              <p className="text-xs text-slate-500">Paste a YouTube watch, Shorts, live, embed, or youtu.be link.</p>
-              {getYoutubeEmbedUrl(form.youtubeVideoLink) && (
-                <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                  <iframe
-                    title="YouTube preview"
-                    src={getYoutubeEmbedUrl(form.youtubeVideoLink)}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              )}
-              {form.youtubeVideoLink.trim() && !getYoutubeEmbedUrl(form.youtubeVideoLink) && (
-                <p className="text-xs text-rose-600">Invalid YouTube URL — video will not show on the article.</p>
-              )}
-            </div>
-
-            <div className="admin-card space-y-3 min-w-0">
-              <h3 className="font-semibold text-slate-900">Social links</h3>
-              <p className="text-xs text-slate-500">
-                Optional post or profile URLs — preview cards appear on the article page.
-              </p>
+            <div className="admin-card space-y-4 min-w-0">
+              <div>
+                <h3 className="font-semibold text-slate-900">YouTube &amp; Social links</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Paste a link — preview card appears below (same style for every platform).
+                </p>
+              </div>
+              <div className="min-w-0 space-y-2">
+                <label className="block text-xs font-medium text-slate-600">YouTube Video</label>
+                <input
+                  name="youtubeVideoLink"
+                  value={form.youtubeVideoLink}
+                  onChange={handleChange}
+                  className="admin-input"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  inputMode="url"
+                  autoComplete="off"
+                />
+                {form.youtubeVideoLink.trim() && !getYoutubeEmbedUrl(form.youtubeVideoLink) && (
+                  <p className="text-xs text-rose-600">
+                    Invalid YouTube URL — video will not show on the article.
+                  </p>
+                )}
+                {getYoutubeEmbedUrl(form.youtubeVideoLink) && (
+                  <div className="min-w-0 overflow-hidden">
+                    <ArticleSocialLinks
+                      article={{
+                        youtubeVideoLink: form.youtubeVideoLink,
+                        featuredImage: form.featuredImage,
+                        ogImage: form.ogImage,
+                        slug: form.slug || 'preview',
+                      }}
+                      includeIds={['youtube']}
+                      hideHeading
+                      className="!mb-0"
+                    />
+                  </div>
+                )}
+              </div>
               {ARTICLE_SOCIAL_DEFS.map((def) => (
-                <div key={def.key} className="min-w-0">
-                  <label className="block text-xs font-medium text-slate-600 mb-1">{def.label}</label>
+                <div key={def.key} className="min-w-0 space-y-2">
+                  <label className="block text-xs font-medium text-slate-600">{def.label}</label>
                   <input
                     name={def.key}
                     value={form[def.key]}
@@ -705,17 +847,23 @@ const ArticleForm = () => {
                     inputMode="url"
                     autoComplete="off"
                   />
+                  {String(form[def.key] || '').trim() && (
+                    <div className="min-w-0 overflow-hidden">
+                      <ArticleSocialLinks
+                        article={{
+                          [def.key]: form[def.key],
+                          featuredImage: form.featuredImage,
+                          ogImage: form.ogImage,
+                          slug: form.slug || 'preview',
+                        }}
+                        includeIds={[def.id]}
+                        hideHeading
+                        className="!mb-0"
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
-              <div className="pt-1 min-w-0 overflow-hidden">
-                <ArticleSocialLinks
-                  article={{
-                    ...form,
-                    slug: form.slug || 'preview',
-                  }}
-                  className="!mb-0"
-                />
-              </div>
             </div>
 
             <div className="admin-card space-y-3">
@@ -730,32 +878,67 @@ const ArticleForm = () => {
               <input name="imageCaption" value={form.imageCaption} onChange={handleChange} className="admin-input" placeholder="Caption" />
             </div>
 
-            <div className="admin-card space-y-3">
-              <h3 className="font-semibold text-slate-900">SEO</h3>
-              <input name="seoTitle" value={form.seoTitle} onChange={handleChange} className="admin-input" placeholder="SEO Title" />
-              <textarea name="metaDescription" value={form.metaDescription} onChange={handleChange} rows={2} className="admin-input" placeholder="Meta Description" />
-              <input name="focusKeyword" value={form.focusKeyword} onChange={handleChange} className="admin-input" placeholder="Focus Keyword" />
-              <input name="secondaryKeywords" value={form.secondaryKeywords} onChange={handleChange} className="admin-input" placeholder="Secondary keywords" />
-              <input name="canonicalUrl" value={form.canonicalUrl} onChange={handleChange} className="admin-input" placeholder="Canonical URL" />
-              <input name="ogTitle" value={form.ogTitle} onChange={handleChange} className="admin-input" placeholder="OG Title" />
-              <textarea name="ogDescription" value={form.ogDescription} onChange={handleChange} rows={2} className="admin-input" placeholder="OG Description" />
-            </div>
+            {!isAuthor && (
+              <div className="admin-card space-y-3">
+                <h3 className="font-semibold text-slate-900">SEO</h3>
+                <input name="seoTitle" value={form.seoTitle} onChange={handleChange} className="admin-input" placeholder="SEO Title" />
+                <textarea name="metaDescription" value={form.metaDescription} onChange={handleChange} rows={2} className="admin-input" placeholder="Meta Description" />
+                <input name="focusKeyword" value={form.focusKeyword} onChange={handleChange} className="admin-input" placeholder="Focus Keyword" />
+                <input name="secondaryKeywords" value={form.secondaryKeywords} onChange={handleChange} className="admin-input" placeholder="Secondary keywords" />
+                <input name="canonicalUrl" value={form.canonicalUrl} onChange={handleChange} className="admin-input" placeholder="Canonical URL" />
+                <input name="ogTitle" value={form.ogTitle} onChange={handleChange} className="admin-input" placeholder="OG Title" />
+                <textarea name="ogDescription" value={form.ogDescription} onChange={handleChange} rows={2} className="admin-input" placeholder="OG Description" />
+              </div>
+            )}
           </div>
         </div>
 
         <div className="sticky bottom-0 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 bg-white/95 backdrop-blur border-t border-slate-200 flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
-          <button type="submit" disabled={loading} className="btn-primary w-full sm:w-auto">
-            {loading ? 'Saving...' : 'Save'}
-          </button>
-          <button type="button" onClick={(e) => handleSubmit(e, 'DRAFT')} disabled={loading} className="btn-secondary w-full sm:w-auto">
-            Save Draft
-          </button>
-          <button type="button" onClick={(e) => handleSubmit(e, 'PENDING')} disabled={loading} className="btn-secondary w-full sm:w-auto">
-            Submit for Review
-          </button>
-          <button type="button" onClick={(e) => handleSubmit(e, 'PUBLISHED')} disabled={loading} className="btn-primary w-full sm:w-auto">
-            Publish
-          </button>
+          {isAuthor ? (
+            <>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, 'DRAFT')}
+                disabled={loading}
+                className="btn-secondary w-full sm:w-auto"
+              >
+                {loading ? 'Saving…' : 'Save Draft'}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, 'PENDING')}
+                disabled={loading}
+                className="btn-primary w-full sm:w-auto"
+              >
+                {loading ? 'Submitting…' : 'Submit for Review'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="submit" disabled={loading} className="btn-primary w-full sm:w-auto">
+                {loading ? 'Saving...' : 'Save'}
+              </button>
+              <button type="button" onClick={(e) => handleSubmit(e, 'DRAFT')} disabled={loading} className="btn-secondary w-full sm:w-auto">
+                Save Draft
+              </button>
+              <button type="button" onClick={(e) => handleSubmit(e, 'PENDING')} disabled={loading} className="btn-secondary w-full sm:w-auto">
+                Submit for Review
+              </button>
+              {form.status === 'PENDING' && (
+                <button
+                  type="button"
+                  onClick={(e) => handleSubmit(e, 'TRASH')}
+                  disabled={loading}
+                  className="w-full sm:w-auto text-sm font-semibold px-4 py-2.5 rounded-lg border border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-50"
+                >
+                  Reject → Trash
+                </button>
+              )}
+              <button type="button" onClick={(e) => handleSubmit(e, 'PUBLISHED')} disabled={loading} className="btn-primary w-full sm:w-auto">
+                {form.status === 'PENDING' ? 'Accept & Publish' : 'Publish'}
+              </button>
+            </>
+          )}
         </div>
       </form>
     </div>

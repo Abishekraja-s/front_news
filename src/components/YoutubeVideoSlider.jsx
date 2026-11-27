@@ -1,6 +1,56 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { youtubeService } from '../services/articleService';
 import { SITE_CATEGORIES } from '../utils/helpers';
+
+/** Make every card in a grid match the tallest (full text, equal size). */
+function EqualHeightGrid({ className = '', children, deps = [] }) {
+  const ref = useRef(null);
+
+  useLayoutEffect(() => {
+    const root = ref.current;
+    if (!root) return undefined;
+
+    const sync = () => {
+      const cards = Array.from(root.querySelectorAll('[data-eq-card]'));
+      if (!cards.length) return;
+      cards.forEach((el) => {
+        el.style.minHeight = '';
+        el.style.height = '';
+      });
+      const max = Math.max(...cards.map((el) => el.getBoundingClientRect().height));
+      if (!Number.isFinite(max) || max < 1) return;
+      cards.forEach((el) => {
+        el.style.minHeight = `${Math.ceil(max)}px`;
+      });
+    };
+
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => sync()) : null;
+    const observeAll = () => {
+      sync();
+      ro?.observe(root);
+      Array.from(root.querySelectorAll('[data-eq-card]')).forEach((el) => ro?.observe(el));
+    };
+    observeAll();
+    window.addEventListener('resize', sync);
+    // Fonts / images can change height after first paint
+    const t1 = window.setTimeout(sync, 120);
+    const t2 = window.setTimeout(sync, 400);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', sync);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  return (
+    <div ref={ref} className={className}>
+      {children}
+    </div>
+  );
+}
 
 const ACCENT_RED = '#E61E26';
 
@@ -213,9 +263,10 @@ const SmallVideoCard = ({ video, onPlay }) => {
     <button
       type="button"
       onClick={() => onPlay(video.videoId)}
-      className="group flex flex-col w-full text-left rounded-xl overflow-hidden bg-white border border-stone-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.05)] hover:shadow-[0_10px_28px_rgba(15,23,42,0.1)] hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+      data-eq-card
+      className="group flex flex-col w-full h-full text-left rounded-xl overflow-hidden bg-white border border-stone-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.05)] hover:shadow-[0_10px_28px_rgba(15,23,42,0.1)] hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
     >
-      <div className="relative aspect-video overflow-hidden bg-slate-200">
+      <div className="relative aspect-video overflow-hidden bg-slate-200 shrink-0">
         {video.thumbnail ? (
           <img
             src={video.thumbnail}
@@ -237,21 +288,23 @@ const SmallVideoCard = ({ video, onPlay }) => {
           <DurationBadge duration={duration} />
         </div>
       </div>
-      <div className="px-3 py-2.5 sm:px-3.5 sm:py-3">
+      <div className="px-3 py-2.5 sm:px-3.5 sm:py-3 flex-1 flex flex-col">
         <h3
-          className="text-sm font-bold text-slate-900 font-tamil group-hover:text-red-700 transition-colors"
-          style={{ lineHeight: 1.55 }}
+          className="text-sm font-bold text-slate-900 font-tamil break-words whitespace-normal group-hover:text-red-700 transition-colors"
+          style={{ lineHeight: 1.5 }}
         >
           {video.title}
         </h3>
-        <MetaRow date={video.publishedAt} views={views} />
+        <div className="mt-auto pt-2">
+          <MetaRow date={video.publishedAt} views={views} />
+        </div>
       </div>
     </button>
   );
 };
 
 /**
- * Mobile-only tile: compact 2×2 card — rounded media, bottom sheet title strip.
+ * Mobile-only tile: full title (no clamp) + equal card height via EqualHeightGrid.
  */
 const MobileTileCard = ({ video, onPlay, accent }) => {
   const label = hashLabel(video.videoId || video._id);
@@ -261,10 +314,11 @@ const MobileTileCard = ({ video, onPlay, accent }) => {
   return (
     <button
       type="button"
+      data-eq-card
       onClick={() => onPlay(video.videoId)}
-      className="group relative flex flex-col w-full h-full text-left overflow-hidden rounded-2xl bg-stone-900 shadow-[0_6px_18px_rgba(15,23,42,0.18)] active:scale-[0.98] transition-transform"
+      className="group relative flex flex-col w-full h-full text-left overflow-hidden rounded-2xl bg-white border border-stone-200/80 shadow-[0_6px_18px_rgba(15,23,42,0.12)] active:scale-[0.98] transition-transform"
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-stone-800 shrink-0">
         {video.thumbnail ? (
           <img
             src={video.thumbnail}
@@ -275,7 +329,7 @@ const MobileTileCard = ({ video, onPlay, accent }) => {
         ) : (
           <div className="absolute inset-0 bg-slate-700" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-black/15" />
 
         <div className="absolute top-1.5 left-1.5 right-1.5 flex items-start justify-between gap-1 z-[1]">
           <CategoryPill label={label} className="!text-[9px] !px-1.5 !py-0.5 max-w-[55%]" />
@@ -292,19 +346,26 @@ const MobileTileCard = ({ video, onPlay, accent }) => {
         </span>
       </div>
 
-      <div className="relative px-2 pt-1.5 pb-2 bg-white min-h-[3.6rem] flex flex-col justify-between border-t-2" style={{ borderColor: accent || ACCENT_RED }}>
+      <div
+        className="relative px-2.5 pt-2 pb-2.5 bg-white flex-1 flex flex-col border-t-2"
+        style={{ borderColor: accent || ACCENT_RED }}
+      >
         <h3
-          className="text-[11px] font-bold text-slate-900 font-tamil"
-          style={{ lineHeight: 1.45 }}
+          className="text-[11px] sm:text-xs font-bold text-slate-900 font-tamil break-words whitespace-normal"
+          style={{ lineHeight: 1.5 }}
         >
           {video.title}
         </h3>
-        {dateText ? (
-          <span className="mt-0.5 text-[9px] text-slate-400 inline-flex items-center gap-0.5">
-            <CalendarIcon />
-            {dateText}
-          </span>
-        ) : null}
+        <span className="mt-auto pt-2 text-[9px] text-slate-400 inline-flex items-center gap-0.5">
+          {dateText ? (
+            <>
+              <CalendarIcon />
+              {dateText}
+            </>
+          ) : (
+            <span className="invisible">—</span>
+          )}
+        </span>
       </div>
     </button>
   );
@@ -328,6 +389,7 @@ const YoutubeVideoSlider = () => {
   const [activeId, setActiveId] = useState(null);
   const [pageIndex, setPageIndex] = useState(0);
   const mobileScrollerRef = useRef(null);
+  const playerShellRef = useRef(null);
 
   useEffect(() => {
     youtubeService
@@ -352,8 +414,31 @@ const YoutubeVideoSlider = () => {
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onKey);
+      const doc = document;
+      if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+        const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+        exit?.call(doc)?.catch?.(() => {});
+      }
     };
   }, [activeId]);
+
+  const togglePlayerFullscreen = async () => {
+    const el = playerShellRef.current;
+    if (!el) return;
+    const doc = document;
+    const active = doc.fullscreenElement || doc.webkitFullscreenElement;
+    try {
+      if (active) {
+        const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+        await exit?.call(doc);
+        return;
+      }
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      await req?.call(el);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const list = useMemo(() => videos.filter((v) => v?.videoId), [videos]);
   const { featured, rest } = useMemo(
@@ -431,7 +516,10 @@ const YoutubeVideoSlider = () => {
               key={`page-${pageIdx}`}
               className="shrink-0 w-full snap-start snap-always px-0.5"
             >
-              <div className="grid grid-cols-2 gap-2.5">
+              <EqualHeightGrid
+                className="grid grid-cols-2 gap-2.5 sm:gap-3 items-stretch"
+                deps={[page.map((v) => v._id || v.videoId).join('|'), pageIndex]}
+              >
                 {page.map((v, i) => (
                   <MobileTileCard
                     key={v._id || v.videoId}
@@ -440,7 +528,7 @@ const YoutubeVideoSlider = () => {
                     accent={MOBILE_ACCENTS[(pageIdx * 4 + i) % MOBILE_ACCENTS.length]}
                   />
                 ))}
-              </div>
+              </EqualHeightGrid>
             </div>
           ))}
         </div>
@@ -465,50 +553,79 @@ const YoutubeVideoSlider = () => {
         <div className="min-h-[420px]">
           <FeaturedVideoCard video={featured} onPlay={setActiveId} />
         </div>
-        <div className="grid grid-cols-2 gap-4 content-start">
+        <EqualHeightGrid
+          className="grid grid-cols-2 gap-4 content-start items-stretch"
+          deps={rest.map((v) => v._id || v.videoId).join('|')}
+        >
           {rest.map((v) => (
             <SmallVideoCard key={v._id || v.videoId} video={v} onPlay={setActiveId} />
           ))}
-        </div>
+        </EqualHeightGrid>
       </div>
 
       {list.length > 5 && (
-        <div className="hidden lg:grid mt-4 grid-cols-4 gap-4">
+        <EqualHeightGrid
+          className="hidden lg:grid mt-4 grid-cols-4 gap-4 items-stretch"
+          deps={list.slice(5, 9).map((v) => v._id || v.videoId).join('|')}
+        >
           {list.slice(5, 9).map((v) => (
             <SmallVideoCard key={v._id || v.videoId} video={v} onPlay={setActiveId} />
           ))}
-        </div>
+        </EqualHeightGrid>
       )}
 
-      {activeId && (
-        <div
-          className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-6"
-          onClick={() => setActiveId(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Video player"
-        >
+      {activeId
+        && createPortal(
           <div
-            className="w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl relative ring-1 ring-white/10"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[200] flex flex-col bg-black/90"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Video player"
           >
-            <button
-              type="button"
-              className="absolute -top-11 right-0 text-white/90 text-sm font-medium hover:text-white px-2 py-1"
+            <div className="shrink-0 flex items-center justify-end gap-2 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2">
+              <button
+                type="button"
+                className="text-white/95 text-sm font-semibold px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 inline-flex items-center gap-1.5"
+                onClick={togglePlayerFullscreen}
+                aria-label="Fullscreen"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" />
+                </svg>
+                Fullscreen
+              </button>
+              <button
+                type="button"
+                className="text-white/95 text-sm font-semibold px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20"
+                onClick={() => setActiveId(null)}
+              >
+                Close ✕
+              </button>
+            </div>
+
+            <div
+              className="flex-1 min-h-0 flex items-center justify-center px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
               onClick={() => setActiveId(null)}
             >
-              Close ✕
-            </button>
-            <iframe
-              title="YouTube player"
-              src={`https://www.youtube.com/embed/${activeId}?autoplay=1&rel=0`}
-              className="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      )}
+              <div
+                ref={playerShellRef}
+                className="relative w-full max-w-5xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <iframe
+                  key={activeId}
+                  title="YouTube player"
+                  src={`https://www.youtube.com/embed/${activeId}?autoplay=1&rel=0&playsinline=1&fs=1&controls=1&modestbranding=1`}
+                  className="absolute inset-0 w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </section>
   );
 };

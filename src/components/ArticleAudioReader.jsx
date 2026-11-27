@@ -46,6 +46,17 @@ const pickVoice = (lang) => {
   return voices.find((v) => String(v.lang || '').toLowerCase().startsWith(prefix)) || null;
 };
 
+const audioMimeFromUrl = (url = '') => {
+  const clean = String(url).split('?')[0].toLowerCase();
+  if (clean.endsWith('.mp3') || clean.endsWith('.mpeg')) return 'audio/mpeg';
+  if (clean.endsWith('.wav')) return 'audio/wav';
+  if (clean.endsWith('.ogg')) return 'audio/ogg';
+  if (clean.endsWith('.m4a')) return 'audio/mp4';
+  if (clean.endsWith('.aac')) return 'audio/aac';
+  if (clean.endsWith('.webm')) return 'audio/webm';
+  return '';
+};
+
 const WaveBars = ({ active }) => (
   <div className="hidden sm:flex items-end gap-[2px] h-3.5 shrink-0" aria-hidden>
     {[0.45, 0.8, 0.55, 1, 0.65].map((h, i) => (
@@ -67,13 +78,17 @@ const WaveBars = ({ active }) => (
 /**
  * Article Audio Reader — premium player UI.
  * 1) Uploaded / linked audio when audioReader URL is set
- * 2) Otherwise browser speech (Tamil/English) — chunked for live Chrome reliability
+ * 2) If file fails to load → browser speech fallback
+ * 3) Otherwise browser speech (Tamil/English)
  */
 const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '' }) => {
   const audioUrl = getMediaUrl(audioReader);
+  const audioRef = useRef(null);
   const [speaking, setSpeaking] = useState(false);
   const [supported, setSupported] = useState(true);
   const [voicesReady, setVoicesReady] = useState(false);
+  const [fileReady, setFileReady] = useState(false);
+  const [fileFailed, setFileFailed] = useState(false);
   const stopRef = useRef(false);
   const keepAliveRef = useRef(null);
 
@@ -81,6 +96,13 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
     const body = htmlToSpeechText(content);
     return [title, excerpt, body].filter(Boolean).join('. ').slice(0, 12000);
   }, [title, excerpt, content]);
+
+  const mimeType = useMemo(() => audioMimeFromUrl(audioUrl), [audioUrl]);
+
+  useEffect(() => {
+    setFileReady(false);
+    setFileFailed(false);
+  }, [audioUrl]);
 
   useEffect(() => {
     const ok = typeof window !== 'undefined' && 'speechSynthesis' in window;
@@ -92,7 +114,6 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
     };
     markVoices();
     window.speechSynthesis.addEventListener?.('voiceschanged', markVoices);
-    // Some mobile browsers fire voices late
     const t = window.setTimeout(markVoices, 250);
 
     return () => {
@@ -106,6 +127,45 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
       window.speechSynthesis.cancel();
     };
   }, []);
+
+  // Force load metadata; mark failed if file is missing / blocked
+  useEffect(() => {
+    if (!audioUrl) return undefined;
+    const el = audioRef.current;
+    if (!el) return undefined;
+
+    let cancelled = false;
+    const onReady = () => {
+      if (cancelled) return;
+      if (Number.isFinite(el.duration) && el.duration > 0) setFileReady(true);
+    };
+    const onError = () => {
+      if (!cancelled) setFileFailed(true);
+    };
+    const onTimeout = window.setTimeout(() => {
+      if (cancelled) return;
+      if (!Number.isFinite(el.duration) || el.duration <= 0) {
+        setFileFailed(true);
+      }
+    }, 8000);
+
+    el.addEventListener('loadedmetadata', onReady);
+    el.addEventListener('canplay', onReady);
+    el.addEventListener('error', onError);
+    try {
+      el.load();
+    } catch {
+      setFileFailed(true);
+    }
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(onTimeout);
+      el.removeEventListener('loadedmetadata', onReady);
+      el.removeEventListener('canplay', onReady);
+      el.removeEventListener('error', onError);
+    };
+  }, [audioUrl]);
 
   const clearKeepAlive = () => {
     if (keepAliveRef.current) {
@@ -144,7 +204,6 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
       speakChunks(rest, lang);
     };
     utter.onerror = () => {
-      // Skip a bad chunk and continue (live browsers sometimes error mid-stream)
       if (stopRef.current) {
         clearKeepAlive();
         setSpeaking(false);
@@ -161,8 +220,6 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
 
     stopRef.current = false;
     window.speechSynthesis.cancel();
-
-    // Warm voices on live Chrome / Safari
     window.speechSynthesis.getVoices();
 
     const hasTamil = /[\u0B80-\u0BFF]/.test(speechText);
@@ -171,7 +228,6 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
 
     setSpeaking(true);
     clearKeepAlive();
-    // Chrome can silently pause speechSynthesis; nudge resume while “playing”
     keepAliveRef.current = window.setInterval(() => {
       if (stopRef.current) return;
       if (window.speechSynthesis.speaking && window.speechSynthesis.paused) {
@@ -179,14 +235,17 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
       }
     }, 5000);
 
-    // Tiny delay helps voices load on first tap (especially mobile live)
     window.setTimeout(() => {
       if (stopRef.current) return;
       speakChunks(chunks, lang);
     }, voicesReady ? 0 : 120);
   };
 
-  if (audioUrl) {
+  const showFilePlayer = Boolean(audioUrl) && !fileFailed;
+  const showSpeech =
+    (!audioUrl || fileFailed) && supported && Boolean(speechText);
+
+  if (showFilePlayer) {
     return (
       <div className="mb-6 relative overflow-hidden rounded-2xl border border-teal-200/60 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950 p-4 sm:p-5 shadow-lg shadow-teal-900/10">
         <div className="pointer-events-none absolute -top-10 -right-8 w-40 h-40 rounded-full bg-teal-400/20 blur-3xl" aria-hidden />
@@ -199,17 +258,29 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
           </div>
           <div>
             <p className="text-sm font-bold text-white">Audio Reader</p>
-            <p className="text-xs text-teal-200/80">Uploaded narration</p>
+            <p className="text-xs text-teal-200/80">
+              {fileReady ? 'Uploaded narration' : 'Loading audio…'}
+            </p>
           </div>
         </div>
-        <audio controls preload="metadata" className="relative z-[1] w-full accent-teal-400" src={audioUrl}>
+        <audio
+          key={audioUrl}
+          ref={audioRef}
+          controls
+          preload="auto"
+          playsInline
+          className="relative z-[1] w-full accent-teal-400"
+          style={{ colorScheme: 'dark' }}
+        >
+          {mimeType ? <source src={audioUrl} type={mimeType} /> : null}
+          <source src={audioUrl} />
           Your browser does not support audio playback.
         </audio>
       </div>
     );
   }
 
-  if (!supported || !speechText) return null;
+  if (!showSpeech) return null;
 
   return (
     <div
@@ -260,7 +331,11 @@ const ArticleAudioReader = ({ audioReader, title = '', excerpt = '', content = '
           </div>
           <div className="flex items-center gap-2 mt-0.5 min-w-0">
             <p className="text-[10px] sm:text-xs text-slate-500 truncate">
-              {speaking ? 'Playing…' : 'Browser voice'}
+              {speaking
+                ? 'Playing…'
+                : fileFailed
+                  ? 'Audio file unavailable — browser voice'
+                  : 'Browser voice'}
             </p>
             <WaveBars active={speaking} />
           </div>

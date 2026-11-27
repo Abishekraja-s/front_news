@@ -39,17 +39,27 @@ export const getArticleImage = (article) => {
 
 export const getMediaUrl = (url) => {
   if (!url || url.trim() === '') return '';
-  if (url.startsWith('blob:') || url.startsWith('data:')) return url;
+  const raw = String(url).trim();
+  if (raw.startsWith('blob:') || raw.startsWith('data:')) return raw;
   // Live HTTPS pages block mixed-content http:// audio/images
-  if (url.startsWith('http://')) {
-    return url.replace(/^http:/i, 'https:');
+  if (raw.startsWith('http://')) {
+    return raw.replace(/^http:/i, 'https:');
   }
-  if (url.startsWith('https://')) return url;
-  if (url.startsWith('/')) {
-    return API_BASE ? `${API_BASE}${url}` : url;
-  }
-  const path = `/${url}`;
-  return API_BASE ? `${API_BASE}${path}` : path;
+  if (raw.startsWith('https://')) return raw;
+  // Encode path segments so spaces / special filenames still play in <audio>
+  const withSlash = raw.startsWith('/') ? raw : `/${raw}`;
+  const encoded = withSlash
+    .split('/')
+    .map((seg, i) => {
+      if (i === 0) return seg;
+      try {
+        return encodeURIComponent(decodeURIComponent(seg));
+      } catch {
+        return encodeURIComponent(seg);
+      }
+    })
+    .join('/');
+  return API_BASE ? `${API_BASE}${encoded}` : encoded;
 };
 
 /** Brand asset from settings — supports { url, version } with cache busting */

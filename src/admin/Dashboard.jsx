@@ -20,7 +20,6 @@ const QUICK_ACTIONS = [
   { label: 'Features Hub', path: '/admin/features', icon: '🧩' },
   { label: 'Feature Content', path: '/admin/feature-content', icon: '🗂️' },
   { label: 'Breaking News', path: '/admin/breaking-news', icon: '🔴' },
-  { label: 'Media Library', path: '/admin/media', icon: '🖼️' },
   { label: 'Categories', path: '/admin/categories', icon: '📁' },
 ];
 

@@ -6,14 +6,35 @@ import { formatDateTime } from '../utils/helpers';
 import AdminPageHeader, { StatusBadge } from './AdminPageHeader';
 import DataTable from './DataTable';
 import { getArticlePath } from '../utils/articlePaths';
+import { useAdminPermissions } from '../context/AdminPermissionsContext';
+import { useAuth } from '../context/AuthContext';
 
-const STATUS_TABS = ['', 'PUBLISHED', 'DRAFT', 'PENDING', 'SCHEDULED', 'TRASH'];
+const ALL_STATUS_TABS = ['', 'PUBLISHED', 'DRAFT', 'PENDING', 'SCHEDULED', 'TRASH'];
+/** Author flow: draft → pending review → admin publish or trash */
+const AUTHOR_STATUS_TABS = ['', 'DRAFT', 'PENDING', 'PUBLISHED', 'TRASH'];
 
 const Articles = () => {
+  const { user } = useAuth();
+  const isAuthor = user?.role === 'AUTHOR';
+  const { canDo } = useAdminPermissions();
+  const canCreate = canDo('articles-create') || isAuthor;
+  const canEditAdmin = !isAuthor && canDo('articles-edit');
+  const canDelete = canDo('articles-delete');
+  const canReview = !isAuthor && (canDo('articles-edit') || canDelete);
+  /** Authors may edit only drafts / pending — not published or trash */
+  const authorCanEditStatus = (s) => ['DRAFT', 'PENDING'].includes(s);
+  const statusTabs = isAuthor ? AUTHOR_STATUS_TABS : ALL_STATUS_TABS;
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
   const [deletingId, setDeletingId] = useState(null);
+  const [reviewingId, setReviewingId] = useState(null);
+
+  useEffect(() => {
+    if (isAuthor && status && !['DRAFT', 'PENDING', 'PUBLISHED', 'TRASH'].includes(status)) {
+      setStatus('');
+    }
+  }, [isAuthor, status]);
 
   const fetchArticles = useCallback(() => {
     setLoading(true);
@@ -53,6 +74,51 @@ const Articles = () => {
     },
     []
   );
+
+  const handleAcceptPublish = useCallback(async (row) => {
+    if (!window.confirm(`Accept and publish “${row.title}”?`)) return;
+    setReviewingId(row._id);
+    try {
+      await articleService.update(row._id, {
+        status: 'PUBLISHED',
+        publishedAt: new Date().toISOString(),
+      });
+      toast.success('Accepted — published');
+      fetchArticles();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Publish failed');
+    } finally {
+      setReviewingId(null);
+    }
+  }, [fetchArticles]);
+
+  const handleRejectTrash = useCallback(async (row) => {
+    if (!window.confirm(`Reject “${row.title}” and move to Trash?`)) return;
+    setReviewingId(row._id);
+    try {
+      await articleService.delete(row._id, false);
+      toast.success('Rejected — moved to Trash');
+      fetchArticles();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Reject failed');
+    } finally {
+      setReviewingId(null);
+    }
+  }, [fetchArticles]);
+
+  const handleSubmitForReview = useCallback(async (row) => {
+    if (!window.confirm(`Submit “${row.title}” for admin review?`)) return;
+    setReviewingId(row._id);
+    try {
+      await articleService.update(row._id, { status: 'PENDING' });
+      toast.success('Submitted for review');
+      fetchArticles();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Submit failed');
+    } finally {
+      setReviewingId(null);
+    }
+  }, [fetchArticles]);
 
   const columns = useMemo(
     () => [
@@ -134,38 +200,98 @@ const Articles = () => {
                 Site
               </a>
             )}
-            <Link
-              to={`/admin/articles/edit/${row._id}`}
-              className="data-table-action data-table-action-edit"
-            >
-              Edit
-            </Link>
-            <button
-              type="button"
-              disabled={deletingId === row._id}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleDelete(row);
-              }}
-              className="data-table-action data-table-action-delete disabled:opacity-50"
-            >
-              {deletingId === row._id
-                ? '…'
-                : row.status === 'TRASH'
-                  ? 'Delete forever'
-                  : 'Delete'}
-            </button>
+            {canReview && row.status === 'PENDING' && (
+              <>
+                <button
+                  type="button"
+                  disabled={reviewingId === row._id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAcceptPublish(row);
+                  }}
+                  className="data-table-action data-table-action-edit disabled:opacity-50"
+                  title="Accept and publish"
+                >
+                  {reviewingId === row._id ? '…' : 'Accept'}
+                </button>
+                <button
+                  type="button"
+                  disabled={reviewingId === row._id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleRejectTrash(row);
+                  }}
+                  className="data-table-action data-table-action-delete disabled:opacity-50"
+                  title="Reject to Trash"
+                >
+                  Reject
+                </button>
+              </>
+            )}
+            {isAuthor && row.status === 'DRAFT' && (
+              <button
+                type="button"
+                disabled={reviewingId === row._id}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSubmitForReview(row);
+                }}
+                className="data-table-action data-table-action-edit disabled:opacity-50"
+                title="Submit draft for admin review"
+              >
+                {reviewingId === row._id ? '…' : 'Submit for Review'}
+              </button>
+            )}
+            {(canEditAdmin || (isAuthor && authorCanEditStatus(row.status))) && (
+              <Link
+                to={`/admin/articles/edit/${row._id}`}
+                className="data-table-action data-table-action-edit"
+              >
+                Edit
+              </Link>
+            )}
+            {canDelete && (
+              <button
+                type="button"
+                disabled={deletingId === row._id}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDelete(row);
+                }}
+                className="data-table-action data-table-action-delete disabled:opacity-50"
+              >
+                {deletingId === row._id
+                  ? '…'
+                  : row.status === 'TRASH'
+                    ? 'Delete forever'
+                    : 'Delete'}
+              </button>
+            )}
           </div>
         ),
       },
     ],
-    [handleDelete, deletingId]
+    [
+      handleDelete,
+      handleAcceptPublish,
+      handleRejectTrash,
+      handleSubmitForReview,
+      deletingId,
+      reviewingId,
+      canEditAdmin,
+      canDelete,
+      canReview,
+      isAuthor,
+    ]
   );
 
   const statusToolbar = (
     <div className="flex gap-1.5 overflow-x-auto scrollbar-hide max-w-full">
-      {STATUS_TABS.map((s) => (
+      {statusTabs.map((s) => (
         <button
           key={s || 'all'}
           type="button"
@@ -186,9 +312,13 @@ const Articles = () => {
     <div>
       <AdminPageHeader
         title="Articles"
-        subtitle="Manage all news articles"
-        actionLabel="+ Add Article"
-        actionTo="/admin/articles/create"
+        subtitle={
+          isAuthor
+            ? 'Your articles · Draft → Submit for Review · Admin publishes or rejects to Trash'
+            : 'Manage articles · Pending: Accept to publish or Reject to Trash'
+        }
+        actionLabel={canCreate ? '+ Add Article' : undefined}
+        actionTo={canCreate ? '/admin/articles/create' : undefined}
       />
 
       <DataTable
@@ -199,9 +329,11 @@ const Articles = () => {
         searchKeys={['title', 'author.name', 'category.nameTamil', 'category.name', 'status']}
         emptyMessage="No articles found"
         emptyAction={
-          <Link to="/admin/articles/create" className="btn-primary mt-4 inline-flex text-sm">
-            Create first article
-          </Link>
+          canCreate ? (
+            <Link to="/admin/articles/create" className="btn-primary mt-4 inline-flex text-sm">
+              Create first article
+            </Link>
+          ) : null
         }
         toolbar={statusToolbar}
         pageSize={10}

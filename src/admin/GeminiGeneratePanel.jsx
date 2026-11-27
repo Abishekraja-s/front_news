@@ -45,6 +45,7 @@ const GeminiGeneratePanel = ({
   const [meta, setMeta] = useState(null);
   const [approved, setApproved] = useState(false);
   const inFlightRef = useRef(false);
+  const lastApplyModeRef = useRef('full');
 
   const geminiErrorMessage = (err) => {
     if (err?.code === 'ECONNABORTED' || /timeout/i.test(err?.message || '')) {
@@ -68,7 +69,8 @@ const GeminiGeneratePanel = ({
       .map((s) => s.trim())
       .filter(Boolean);
 
-  const runGenerate = async (regenerate = false) => {
+  /** applyMode: 'full' | 'seoAeo' — seoAeo applies SEO + AEO/GEO only (article form) */
+  const runGenerate = async (regenerate = false, applyMode = 'full') => {
     if (inFlightRef.current || loading) return;
 
     const t = (topic || initialTopic || '').trim();
@@ -80,6 +82,7 @@ const GeminiGeneratePanel = ({
     inFlightRef.current = true;
     setLoading(true);
     setApproved(false);
+    lastApplyModeRef.current = applyMode;
     try {
       const { data } = await aeoService.generateGemini(
         {
@@ -98,8 +101,16 @@ const GeminiGeneratePanel = ({
       setPreview(previewData);
       setMeta(data.meta);
       if (mode === 'article' && onApplied) {
-        onApplied(previewData);
-        toast.success(regenerate ? 'Regenerated and applied to article' : 'Generated and applied to article');
+        onApplied(previewData, applyMode);
+        toast.success(
+          applyMode === 'seoAeo'
+            ? regenerate
+              ? 'Regenerated — SEO & AEO/GEO applied (title/content kept)'
+              : 'SEO & AEO/GEO applied (title/content kept)'
+            : regenerate
+              ? 'Regenerated and applied to article'
+              : 'Generated and applied to article'
+        );
       } else {
         toast.success(regenerate ? 'Regenerated with Gemini' : 'Generated with Gemini');
       }
@@ -131,15 +142,20 @@ const GeminiGeneratePanel = ({
     setSaving(true);
     try {
       if (mode === 'article') {
+        const applyMode = lastApplyModeRef.current || 'full';
         if (onApplied) {
-          onApplied(preview);
-          toast.success('Applied to article form — remember to Save the article');
+          onApplied(preview, applyMode);
+          toast.success(
+            applyMode === 'seoAeo'
+              ? 'SEO & AEO/GEO applied — remember to Save the article'
+              : 'Applied to article form — remember to Save the article'
+          );
         } else if (articleId) {
           await aeoService.applyGeminiArticle({ articleId, ...preview });
           toast.success('Saved to article');
-          onApplied?.(preview);
+          onApplied?.(preview, applyMode);
         } else {
-          onApplied?.(preview);
+          onApplied?.(preview, applyMode);
           toast.success('Applied to form');
         }
       } else {
@@ -171,24 +187,37 @@ const GeminiGeneratePanel = ({
               ஜெமினி மூலம் உருவாக்கு / Generate with Gemini
             </h3>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              SEO · AEO answers · GEO summaries · FAQs · entities · JSON-LD · Open Graph
+              Full generate updates all fields · SEO & AEO/GEO only keeps title, description & content
             </p>
           </div>
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => runGenerate(false)}
-            className="btn-primary text-sm py-2.5 px-4 shrink-0 disabled:opacity-60"
-          >
-            {loading ? (
-              <span className="inline-flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Generating…
-              </span>
-            ) : (
-              '✨ Generate with Gemini'
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => runGenerate(false, 'full')}
+              className="btn-primary text-sm py-2.5 px-4 disabled:opacity-60"
+            >
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  Generating…
+                </span>
+              ) : (
+                '✨ Generate with Gemini'
+              )}
+            </button>
+            {mode === 'article' && (
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => runGenerate(false, 'seoAeo')}
+                className="text-sm font-semibold py-2.5 px-4 rounded-lg border border-teal-300 text-teal-800 bg-white hover:bg-teal-50 disabled:opacity-60"
+                title="Fill SEO and AEO/GEO only — keep title, description and content"
+              >
+                {loading ? 'Generating…' : 'SEO & AEO/GEO only'}
+              </button>
             )}
-          </button>
+          </div>
         </div>
 
         <div className={`grid gap-3 ${mode === 'page' ? 'sm:grid-cols-2' : ''}`}>
